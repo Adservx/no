@@ -1,0 +1,196 @@
+.pdf-contact-sheet {
+  margin: 20px auto;
+  background-color: var(--card-bg);
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: var(--shadow), 0 8px 16px rgba(0, 0, 0, 0.1);
+  width: min(100%, 800px);
+  border: 1px solid var(--border-color);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.pdf-contact-sheet:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow), 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.pdf-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 25px;
+  width: 100%;
+  overflow-x: auto;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.pdf-preview button {
+  padding: 15px 35px;
+  font-size: 1.1rem;
+  background-color: #4CAF50;  /* Changed to light green */
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(0);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  border-radius: 10px;
+  color: white;
+  min-width: 220px;
+  position: relative;
+  overflow: hidden;
+}
+
+.pdf-preview button:disabled {
+  background-color: #666;
+  cursor: not-allowed;
+  opacity: 0.7;
+  transform: none;
+  box-shadow: none;
+}
+
+.pdf-preview button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+  background-color: #45a049;  /* Darker green on hover */
+}
+
+.pdf-preview button:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.pdf-preview button.generating {
+  background-color: #3d8c40;
+  cursor: not-allowed;
+  opacity: 0.9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s linear infinite;
+  margin-right: 4px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.react-pdf__Document {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  padding: 10px;
+  background-color: var(--card-bg);
+}
+
+.react-pdf__Page {
+  margin: 10px;
+  box-shadow: var(--shadow);
+  border-radius: 4px;
+  transition: transform 0.3s ease;
+  max-width: 100%;
+  height: auto !important;
+  background-color: var(--card-bg) !important;
+}
+
+.react-pdf__Page:hover {
+  transform: scale(1.02);
+}
+
+.react-pdf__Page canvas {
+  max-width: 100%;
+  height: auto !important;
+}
+
+.react-pdf__message {
+  padding: 20px;
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.error-message {
+  color: #e74c3c;
+  padding: 15px;
+  margin: 15px 0;
+  border: 1px solid #e74c3c;
+  border-radius: 6px;
+  background-color: #fdf3f2;
+}
+
+.dropzone p {
+  font-size: 1.1rem;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.pdf-select-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background-color: var(--primary-color);
+  color: white;
+  border: 2px solid white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  margin: 20px auto;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.pdf-select-button:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.pdf-select-button:active {
+  transform: translateY(0);
+}
+
+.file-name {
+  font-size: 1.1rem;
+  color: var(--text-color);
+  margin: 0 0 15px 0;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  word-break: break-word;
+}
+
+.loading {
+  padding: 15px;
+  color: var(--text-color);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  margin: 10px 0;
+}
+
+@media (max-width: 480px) {
+  .pdf-contact-sheet {
+    padding: 10px;
+  }
+  
+  .react-pdf__Document {
+    padding: 5px;
+  }
+}
