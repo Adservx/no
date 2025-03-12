@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { useDropzone } from 'react-dropzone';
 import jsPDF from 'jspdf';
@@ -95,7 +95,7 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
       const pdfUrl = URL.createObjectURL(pdfFile);
       const loadingTask = pdfjs.getDocument(pdfUrl);
       
-      loadingTask.onProgress = (data) => {
+      loadingTask.onProgress = (data: { loaded: number; total: number }) => {
         if (data.total > 0) {
           const progress = (data.loaded / data.total) * 30; // First 30%
           setLoadingProgress(Math.round(progress));
