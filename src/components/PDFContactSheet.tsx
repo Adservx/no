@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Document, Page, pdfjs } from 'react-pdf';
+import { Document, pdfjs } from 'react-pdf';
 import { useDropzone } from 'react-dropzone';
 import jsPDF from 'jspdf';
 import './PDFContactSheet.css';
@@ -13,6 +13,11 @@ interface PDFContactSheetProps {
     resolution: number;
     layoutDirection: 'across' | 'down';
   };
+}
+
+interface LoadProgressData {
+  loaded: number;
+  total: number;
 }
 
 export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
@@ -50,11 +55,6 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
     setError(null);
     setNumPages(numPages);
     console.log(`PDF loaded with ${numPages} pages`);
-  };
-
-  const onDocumentLoadError = (error: Error) => {
-    console.error('PDF load error:', error);
-    setError(`Error loading PDF: ${error.message}`);
   };
 
   const generateContactSheet = async () => {
@@ -95,7 +95,7 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
       const pdfUrl = URL.createObjectURL(pdfFile);
       const loadingTask = pdfjs.getDocument(pdfUrl);
       
-      loadingTask.onProgress = (data: { loaded: number; total: number }) => {
+      loadingTask.onProgress = (data: LoadProgressData) => {
         if (data.total > 0) {
           const progress = (data.loaded / data.total) * 30; // First 30%
           setLoadingProgress(Math.round(progress));
