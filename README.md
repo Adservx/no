@@ -1,15 +1,17 @@
-# PDF Contact Sheet Generator
+# no
+
+[![CI](https://github.com/Adservx/no/actions/workflows/ci.yml/badge.svg)](https://github.com/Adservx/no/actions/workflows/ci.yml)
 
 A React-based web application that generates contact sheets from PDF files. This tool allows you to create a grid-based preview of PDF pages with customizable layouts.
 
 ## Features
 
-- Drag & drop PDF file upload
-- Customizable grid layout (rows & columns)
-- Adjustable spacing and resolution
-- Support for different page sizes (A4, A3, Letter)
-- High-quality output
-- Choice of layout direction (across or down)
+- 📥 Drag & drop PDF file upload
+- 🔧 Customizable grid layout (rows & columns)
+- 📐 Adjustable spacing and resolution
+- 📄 Support for different page sizes (A4, A3, Letter)
+- 🎨 High-quality output
+- ↔️ Choice of layout direction (across or down)
 
 ## Getting Started
 
@@ -22,8 +24,8 @@ A React-based web application that generates contact sheets from PDF files. This
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/pdf-contact-sheet.git
-cd pdf-contact-sheet
+git clone https://github.com/Adservx/no.git
+cd no
 ```
 
 2. Install dependencies:
@@ -47,6 +49,10 @@ npm run build
 ```
 
 The build output will be in the `dist` directory.
+
+## Contributing
+
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 ## License
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { PDFContactSheet } from './components/PDFContactSheet';
 import { ConfigPanel } from './components/ConfigPanel';
 import './App.css';

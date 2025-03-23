@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { Document, pdfjs } from 'react-pdf';
+import React, { useState, useRef, useCallback } from 'react';
+import { Document, Page, pdfjs } from 'react-pdf';
 import { useDropzone } from 'react-dropzone';
 import jsPDF from 'jspdf';
 import './PDFContactSheet.css';
@@ -13,11 +13,6 @@ interface PDFContactSheetProps {
     resolution: number;
     layoutDirection: 'across' | 'down';
   };
-}
-
-interface LoadProgressData {
-  loaded: number;
-  total: number;
 }
 
 export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
@@ -57,6 +52,23 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
     console.log(`PDF loaded with ${numPages} pages`);
   };
 
+  const onDocumentLoadError = (error: Error) => {
+    console.error('PDF load error:', error);
+    setError(`Error loading PDF: ${error.message}`);
+  };
+
+  const getGridPosition = (index: number) => {
+    if (config.layoutDirection === 'down') {
+      const col = Math.floor(index / config.rows);
+      const row = index % config.rows;
+      return { row, col };
+    } else { // across first
+      const row = Math.floor(index / config.columns);
+      const col = index % config.columns;
+      return { row, col };
+    }
+  };
+
   const generateContactSheet = async () => {
     if (!pdfFile || !numPages || !canvasRef.current) {
       setError('Please select a valid PDF file first');
@@ -73,113 +85,92 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
       if (!ctx) throw new Error('Could not get canvas context');
 
       // Calculate dimensions with DPI
-      const dpiScale = config.resolution / 72; // Convert from points to pixels
-      const pageWidth = 595 * dpiScale; // A4 width
-      const pageHeight = 842 * dpiScale; // A4 height
+      const dpiScale = config.resolution / 72;
+      const pageWidth = 595 * dpiScale;
+      const pageHeight = 842 * dpiScale;
       const thumbWidth = (pageWidth - (config.spacing * (config.columns + 1))) / config.columns;
       const thumbHeight = (pageHeight - (config.spacing * (config.rows + 1))) / config.rows;
 
-      // Set high-resolution canvas size
+      // Set canvas size
       canvas.width = pageWidth;
       canvas.height = pageHeight;
 
-      // Enable high-quality rendering
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
+      // Calculate total sheets needed
+      const pagesPerSheet = config.rows * config.columns;
+      const totalSheets = Math.ceil(numPages / pagesPerSheet);
 
-      // Fill white background
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Load PDF with proper error handling
+      // Load PDF
       const pdfUrl = URL.createObjectURL(pdfFile);
       const loadingTask = pdfjs.getDocument(pdfUrl);
-      
-      loadingTask.onProgress = (data: LoadProgressData) => {
-        if (data.total > 0) {
-          const progress = (data.loaded / data.total) * 30; // First 30%
-          setLoadingProgress(Math.round(progress));
-        }
-      };
-
       const loadedPdf = await loadingTask.promise;
-      let currentPage = 1;
-      const totalCells = Math.min(config.rows * config.columns, numPages);
 
-      // Function to calculate grid position based on layout direction
-      const getGridPosition = (index: number) => {
-        if (config.layoutDirection === 'across') {
-          // Across first: fill each row from left to right
-          const row = Math.floor(index / config.columns);
-          const col = index % config.columns;
-          return { row, col };
-        } else {
-          // Down first: fill each column from top to bottom
-          const row = index % config.rows;
-          const col = Math.floor(index / config.rows);
-          if (col >= config.columns) return null; // Prevent overflow
-          return { row, col };
+      // Generate each sheet
+      for (let sheetIndex = 0; sheetIndex < totalSheets; sheetIndex++) {
+        // Clear canvas for new sheet
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const startPage = sheetIndex * pagesPerSheet + 1;
+        const endPage = Math.min((sheetIndex + 1) * pagesPerSheet, numPages);
+        let currentPage = startPage;
+
+        // Draw pages for current sheet
+        for (let i = 0; i < pagesPerSheet && currentPage <= endPage; i++) {
+          const position = getGridPosition(i);
+          if (!position) continue;
+
+          const { row, col } = position;
+          const progress = (((sheetIndex * pagesPerSheet) + (currentPage - startPage)) / numPages) * 100;
+          setLoadingProgress(Math.round(progress));
+
+          try {
+            const page = await loadedPdf.getPage(currentPage);
+            const viewport = page.getViewport({ scale: 1.0 });
+            const scale = Math.min(
+              thumbWidth / viewport.width,
+              thumbHeight / viewport.height
+            ) * 1.5;
+
+            const scaledViewport = page.getViewport({ scale });
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = scaledViewport.width;
+            tempCanvas.height = scaledViewport.height;
+            const tempCtx = tempCanvas.getContext('2d');
+
+            if (!tempCtx) throw new Error('Could not create temporary canvas');
+
+            await page.render({
+              canvasContext: tempCtx,
+              viewport: scaledViewport,
+              background: 'white',
+              intent: 'print'
+            }).promise;
+
+            const x = config.spacing * dpiScale + col * (thumbWidth + config.spacing * dpiScale);
+            const y = config.spacing * dpiScale + row * (thumbHeight + config.spacing * dpiScale);
+
+            ctx.drawImage(tempCanvas, x, y, thumbWidth, thumbHeight);
+            currentPage++;
+          } catch (err) {
+            console.error(`Error rendering page ${currentPage}:`, err);
+          }
         }
-      };
 
-      // Draw pages with better progress tracking
-      for (let i = 0; i < totalCells; i++) {
-        const position = getGridPosition(i);
-        if (!position) continue;
-        
-        const { row, col } = position;
-        const progress = 30 + Math.round((currentPage / totalCells) * 70); // Remaining 70%
-        setLoadingProgress(progress);
+        // Create and save PDF for current sheet
+        const pdf = new jsPDF({
+          orientation: pageHeight > pageWidth ? 'portrait' : 'landscape',
+          unit: 'px',
+          format: [canvas.width, canvas.height]
+        });
 
-        try {
-          const page = await loadedPdf.getPage(currentPage);
-          const viewport = page.getViewport({ scale: 1.0 });
-          const scale = Math.min(
-            thumbWidth / viewport.width,
-            thumbHeight / viewport.height
-          ) * 1.5;
+        const imageData = canvas.toDataURL('image/jpeg', 1.0);
+        pdf.addImage(imageData, 'JPEG', 0, 0, canvas.width, canvas.height);
 
-          const scaledViewport = page.getViewport({ scale });
-          const tempCanvas = document.createElement('canvas');
-          tempCanvas.width = scaledViewport.width;
-          tempCanvas.height = scaledViewport.height;
-          const tempCtx = tempCanvas.getContext('2d');
-          
-          if (!tempCtx) throw new Error('Could not create temporary canvas');
-
-          await page.render({
-            canvasContext: tempCtx,
-            viewport: scaledViewport,
-            background: 'white',
-            intent: 'print'
-          }).promise;
-
-          const x = config.spacing * dpiScale + col * (thumbWidth + config.spacing * dpiScale);
-          const y = config.spacing * dpiScale + row * (thumbHeight + config.spacing * dpiScale);
-
-          ctx.drawImage(tempCanvas, x, y, thumbWidth, thumbHeight);
-          currentPage++;
-        } catch (err) {
-          console.error(`Error rendering page ${currentPage}:`, err);
-        }
+        // Save with sheet number in filename
+        const filename = `contact-sheet-${sheetIndex + 1}-${pdfFile.name}`;
+        pdf.save(filename);
       }
 
-      // Export as PDF instead of PNG
-      setLoadingProgress(95);
-      const pdf = new jsPDF({
-        orientation: pageHeight > pageWidth ? 'portrait' : 'landscape',
-        unit: 'px',
-        format: [canvas.width, canvas.height]
-      });
-
-      // Add the canvas as an image to the PDF
-      const imageData = canvas.toDataURL('image/jpeg', 1.0);
-      pdf.addImage(imageData, 'JPEG', 0, 0, canvas.width, canvas.height);
-
-      // Save the PDF
-      setLoadingProgress(100);
-      pdf.save(`contact-sheet-${pdfFile.name}`);
-      
       // Cleanup
       URL.revokeObjectURL(pdfUrl);
     } catch (err) {
@@ -187,6 +178,7 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
       setError(err instanceof Error ? err.message : 'Error generating contact sheet');
     } finally {
       setIsGenerating(false);
+      setLoadingProgress(100);
     }
   };
 
