@@ -1,5 +1,5 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { Document, Page, pdfjs } from 'react-pdf';
+import React, { useState, useRef } from 'react';
+import { Document, pdfjs } from 'react-pdf';
 import { useDropzone } from 'react-dropzone';
 import jsPDF from 'jspdf';
 import './PDFContactSheet.css';
