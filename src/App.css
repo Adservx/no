@@ -1,1 +1,245 @@
-/* ...existing code... */
+:root {
+    --primary-color: #4682b4;  /* Steel Blue */
+    --primary-hover: #5f9ea0;  /* Cadet Blue */
+    --background-color: #1a1f3c;  /* Dark Blue */
+    --text-color: #e6f3ff;  /* Light Blue White */
+    --border-color: #6495ed;  /* Cornflower Blue */
+    --shadow: 0 2px 4px rgba(70, 130, 180, 0.3);
+    --card-bg: #2a3352;  /* Slightly lighter than background */
+    --font-family-base: 'Quicksand', sans-serif;
+    --font-family-title: 'Water Brush', cursive;
+    
+    /* Responsive variables */
+    --title-size: 2.2rem;
+    --base-size: 1rem;
+    --button-size: 1.3rem;
+    --spacing: 25px;
+    --container-width: min(100%, 1200px);
+    --text-align: center;
+
+    /* Add rain effect variables */
+    --rain-color: rgba(176, 224, 230, 0.15);
+    --rain-shadow: 0 0 20px rgba(176, 224, 230, 0.2);
+}
+
+body {
+  font-family: var(--font-family-base);
+  letter-spacing: 1px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+  text-align: var(--text-align);
+  background: linear-gradient(135deg, var(--background-color), #2a3352);
+}
+
+.app {
+  width: var(--container-width);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing);
+}
+
+h1.cyberpunk-title {
+  font-family: var(--font-family-title) !important;
+  font-size: 2.2rem;
+  letter-spacing: 2px;
+  line-height: 1.5;
+  text-shadow: 
+    0 0 10px var(--rain-color),
+    0 0 20px var(--rain-color);
+  text-align: center;
+  margin: var(--spacing) auto;
+  color: var(--text-color);
+  animation: rainGlow 3s ease-in-out infinite;
+  font-weight: 400;
+}
+
+@keyframes rainGlow {
+    0%, 100% {
+        text-shadow: 
+            0 0 10px var(--rain-color),
+            0 0 20px var(--rain-color);
+    }
+    50% {
+        text-shadow: 
+            0 0 15px var(--rain-color),
+            0 0 30px var(--rain-color),
+            0 0 45px var(--rain-color);
+    }
+}
+
+button {
+  font-family: var(--font-family-base);
+  font-size: 1.3rem;
+  letter-spacing: 1.5px;
+  background: linear-gradient(45deg, var(--primary-color), var(--primary-hover));
+  border: none;
+  box-shadow: 0 0 15px var(--rain-color);
+}
+
+.config-item {
+  text-align: center;
+}
+
+.config-item label {
+  font-family: 'Dancing Script', cursive;
+  font-size: 1.2rem;
+  letter-spacing: 1px;
+  text-align: center;
+  color: var(--text-color);
+}
+
+.config-item input,
+.config-item select {
+  font-family: var(--font-family-base);
+  font-size: 0.9rem;
+  background: rgba(70, 130, 180, 0.1);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+}
+
+.dropzone p {
+  font-family: var(--font-family-base);
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.pdf-preview, 
+.file-name,
+.error-message,
+.loading {
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.config-panel {
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow), 0 0 20px var(--rain-color);
+  border: 1px solid rgba(176, 224, 230, 0.2);
+}
+
+/* Tablet devices (portrait and landscape) */
+@media screen and (max-width: 1024px) {
+    :root {
+        --title-size: 2rem;
+        --base-size: 0.95rem;
+        --button-size: 1.2rem;
+        --spacing: 20px;
+    }
+
+    .config-panel {
+        width: min(100%, 500px);
+        padding: var(--spacing);
+    }
+
+    .app {
+        padding: calc(var(--spacing) * 0.8);
+    }
+}
+
+/* Large mobile devices */
+@media screen and (max-width: 768px) {
+    :root {
+        --title-size: 1.8rem;
+        --base-size: 0.9rem;
+        --button-size: 1.1rem;
+        --spacing: 15px;
+    }
+
+    h1.cyberpunk-title {
+        font-size: var(--title-size);
+        letter-spacing: 1.5px;
+    }
+
+    .config-item {
+        padding: 8px 0;
+    }
+
+    .config-item label {
+        text-align: center;
+        width: 100%;
+    }
+}
+
+/* Small mobile devices */
+@media screen and (max-width: 480px) {
+    :root {
+        --title-size: 1.5rem;
+        --base-size: 0.85rem;
+        --button-size: 1rem;
+        --spacing: 10px;
+    }
+
+    h1.cyberpunk-title {
+        letter-spacing: 1px;
+    }
+
+    .config-item label {
+        font-size: var(--base-size);
+        padding: 6px 10px;
+    }
+
+    .config-item input,
+    .config-item select {
+        font-size: var(--base-size);
+        padding: 6px 10px;
+    }
+
+    .app {
+        padding: calc(var(--spacing) * 0.5);
+    }
+    
+    .config-item {
+        align-items: center;
+    }
+}
+
+/* Extra small devices */
+@media screen and (max-width: 320px) {
+    :root {
+        --title-size: 1.3rem;
+        --base-size: 0.8rem;
+        --button-size: 0.9rem;
+        --spacing: 8px;
+    }
+
+    .config-panel {
+        padding: 15px;
+    }
+}
+
+/* For high-DPI screens */
+@media screen and (-webkit-min-device-pixel-ratio: 2),
+       screen and (min-resolution: 192dpi) {
+    :root {
+        --shadow: 0 2px 8px rgba(70, 130, 180, 0.25);
+    }
+}
+
+/* For landscape orientation */
+@media screen and (orientation: landscape) and (max-height: 600px) {
+    .app {
+        padding: 10px;
+    }
+
+    h1.cyberpunk-title {
+        margin: 10px 0;
+    }
+
+    .config-panel {
+        margin: 10px auto;
+    }
+}
+
+/* Support for dark mode */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --shadow: 0 2px 4px rgba(70, 130, 180, 0.4);
+    }
+}

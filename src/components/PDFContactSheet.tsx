@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Document, pdfjs } from 'react-pdf';
 import { useDropzone } from 'react-dropzone';
 import jsPDF from 'jspdf';
@@ -15,6 +15,8 @@ interface PDFContactSheetProps {
   };
 }
 
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+
 export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [numPages, setNumPages] = useState<number | null>(null);
@@ -24,12 +26,41 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    return () => {
+      // Cleanup on unmount
+      if (pdfFile) {
+        URL.revokeObjectURL(URL.createObjectURL(pdfFile));
+      }
+    };
+  }, [pdfFile]);
+
+  const validateFile = (file: File): boolean => {
+    if (file.size > MAX_FILE_SIZE) {
+      setError('File size exceeds 100MB limit');
+      return false;
+    }
+    if (!file.type.includes('pdf')) {
+      setError('Only PDF files are supported');
+      return false;
+    }
+    return true;
+  };
+
   const { getRootProps, getInputProps } = useDropzone({
     accept: { 'application/pdf': ['.pdf'] },
+    maxSize: MAX_FILE_SIZE,
     onDrop: (acceptedFiles) => {
       setError(null);
-      setPdfFile(acceptedFiles[0]);
+      const file = acceptedFiles[0];
+      if (file && validateFile(file)) {
+        setPdfFile(file);
+      }
     },
+    onDropRejected: (rejectedFiles) => {
+      const error = rejectedFiles[0]?.errors[0]?.message || 'Invalid file';
+      setError(error);
+    }
   });
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {

@@ -1,17 +1,17 @@
 :root {
-  --primary-color: #5c9ce6;
-  --primary-hover: #4a90e2;
-  --background-color: #1a1a1a;
-  --text-color: #e1e1e1;
-  --border-color: #404040;
-  --shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  --card-bg: #2d2d2d;
+  --primary-color: #ff6600;
+  --primary-hover: #ff8533;
+  --background-color: #1a0f0f;
+  --text-color: #ffa366;
+  --border-color: #4d1a00;
+  --shadow: 0 2px 4px rgba(255, 102, 0, 0.3);
+  --card-bg: #2d1f1f;
 }
 
 body {
   background-color: var(--background-color);
   color: var(--text-color);
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: 'Poppins', sans-serif;
   min-height: 100vh;
   margin: 0;
   transition: background-color 0.3s ease;
@@ -41,9 +41,77 @@ h1 {
   font-weight: 600;
 }
 
+h1.cyberpunk-title {
+  font-family: 'Creepster', cursive !important;
+  text-transform: none;
+  background: linear-gradient(-45deg, #ff6600, #cc3300);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 
+    0 0 10px rgba(255, 102, 0, 0.7),
+    0 0 20px rgba(255, 102, 0, 0.5);
+  letter-spacing: 2px;
+  font-weight: 400;
+  font-size: 4rem;
+  position: relative;
+  margin: 2rem 0;
+  padding: 0.5em;
+  animation: spookyFloat 3s ease-in-out infinite;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+@keyframes spookyFloat {
+  0%, 100% {
+    transform: translateY(0) rotate(-2deg);
+    text-shadow: 
+      0 0 10px rgba(255, 102, 0, 0.7),
+      0 0 20px rgba(255, 102, 0, 0.5);
+  }
+  50% {
+    transform: translateY(-10px) rotate(2deg);
+    text-shadow: 
+      0 0 15px rgba(255, 102, 0, 0.9),
+      0 0 30px rgba(255, 102, 0, 0.7);
+  }
+}
+
 .dropzone {
   width: min(100%, 600px);
-  border: 2px dashed var(--primary-color);
+  border: 2px dashed #ff6600;
   border-radius: 8px;
   padding: 40px;
   text-align: center;
@@ -56,6 +124,7 @@ h1 {
   flex-direction: column;  /* added */
   align-items: center;  /* added */
   justify-content: center;  /* added */
+  box-shadow: 0 0 15px rgba(255, 102, 0, 0.2);
 }
 
 .pdf-select-button {
@@ -64,8 +133,9 @@ h1 {
 }
 
 .dropzone:hover {
-  border-color: var(--primary-hover);
+  border-color: #ff8533;
   background-color: #f8fafc;
+  box-shadow: 0 0 20px rgba(255, 102, 0, 0.3);
 }
 
 .pdf-preview {
@@ -79,9 +149,9 @@ h1 {
 
 button {
   padding: 12px 24px;
-  background-color: var(--primary-color);
+  background-color: #ff6600;
   color: white;
-  border: 2px solid white;
+  border: 2px solid #ff8533;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
@@ -89,16 +159,48 @@ button {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   margin: 0 auto;
   display: block;
+  font-family: 'Creepster', cursive;
+  letter-spacing: 1px;
+  font-size: 1.2rem;
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
 }
 
 button:hover {
-  background-color: var(--primary-hover);
+  background-color: #ff8533;
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 15px rgba(255, 102, 0, 0.5);
 }
 
 button:active {
   transform: translateY(0);
+}
+
+.error-boundary {
+  text-align: center;
+  padding: 2rem;
+  margin: 2rem auto;
+  background: rgba(255, 0, 0, 0.1);
+  border-radius: 8px;
+  border: 1px solid #ff0000;
+  max-width: 600px;
+}
+
+.error-boundary h2 {
+  color: #ff0000;
+  margin-bottom: 1rem;
+}
+
+.error-boundary button {
+  background: #ff0000;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.error-boundary button:hover {
+  background: #cc0000;
 }
 
 @media (max-width: 768px) {
