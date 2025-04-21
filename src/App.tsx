@@ -17,7 +17,7 @@ function App() {
   const [config, setConfig] = useState<Config>({
     columns: 3,
     rows: 3,
-    spacing: 10,
+    spacing: 0.2,
     pageSize: 'A4',
     resolution: 600,
     layoutDirection: 'down'
