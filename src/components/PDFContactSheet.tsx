@@ -137,12 +137,24 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
       const dpiScale = config.resolution / 72;
       const pageWidth = 595 * dpiScale;
       const pageHeight = 842 * dpiScale;
-      const thumbWidth = (pageWidth - (config.spacing * (config.columns + 1))) / config.columns;
-      const thumbHeight = (pageHeight - (config.spacing * (config.rows + 1))) / config.rows;
-
+      
+      // Calculate the available space for thumbnails
+      const horizontalSpacing = config.spacing * (config.columns + 1) * dpiScale;
+      const verticalSpacing = config.spacing * (config.rows + 1) * dpiScale;
+      
+      // Calculate thumbnail width based on available space
+      const thumbWidth = (pageWidth - horizontalSpacing) / config.columns;
+      
+      // Use a fixed aspect ratio (e.g., 1:1.414 which is A4 ratio)
+      const aspectRatio = 1.414; // Standard A4 ratio
+      const thumbHeight = thumbWidth * aspectRatio;
+      
+      // Adjust canvas height if needed to accommodate the thumbnails with fixed ratio
+      const calculatedPageHeight = (thumbHeight * config.rows) + verticalSpacing;
+      
       // Set canvas size
       canvas.width = pageWidth;
-      canvas.height = pageHeight;
+      canvas.height = calculatedPageHeight > pageHeight ? calculatedPageHeight : pageHeight;
 
       // Calculate total sheets needed
       const pagesPerSheet = config.rows * config.columns;
@@ -155,9 +167,76 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
 
       // Generate each sheet
       for (let sheetIndex = 0; sheetIndex < totalSheets; sheetIndex++) {
-        // Clear canvas for new sheet
-        ctx.fillStyle = 'white';
+        // Clear canvas for new sheet with bluebird feather theme
+        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        gradient.addColorStop(0, '#4ade80');  // Light Green-400
+        gradient.addColorStop(0.3, '#7dd3fc'); // Sky Blue-300
+        gradient.addColorStop(0.7, '#38bdf8'); // Sky Blue-400
+        gradient.addColorStop(1, '#22c55e');  // Green-500
+        ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Add feather pattern
+        const featherSize = 80 * dpiScale;
+        const featherCount = Math.ceil(canvas.width / featherSize) * Math.ceil(canvas.height / featherSize);
+        
+        // Draw feather pattern
+        for (let i = 0; i < featherCount; i++) {
+          const row = Math.floor(i / Math.ceil(canvas.width / featherSize));
+          const col = i % Math.ceil(canvas.width / featherSize);
+          const x = col * featherSize;
+          const y = row * featherSize;
+          
+          // Skip some feathers randomly for a more natural look
+          if (Math.random() > 0.7) continue;
+          
+          // Draw feather
+          ctx.save();
+          ctx.translate(x + featherSize/2, y + featherSize/2);
+          ctx.rotate(Math.random() * Math.PI * 2); // Random rotation
+          
+          // Draw feather shaft
+          ctx.beginPath();
+          ctx.moveTo(0, -featherSize/3);
+          ctx.lineTo(0, featherSize/3);
+          ctx.strokeStyle = 'rgba(56, 189, 248, 0.1)'; // Sky blue
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          
+          // Draw feather barbs
+          const barbCount = 10;
+          const barbLength = featherSize/4;
+          
+          for (let j = 0; j < barbCount; j++) {
+            const barbY = -featherSize/3 + (j * featherSize/barbCount) * 0.66;
+            
+            // Right side barbs
+            ctx.beginPath();
+            ctx.moveTo(0, barbY);
+            ctx.bezierCurveTo(
+              barbLength/3, barbY + featherSize/60,
+              barbLength/2, barbY + featherSize/30,
+              barbLength, barbY
+            );
+            ctx.strokeStyle = 'rgba(125, 211, 252, 0.07)'; // Light sky blue
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            
+            // Left side barbs
+            ctx.beginPath();
+            ctx.moveTo(0, barbY);
+            ctx.bezierCurveTo(
+              -barbLength/3, barbY + featherSize/60,
+              -barbLength/2, barbY + featherSize/30,
+              -barbLength, barbY
+            );
+            ctx.strokeStyle = 'rgba(74, 222, 128, 0.07)'; // Light green
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+          
+          ctx.restore();
+        }
 
         const startPage = sheetIndex * pagesPerSheet + 1;
         const endPage = Math.min((sheetIndex + 1) * pagesPerSheet, numPages);
@@ -191,14 +270,25 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
             await page.render({
               canvasContext: tempCtx,
               viewport: scaledViewport,
-              background: 'white',
+              background: 'transparent',
               intent: 'print'
             }).promise;
 
             const x = config.spacing * dpiScale + col * (thumbWidth + config.spacing * dpiScale);
             const y = config.spacing * dpiScale + row * (thumbHeight + config.spacing * dpiScale);
 
-            ctx.drawImage(tempCanvas, x, y, thumbWidth, thumbHeight);
+            // Center the PDF within its allocated space if it doesn't fill the entire area
+            const pdfWidth = Math.min(thumbWidth, scaledViewport.width);
+            const pdfHeight = Math.min(thumbHeight, scaledViewport.height);
+            const xOffset = (thumbWidth - pdfWidth) / 2;
+            const yOffset = (thumbHeight - pdfHeight) / 2;
+            
+            // Draw white background for the PDF thumbnail
+            ctx.fillStyle = 'white';
+            ctx.fillRect(x + xOffset - 5, y + yOffset - 5, pdfWidth + 10, pdfHeight + 10);
+            
+            // Draw the PDF on top of the white background
+            ctx.drawImage(tempCanvas, x + xOffset, y + yOffset, pdfWidth, pdfHeight);
             currentPage++;
           } catch (err) {
             console.error(`Error rendering page ${currentPage}:`, err);
@@ -272,7 +362,7 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
             <button 
               onClick={handleGenerateClick} 
               disabled={isGenerating || !numPages || pendingGeneration}
-              className={isGenerating ? 'generating' : ''}
+              className={`generate-button ${isGenerating ? 'generating' : ''}`}
             >
               {isGenerating ? (
                 <>
@@ -283,6 +373,13 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
                 'Generate Contact Sheet'
               )}
             </button>
+            
+            {isGenerating && (
+              <div className="progress-bar">
+                <div className="progress" style={{ width: `${loadingProgress}%` }}></div>
+                <span>{loadingProgress}%</span>
+              </div>
+            )}
           </div>
         </>
       )}

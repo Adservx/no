@@ -173,18 +173,133 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
       canvas.width = pageWidth;
       canvas.height = pageHeight;
 
-      // Calculate dimensions for 2 PDFs per page
+      // Calculate dimensions for 2 PDFs per page with fixed aspect ratio
       const spacing = config.spacing * dpiScale;
       const thumbWidth = (pageWidth - (spacing * 3)) / 2; // 2 columns with spacing
-      const thumbHeight = pageHeight - (spacing * 2); // Full height minus spacing
+      
+      // Use a fixed aspect ratio (e.g., 1:1.414 which is A4 ratio)
+      const aspectRatio = 1.414; // Standard A4 ratio
+      const thumbHeight = thumbWidth / aspectRatio; // Divide by aspect ratio since we're in landscape
+      
+      // Check if the calculated height fits in the page
+      const requiredHeight = (thumbHeight + spacing * 2);
+      const finalThumbHeight = requiredHeight > pageHeight ? (pageHeight - spacing * 2) : thumbHeight;
 
       // Calculate total sheets needed (2 PDFs per sheet)
       const totalSheets = Math.ceil(pdfPages.length / 2);
 
       for (let sheetIndex = 0; sheetIndex < totalSheets; sheetIndex++) {
-        // Clear canvas for new sheet
-        ctx.fillStyle = 'white';
+        // Clear canvas for new sheet with peacock feather theme
+        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        gradient.addColorStop(0, '#4ade80');  // Light Green-400
+        gradient.addColorStop(0.3, '#7dd3fc'); // Sky Blue-300
+        gradient.addColorStop(0.7, '#38bdf8'); // Sky Blue-400
+        gradient.addColorStop(1, '#22c55e');  // Green-500
+        ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Add peacock feather pattern
+        const featherCount = 6;  // Fewer, larger feathers for peacock style
+        
+        for (let i = 0; i < featherCount; i++) {
+          // Position feathers around the edges
+          let x, y;
+          
+          if (i < 3) {
+            // Left side
+            x = canvas.width * 0.1;
+            y = canvas.height * (0.25 + i * 0.25);
+          } else {
+            // Right side
+            x = canvas.width * 0.9;
+            y = canvas.height * (0.25 + (i-3) * 0.25);
+          }
+          
+          // Draw peacock feather
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.rotate((i % 2 === 0 ? -0.2 : 0.2) + (i < 3 ? -0.3 : 0.3));
+          
+          // Draw feather stem
+          const stemLength = 120 * dpiScale;
+          ctx.beginPath();
+          ctx.moveTo(0, -stemLength/2);
+          ctx.lineTo(0, stemLength/2);
+          ctx.strokeStyle = 'rgba(56, 189, 248, 0.15)'; // Sky blue
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          
+          // Draw peacock eye
+          const eyeRadius = stemLength * 0.4;
+          const eyeY = -stemLength * 0.1;
+          
+          // Draw eye rings
+          const rings = 4;
+          for (let r = rings; r > 0; r--) {
+            const ringRadius = eyeRadius * (r/rings);
+            ctx.beginPath();
+            ctx.arc(0, eyeY, ringRadius, 0, Math.PI * 2);
+            
+            // Different colors for the rings
+            let alpha;
+            switch(r) {
+              case 4: ctx.strokeStyle = 'rgba(74, 222, 128, 0.2)'; break; // Outer - light green
+              case 3: ctx.strokeStyle = 'rgba(125, 211, 252, 0.2)'; break; // Light sky blue
+              case 2: ctx.strokeStyle = 'rgba(56, 189, 248, 0.2)'; break; // Sky blue
+              case 1: ctx.strokeStyle = 'rgba(34, 197, 94, 0.2)'; break; // Green
+            }
+            
+            ctx.lineWidth = 3;
+            ctx.stroke();
+          }
+          
+          // Draw eye center
+          ctx.beginPath();
+          ctx.arc(0, eyeY, eyeRadius * 0.2, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+          ctx.fill();
+          
+          // Draw feather barbs
+          const barbCount = 20;
+          const maxBarbLength = stemLength * 0.6;
+          
+          for (let j = 0; j < barbCount; j++) {
+            const barbY = -stemLength/2 + (j * stemLength/barbCount);
+            
+            // Skip barbs near the eye
+            if (Math.abs(barbY - eyeY) < eyeRadius * 0.8) continue;
+            
+            // Calculate barb length - shorter near ends, longer in middle
+            const barbPosition = j / barbCount;
+            const barbLength = maxBarbLength * Math.sin(barbPosition * Math.PI);
+            
+            // Right side barbs
+            ctx.beginPath();
+            ctx.moveTo(0, barbY);
+            ctx.bezierCurveTo(
+              barbLength/3, barbY + stemLength/30,
+              barbLength/2, barbY + stemLength/20,
+              barbLength, barbY
+            );
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            
+            // Left side barbs
+            ctx.beginPath();
+            ctx.moveTo(0, barbY);
+            ctx.bezierCurveTo(
+              -barbLength/3, barbY + stemLength/30,
+              -barbLength/2, barbY + stemLength/20,
+              -barbLength, barbY
+            );
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+          
+          ctx.restore();
+        }
 
         // Process 2 PDFs for this sheet
         for (let i = 0; i < 2; i++) {
@@ -208,7 +323,7 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
             // Calculate scale to fit
             const scale = Math.min(
               thumbWidth / viewport.width,
-              thumbHeight / viewport.height
+              finalThumbHeight / viewport.height
             );
 
             const scaledViewport = page.getViewport({ scale });
@@ -222,7 +337,7 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
             await page.render({
               canvasContext: tempCtx,
               viewport: scaledViewport,
-              background: 'white',
+              background: 'transparent',
               intent: 'print'
             }).promise;
 
@@ -230,14 +345,23 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
             const x = spacing + i * (thumbWidth + spacing);
             const y = spacing;
 
-            // Center the PDF vertically if needed
-            const yOffset = (thumbHeight - scaledViewport.height) / 2;
-            ctx.drawImage(tempCanvas, x, y + yOffset, scaledViewport.width, scaledViewport.height);
+            // Center the PDF within its allocated space if it doesn't fill the entire area
+            const pdfWidth = Math.min(thumbWidth, scaledViewport.width);
+            const pdfHeight = Math.min(finalThumbHeight, scaledViewport.height);
+            const xOffset = (thumbWidth - pdfWidth) / 2;
+            const yOffset = (finalThumbHeight - pdfHeight) / 2;
+            
+            // Draw white background for the PDF thumbnail
+            ctx.fillStyle = 'white';
+            ctx.fillRect(x + xOffset - 5, y + yOffset - 5, pdfWidth + 10, pdfHeight + 10);
+            
+            // Draw the PDF on top of the white background
+            ctx.drawImage(tempCanvas, x + xOffset, y + yOffset, pdfWidth, pdfHeight);
             
             // Add filename below the PDF
             ctx.font = '12px Arial';
             ctx.fillStyle = 'black';
-            ctx.fillText(pageItem.name, x, y + yOffset + scaledViewport.height + 15);
+            ctx.fillText(pageItem.name, x + xOffset, y + yOffset + pdfHeight + 15);
 
             // Cleanup
             URL.revokeObjectURL(pdfUrl);
@@ -271,8 +395,6 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
 
   return (
     <div className="pdf-contact-sheet">
-      <h2>Two n T</h2>
-      
       <div className="upload-section">
         <h3 className="upload-section-title">Upload PDF Files</h3>
         <div {...getRootProps()} className="dropzone">
