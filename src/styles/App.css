@@ -6,18 +6,25 @@
   --border-color: #4d1a00;
   --shadow: 0 2px 4px rgba(255, 102, 0, 0.3);
   --card-bg: #2d1f1f;
+  --font-family-cursive: 'Dancing Script', 'Parisienne', cursive;
+  --font-family-elegant: 'Great Vibes', 'Alex Brush', cursive;
 }
+
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Great+Vibes&family=Alex+Brush&family=Parisienne&display=swap');
 
 body {
   background-color: var(--background-color);
   color: var(--text-color);
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-family-cursive);
   min-height: 100vh;
   margin: 0;
   transition: background-color 0.3s ease;
   display: flex;
   justify-content: center;
   align-items: center;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  letter-spacing: 0.5px;
 }
 
 .app {
@@ -36,13 +43,15 @@ body {
 h1 {
   text-align: center;
   color: var(--text-color);
-  font-size: clamp(1.5rem, 5vw, 2.5rem);
+  font-size: clamp(2rem, 5vw, 3rem);
   margin: 2rem 0;
   font-weight: 600;
+  font-family: var(--font-family-elegant);
+  letter-spacing: 2px;
 }
 
 h1.cyberpunk-title {
-  font-family: 'Creepster', cursive !important;
+  font-family: var(--font-family-elegant) !important;
   text-transform: none;
   background: linear-gradient(-45deg, #ff6600, #cc3300);
   -webkit-background-clip: text;
@@ -51,13 +60,28 @@ h1.cyberpunk-title {
   text-shadow: 
     0 0 10px rgba(255, 102, 0, 0.7),
     0 0 20px rgba(255, 102, 0, 0.5);
-  letter-spacing: 2px;
+  letter-spacing: 3px;
   font-weight: 400;
-  font-size: 4rem;
+  font-size: 4.5rem;
   position: relative;
   margin: 2rem 0;
   padding: 0.5em;
-  animation: spookyFloat 3s ease-in-out infinite;
+  animation: elegantFloat 4s ease-in-out infinite;
+}
+
+@keyframes elegantFloat {
+  0%, 100% {
+    transform: translateY(0) rotate(-1deg);
+    text-shadow: 
+      0 0 10px rgba(255, 102, 0, 0.7),
+      0 0 20px rgba(255, 102, 0, 0.5);
+  }
+  50% {
+    transform: translateY(-8px) rotate(1deg);
+    text-shadow: 
+      0 0 15px rgba(255, 102, 0, 0.9),
+      0 0 30px rgba(255, 102, 0, 0.7);
+  }
 }
 
 @keyframes fadeInScale {
@@ -162,7 +186,7 @@ button {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   margin: 0 auto;
   display: block;
-  font-family: 'Creepster', cursive;
+  font-family: var(--font-family-cursive);
   letter-spacing: 1px;
   font-size: 1.2rem;
   text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
@@ -245,6 +269,14 @@ button:active {
   text-align: center;
 }
 
-h1, h2, h3, h4, h5, h6, p {
+h1, h2, h3, h4, h5, h6 {
   text-align: center;
+  font-family: var(--font-family-elegant);
+  letter-spacing: 1px;
+}
+
+p {
+  text-align: center;
+  font-family: var(--font-family-cursive);
+  font-size: 1.1rem;
 }
