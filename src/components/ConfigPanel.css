@@ -1,6 +1,7 @@
 .config-panel {
   background-color: var(--card-bg);
-  width: min(100%, 600px);
+  width: 100%;
+  max-width: var(--component-width);
   padding: 25px;
   border: 2px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(8px);
@@ -20,6 +21,7 @@
   flex-wrap: wrap;
   gap: 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  width: 100%;
 }
 
 .config-item:last-child {
@@ -42,7 +44,7 @@
   padding: 8px 12px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 6px;
-  width: 120px;
+  width: 100%;
   font-size: 14px;
   transition: border-color 0.3s ease;
   background-color: rgba(255, 255, 255, 0.05);
@@ -69,7 +71,6 @@
 @media (max-width: 768px) {
   .config-panel {
     padding: 20px 15px;
-    width: min(100%, 500px);
   }
   
   .config-item label {
@@ -88,7 +89,6 @@
 @media (max-width: 480px) {
   .config-panel {
     padding: 15px 10px;
-    width: 100%;
   }
   
   .config-item {

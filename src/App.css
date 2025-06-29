@@ -15,6 +15,7 @@
     --button-size: 1.3rem;
     --spacing: 25px;
     --container-width: min(100%, 1200px);
+    --component-width: min(100%, 600px);
     --text-align: center;
 
     /* Add rain effect variables */
@@ -45,6 +46,7 @@ body {
   justify-content: center;
   padding: var(--spacing);
   max-width: 100%; /* Ensure app doesn't overflow screen width */
+  box-sizing: border-box;
 }
 
 h1.cyberpunk-title {
@@ -61,6 +63,7 @@ h1.cyberpunk-title {
   animation: rainGlow 3s ease-in-out infinite;
   font-weight: 400;
   word-wrap: break-word; /* Allow title to wrap on small screens */
+  width: 100%;
 }
 
 @keyframes rainGlow {
@@ -90,6 +93,7 @@ button {
 
 .config-item {
   text-align: center;
+  width: 100%;
 }
 
 .config-item label {
@@ -98,6 +102,7 @@ button {
   letter-spacing: 1px;
   text-align: center;
   color: var(--text-color);
+  width: 100%;
 }
 
 .config-item input,
@@ -107,8 +112,11 @@ button {
   background: rgba(70, 130, 180, 0.1);
   border: 1px solid var(--border-color);
   color: var(--text-color);
+  appearance: none;
   -webkit-appearance: none; /* Fix for iOS input styling */
   border-radius: 6px; /* Consistent border radius */
+  width: 100%;
+  max-width: 300px;
 }
 
 .dropzone p {
@@ -125,6 +133,7 @@ button {
   margin-left: auto;
   margin-right: auto;
   max-width: 100%; /* Ensure content doesn't overflow */
+  width: 100%;
 }
 
 .config-panel {
@@ -132,7 +141,8 @@ button {
   box-shadow: var(--shadow), 0 0 20px var(--rain-color);
   border: 1px solid rgba(176, 224, 230, 0.2);
   width: 100%; /* Full width on mobile */
-  max-width: 600px; /* Constrain on larger screens */
+  max-width: var(--component-width); /* Constrain on larger screens */
+  box-sizing: border-box;
 }
 
 .tab-container {
@@ -141,6 +151,7 @@ button {
   gap: 10px;
   margin: 20px 0;
   width: 100%;
+  max-width: var(--component-width);
 }
 
 .tab-button {
@@ -156,6 +167,8 @@ button {
   font-weight: 500;
   box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
   opacity: 0.7;
+  flex: 1;
+  max-width: 250px;
 }
 
 .tab-button:hover {
@@ -179,10 +192,11 @@ button {
         --base-size: 0.95rem;
         --button-size: 1.2rem;
         --spacing: 20px;
+        --component-width: min(100%, 500px);
     }
 
     .config-panel {
-        width: min(100%, 500px);
+        width: 100%;
         padding: var(--spacing);
     }
 
@@ -203,6 +217,7 @@ button {
         --base-size: 0.9rem;
         --button-size: 1.1rem;
         --spacing: 15px;
+        --component-width: 100%;
     }
 
     h1.cyberpunk-title {
@@ -232,6 +247,7 @@ button {
         width: 100%;
         padding: 10px;
         font-size: var(--base-size);
+        max-width: 100%;
     }
     
     .tab-button.active {
@@ -253,35 +269,33 @@ button {
     }
 
     .app {
-        padding: 10px;
+        padding: var(--spacing);
         width: 100%;
     }
 
     h1.cyberpunk-title {
+        font-size: var(--title-size);
         letter-spacing: 1px;
         margin: 10px auto;
-        font-size: var(--title-size);
     }
 
     .config-item label {
-        font-size: var(--base-size);
-        padding: 6px 10px;
+        font-size: 1rem;
     }
 
     .config-item input,
     .config-item select {
-        font-size: var(--base-size);
-        padding: 6px 10px;
-        width: 100%;
+        font-size: 0.8rem;
+        padding: 8px;
     }
 
     .tab-button {
         padding: 8px;
+        font-size: 0.8rem;
     }
 
     .config-panel {
-        padding: 15px 10px;
-        margin: 10px auto;
+        padding: var(--spacing);
     }
 }
 
@@ -295,12 +309,16 @@ button {
     }
 
     .app {
-        padding: 5px;
+        padding: var(--spacing);
     }
 
     .config-panel {
-        padding: 10px 5px;
-        margin: 5px auto;
+        padding: var(--spacing);
+    }
+
+    .tab-button {
+        padding: 6px;
+        font-size: 0.75rem;
     }
 }
 
@@ -308,7 +326,8 @@ button {
 @media screen and (-webkit-min-device-pixel-ratio: 2),
        screen and (min-resolution: 192dpi) {
     :root {
-        --shadow: 0 1px 3px rgba(70, 130, 180, 0.3);
+        --shadow: 0 2px 6px rgba(70, 130, 180, 0.4);
+        --rain-shadow: 0 0 25px rgba(176, 224, 230, 0.25);
     }
 }
 
@@ -317,22 +336,28 @@ button {
     .app {
         padding: 10px;
         margin: 0;
+        min-height: auto;
     }
 
     h1.cyberpunk-title {
-        margin: 10px auto;
         font-size: 1.5rem;
+        margin: 10px auto;
     }
 
     .config-panel {
         padding: 10px;
-        margin: 10px auto;
+        margin: 5px 0;
     }
 }
 
-/* Dark mode preference */
+/* Dark mode support */
 @media (prefers-color-scheme: dark) {
     :root {
-        --text-color: #e6f3ff;
+        --primary-color: #5f9ea0;  /* Slightly lighter for dark mode */
+        --primary-hover: #7fb1b3;
+        --background-color: #141833;  /* Darker background */
+        --card-bg: #212845;
+        --text-color: #f0f8ff;  /* Brighter text */
+        --rain-color: rgba(176, 224, 230, 0.2);
     }
 }

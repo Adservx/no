@@ -30,6 +30,8 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
   const [isExtracting, setIsExtracting] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [extractionProgress, setExtractionProgress] = useState(0);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingGeneration, setPendingGeneration] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -127,6 +129,22 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
   const clearAllFiles = () => {
     setPdfFiles([]);
     setPdfPages([]);
+  };
+
+  const handleGenerateClick = () => {
+    setShowConfirmDialog(true);
+    setPendingGeneration(true);
+  };
+
+  const handleConfirmGeneration = () => {
+    setShowConfirmDialog(false);
+    setPendingGeneration(false);
+    generateContactSheet();
+  };
+
+  const handleCancelGeneration = () => {
+    setShowConfirmDialog(false);
+    setPendingGeneration(false);
   };
 
   const generateContactSheet = async () => {
@@ -323,21 +341,43 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
             </ul>
           </div>
           
-          <button
-            className="generate-button"
-            onClick={generateContactSheet}
-            disabled={isGenerating}
-          >
-            {isGenerating ? 'Generating...' : 'Generate Horizontal Contact Sheet'}
-          </button>
-          
-          {isGenerating && (
-            <div className="progress-bar">
-              <div className="progress" style={{ width: `${loadingProgress}%` }}></div>
-              <span>{loadingProgress}%</span>
-            </div>
-          )}
+          <div className="pdf-preview">
+            <button
+              className={`generate-button ${isGenerating ? 'generating' : ''}`}
+              onClick={handleGenerateClick}
+              disabled={isGenerating || pendingGeneration}
+            >
+              {isGenerating ? (
+                <>
+                  <span className="loading-spinner"></span>
+                  Generating... {loadingProgress}%
+                </>
+              ) : (
+                'Generate Two n T'
+              )}
+            </button>
+            
+            {isGenerating && (
+              <div className="progress-bar">
+                <div className="progress" style={{ width: `${loadingProgress}%` }}></div>
+                <span>{loadingProgress}%</span>
+              </div>
+            )}
+          </div>
         </>
+      )}
+      
+      {showConfirmDialog && (
+        <div className="confirmation-dialog">
+          <div className="confirmation-content">
+            <h4>Download Confirmation</h4>
+            <p>The Two n T sheet will be downloaded to your device. Do you want to proceed?</p>
+            <div className="confirmation-buttons">
+              <button className="confirm-button" onClick={handleConfirmGeneration}>Yes, Download</button>
+              <button className="cancel-button" onClick={handleCancelGeneration}>Cancel</button>
+            </div>
+          </div>
+        </div>
       )}
       
       <canvas ref={canvasRef} style={{ display: 'none' }} />

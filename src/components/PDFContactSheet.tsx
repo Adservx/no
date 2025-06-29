@@ -23,6 +23,8 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
   const [error, setError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingGeneration, setPendingGeneration] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -98,6 +100,22 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
       const col = index % config.columns;
       return { row, col };
     }
+  };
+
+  const handleGenerateClick = () => {
+    setShowConfirmDialog(true);
+    setPendingGeneration(true);
+  };
+
+  const handleConfirmGeneration = () => {
+    setShowConfirmDialog(false);
+    setPendingGeneration(false);
+    generateContactSheet();
+  };
+
+  const handleCancelGeneration = () => {
+    setShowConfirmDialog(false);
+    setPendingGeneration(false);
   };
 
   const generateContactSheet = async () => {
@@ -252,8 +270,8 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
           <div className="pdf-preview">
             <p className="file-name">{pdfFile.name}</p>
             <button 
-              onClick={generateContactSheet} 
-              disabled={isGenerating || !numPages}
+              onClick={handleGenerateClick} 
+              disabled={isGenerating || !numPages || pendingGeneration}
               className={isGenerating ? 'generating' : ''}
             >
               {isGenerating ? (
@@ -267,6 +285,19 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
             </button>
           </div>
         </>
+      )}
+      
+      {showConfirmDialog && (
+        <div className="confirmation-dialog">
+          <div className="confirmation-content">
+            <h4>Download Confirmation</h4>
+            <p>The contact sheet will be downloaded to your device. Do you want to proceed?</p>
+            <div className="confirmation-buttons">
+              <button className="confirm-button" onClick={handleConfirmGeneration}>Yes, Download</button>
+              <button className="cancel-button" onClick={handleCancelGeneration}>Cancel</button>
+            </div>
+          </div>
+        </div>
       )}
       
       <canvas ref={canvasRef} style={{ display: 'none' }} />
