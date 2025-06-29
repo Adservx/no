@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { PDFContactSheet } from './components/PDFContactSheet';
+import { HorizontalPDFContactSheet } from './components/HorizontalPDFContactSheet';
 import { ConfigPanel } from './components/ConfigPanel';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import './App.css';  // Updated import path
@@ -22,13 +23,39 @@ function App() {
     resolution: 600,
     layoutDirection: 'down'
   });
+  
+  const [activeTab, setActiveTab] = useState<'standard' | 'horizontal'>('standard');
 
   return (
     <ErrorBoundary>
       <div className="app">
         <h1 className="cyberpunk-title">PrajoL's Minimize Maker</h1>
-        <ConfigPanel config={config} onConfigChange={setConfig} />
-        <PDFContactSheet config={config} />
+        
+        <div className="tab-container">
+          <button 
+            className={`tab-button ${activeTab === 'standard' ? 'active' : ''}`} 
+            onClick={() => setActiveTab('standard')}
+          >
+            Standard Contact Sheet
+          </button>
+          <button 
+            className={`tab-button ${activeTab === 'horizontal' ? 'active' : ''}`} 
+            onClick={() => setActiveTab('horizontal')}
+          >
+            Two n T
+          </button>
+        </div>
+        
+        {activeTab === 'standard' && (
+          <>
+            <ConfigPanel config={config} onConfigChange={setConfig} />
+            <PDFContactSheet config={config} />
+          </>
+        )}
+        
+        {activeTab === 'horizontal' && (
+          <HorizontalPDFContactSheet config={config} />
+        )}
       </div>
     </ErrorBoundary>
   );

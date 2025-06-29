@@ -8,6 +8,7 @@
   border-radius: 8px;
   box-shadow: var(--shadow);
   text-align: center;
+  box-sizing: border-box;
 }
 
 .config-item {
@@ -49,6 +50,7 @@
   flex: 2;
   max-width: 200px;
   margin: 0 15px;
+  -webkit-appearance: none; /* Fix for iOS styling */
 }
 
 .config-item input:focus,
@@ -63,19 +65,47 @@
   border-color: var(--primary-hover);
 }
 
+/* Tablet devices */
+@media (max-width: 768px) {
+  .config-panel {
+    padding: 20px 15px;
+    width: min(100%, 500px);
+  }
+  
+  .config-item label {
+    min-width: 120px;
+    padding: 8px 10px;
+  }
+  
+  .config-item input,
+  .config-item select {
+    padding: 8px 10px;
+    margin: 0 10px;
+  }
+}
+
+/* Mobile devices */
 @media (max-width: 480px) {
+  .config-panel {
+    padding: 15px 10px;
+    width: 100%;
+  }
+  
   .config-item {
     flex-direction: column;
     align-items: stretch;
     border: 1px solid rgba(255, 255, 255, 0.1);
     margin: 8px 0;
     border-radius: 6px;
-    padding: 15px;
+    padding: 15px 10px;
   }
   
   .config-item input,
   .config-item select {
     max-width: 100%;
+    width: 100%;
+    margin: 0;
+    box-sizing: border-box;
   }
   
   .config-item label {
@@ -84,5 +114,43 @@
     padding-bottom: 10px;
     margin-bottom: 10px;
     text-align: left;
+    width: 100%;
+    min-width: unset;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 320px) {
+  .config-panel {
+    padding: 10px 5px;
+  }
+  
+  .config-item {
+    padding: 10px 5px;
+    margin: 5px 0;
+  }
+  
+  .config-item label {
+    font-size: 0.9rem;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+  }
+  
+  .config-item input,
+  .config-item select {
+    padding: 6px 8px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Landscape orientation on small devices */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+  .config-panel {
+    padding: 10px;
+    margin: 10px auto;
+  }
+  
+  .config-item {
+    padding: 8px 0;
   }
 }

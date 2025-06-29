@@ -215,21 +215,25 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
 
   return (
     <div className="pdf-contact-sheet">
-      <div {...getRootProps()} className="dropzone">
-        <input {...getInputProps()} />
-        <p>Drag & drop a PDF file here</p>
+      <div className="upload-section">
+        <h3 className="upload-section-title">Upload PDF</h3>
+        <div {...getRootProps()} className="dropzone">
+          <input {...getInputProps()} />
+          <div className="dropzone-icon">📄</div>
+          <p>Drag & drop a PDF file here</p>
+        </div>
+        
+        <button className="pdf-select-button" onClick={openFileDialog}>
+          Select PDF File
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/pdf"
+          onChange={handleFileSelect}
+          style={{ display: 'none' }}
+        />
       </div>
-      
-      <button className="pdf-select-button" onClick={openFileDialog}>
-        📄 Select PDF File
-      </button>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="application/pdf"
-        onChange={handleFileSelect}
-        style={{ display: 'none' }}
-      />
       
       {error && <div className="error-message">{error}</div>}
       

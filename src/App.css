@@ -32,6 +32,8 @@ body {
   margin: 0;
   text-align: var(--text-align);
   background: linear-gradient(135deg, var(--background-color), #2a3352);
+  -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+  overflow-x: hidden; /* Prevent horizontal scroll on mobile */
 }
 
 .app {
@@ -42,6 +44,7 @@ body {
   align-items: center;
   justify-content: center;
   padding: var(--spacing);
+  max-width: 100%; /* Ensure app doesn't overflow screen width */
 }
 
 h1.cyberpunk-title {
@@ -57,6 +60,7 @@ h1.cyberpunk-title {
   color: var(--text-color);
   animation: rainGlow 3s ease-in-out infinite;
   font-weight: 400;
+  word-wrap: break-word; /* Allow title to wrap on small screens */
 }
 
 @keyframes rainGlow {
@@ -80,6 +84,8 @@ button {
   background: linear-gradient(45deg, var(--primary-color), var(--primary-hover));
   border: none;
   box-shadow: 0 0 15px var(--rain-color);
+  cursor: pointer; /* Ensure cursor pointer on all buttons */
+  touch-action: manipulation; /* Improve touch experience */
 }
 
 .config-item {
@@ -101,6 +107,8 @@ button {
   background: rgba(70, 130, 180, 0.1);
   border: 1px solid var(--border-color);
   color: var(--text-color);
+  -webkit-appearance: none; /* Fix for iOS input styling */
+  border-radius: 6px; /* Consistent border radius */
 }
 
 .dropzone p {
@@ -116,12 +124,52 @@ button {
   text-align: center;
   margin-left: auto;
   margin-right: auto;
+  max-width: 100%; /* Ensure content doesn't overflow */
 }
 
 .config-panel {
   backdrop-filter: blur(10px);
   box-shadow: var(--shadow), 0 0 20px var(--rain-color);
   border: 1px solid rgba(176, 224, 230, 0.2);
+  width: 100%; /* Full width on mobile */
+  max-width: 600px; /* Constrain on larger screens */
+}
+
+.tab-container {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 20px 0;
+  width: 100%;
+}
+
+.tab-button {
+  padding: 12px 20px;
+  border-radius: 8px 8px 0 0;
+  background: rgba(70, 130, 180, 0.2);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-bottom: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  font-weight: 500;
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+  opacity: 0.7;
+}
+
+.tab-button:hover {
+  background: rgba(70, 130, 180, 0.3);
+  transform: translateY(-2px);
+}
+
+.tab-button.active {
+  background: var(--primary-color);
+  color: white;
+  opacity: 1;
+  transform: translateY(-3px);
+  box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
+  font-weight: 600;
 }
 
 /* Tablet devices (portrait and landscape) */
@@ -141,6 +189,11 @@ button {
     .app {
         padding: calc(var(--spacing) * 0.8);
     }
+
+    .tab-button {
+        padding: 10px 15px;
+        font-size: 0.95rem;
+    }
 }
 
 /* Large mobile devices */
@@ -155,6 +208,7 @@ button {
     h1.cyberpunk-title {
         font-size: var(--title-size);
         letter-spacing: 1.5px;
+        margin: 15px auto;
     }
 
     .config-item {
@@ -164,6 +218,24 @@ button {
     .config-item label {
         text-align: center;
         width: 100%;
+    }
+
+    .tab-container {
+        flex-direction: column;
+        gap: 5px;
+        margin: 15px 0;
+    }
+    
+    .tab-button {
+        border-radius: 8px;
+        border-bottom: 1px solid var(--border-color);
+        width: 100%;
+        padding: 10px;
+        font-size: var(--base-size);
+    }
+    
+    .tab-button.active {
+        transform: scale(1.02);
     }
 }
 
@@ -176,8 +248,19 @@ button {
         --spacing: 10px;
     }
 
+    body {
+        padding: 0;
+    }
+
+    .app {
+        padding: 10px;
+        width: 100%;
+    }
+
     h1.cyberpunk-title {
         letter-spacing: 1px;
+        margin: 10px auto;
+        font-size: var(--title-size);
     }
 
     .config-item label {
@@ -189,18 +272,20 @@ button {
     .config-item select {
         font-size: var(--base-size);
         padding: 6px 10px;
+        width: 100%;
     }
 
-    .app {
-        padding: calc(var(--spacing) * 0.5);
+    .tab-button {
+        padding: 8px;
     }
-    
-    .config-item {
-        align-items: center;
+
+    .config-panel {
+        padding: 15px 10px;
+        margin: 10px auto;
     }
 }
 
-/* Extra small devices */
+/* Extra small mobile devices */
 @media screen and (max-width: 320px) {
     :root {
         --title-size: 1.3rem;
@@ -209,37 +294,45 @@ button {
         --spacing: 8px;
     }
 
+    .app {
+        padding: 5px;
+    }
+
     .config-panel {
-        padding: 15px;
+        padding: 10px 5px;
+        margin: 5px auto;
     }
 }
 
-/* For high-DPI screens */
+/* High-DPI devices */
 @media screen and (-webkit-min-device-pixel-ratio: 2),
        screen and (min-resolution: 192dpi) {
     :root {
-        --shadow: 0 2px 8px rgba(70, 130, 180, 0.25);
+        --shadow: 0 1px 3px rgba(70, 130, 180, 0.3);
     }
 }
 
-/* For landscape orientation */
+/* Landscape mode on small devices */
 @media screen and (orientation: landscape) and (max-height: 600px) {
     .app {
         padding: 10px;
+        margin: 0;
     }
 
     h1.cyberpunk-title {
-        margin: 10px 0;
+        margin: 10px auto;
+        font-size: 1.5rem;
     }
 
     .config-panel {
+        padding: 10px;
         margin: 10px auto;
     }
 }
 
-/* Support for dark mode */
+/* Dark mode preference */
 @media (prefers-color-scheme: dark) {
     :root {
-        --shadow: 0 2px 4px rgba(70, 130, 180, 0.4);
+        --text-color: #e6f3ff;
     }
 }
