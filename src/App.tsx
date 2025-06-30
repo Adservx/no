@@ -20,15 +20,6 @@ export interface TwoNTConfig {
   resolution: number;
 }
 
-// Bubble interface for typing
-interface Bubble {
-  id: number;
-  size: number;
-  left: number;
-  duration: number;
-  delay: number;
-}
-
 function App() {
   const [standardConfig, setStandardConfig] = useState<Config>({
     columns: 3,
@@ -46,27 +37,28 @@ function App() {
   
   const [activeTab, setActiveTab] = useState<'standard' | 'horizontal'>('standard');
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
-  const [bubbles, setBubbles] = useState<Bubble[]>([]);
+  const [isStandalone, setIsStandalone] = useState<boolean>(false);
 
-  // Create bubbles on component mount
+  // Check if app is running in standalone mode (PWA)
   useEffect(() => {
-    const numberOfBubbles = 15;
-    const newBubbles: Bubble[] = [];
-    
-    for (let i = 0; i < numberOfBubbles; i++) {
-      newBubbles.push({
-        id: i,
-        size: Math.floor(Math.random() * 60) + 20, // Random size between 20px and 80px
-        left: Math.floor(Math.random() * 100), // Random position from 0% to 100%
-        duration: Math.floor(Math.random() * 15) + 10, // Random duration between 10s and 25s
-        delay: Math.floor(Math.random() * 15) // Random delay up to 15s
-      });
-    }
-    
-    setBubbles(newBubbles);
-    
-    // Set CSS variable for bubble durations
-    document.documentElement.style.setProperty('--bubble-duration', '15s');
+    const isInStandaloneMode = () => {
+      return (
+        window.matchMedia('(display-mode: standalone)').matches ||
+        (window.navigator as any).standalone === true ||
+        document.referrer.includes('android-app://')
+      );
+    };
+
+    setIsStandalone(isInStandaloneMode());
+
+    // Listen for changes (in case user switches between modes)
+    const mql = window.matchMedia('(display-mode: standalone)');
+    const handleChange = (e: MediaQueryListEvent) => {
+      setIsStandalone(e.matches);
+    };
+
+    mql.addEventListener('change', handleChange);
+    return () => mql.removeEventListener('change', handleChange);
   }, []);
 
   const toggleSidebar = () => {
@@ -75,25 +67,7 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <div className="app-container">
-        {/* Render bubbles */}
-        {bubbles.map((bubble) => (
-          <div 
-            key={bubble.id}
-            className="bubble"
-            style={{
-              width: `${bubble.size}px`,
-              height: `${bubble.size}px`,
-              left: `${bubble.left}%`,
-              animationDuration: `${bubble.duration}s`,
-              animationDelay: `${bubble.delay}s`
-            }}
-          />
-        ))}
-        
-        {/* Water shimmer effect */}
-        <div className="shimmer"></div>
-        
+      <div className={`app-container ${isStandalone ? 'standalone-mode' : ''}`}>
         <div className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
           <div className="sidebar-toggle" onClick={toggleSidebar}>
             {sidebarOpen ? '◀' : '▶'}
