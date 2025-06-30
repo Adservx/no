@@ -538,30 +538,3 @@ h1, h2, h3, h4, h5, h6, p {
         background-position: 200% 200%;
     }
 }
-
-/* Standalone mode styles (PWA mode) */
-.standalone-mode {
-    /* Full viewport height without browser UI */
-    height: 100vh;
-    width: 100vw;
-    position: fixed;
-    top: 0;
-    left: 0;
-    overflow: auto;
-    -webkit-overflow-scrolling: touch;
-}
-
-/* Hide address bar on iOS Safari */
-html.ios-standalone {
-    height: calc(100% + 1px);
-}
-
-/* Safe area insets for notched devices */
-@supports (padding: max(0px)) {
-    .standalone-mode {
-        padding-left: env(safe-area-inset-left);
-        padding-right: env(safe-area-inset-right);
-        padding-top: env(safe-area-inset-top);
-        padding-bottom: env(safe-area-inset-bottom);
-    }
-}

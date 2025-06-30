@@ -47,29 +47,6 @@ function App() {
   const [activeTab, setActiveTab] = useState<'standard' | 'horizontal'>('standard');
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
-  const [isStandalone, setIsStandalone] = useState<boolean>(false);
-
-  // Check if app is running in standalone mode (PWA)
-  useEffect(() => {
-    const isInStandaloneMode = () => {
-      return (
-        window.matchMedia('(display-mode: standalone)').matches ||
-        (window.navigator as any).standalone === true ||
-        document.referrer.includes('android-app://')
-      );
-    };
-
-    setIsStandalone(isInStandaloneMode());
-
-    // Listen for changes (in case user switches between modes)
-    const mql = window.matchMedia('(display-mode: standalone)');
-    const handleChange = (e: MediaQueryListEvent) => {
-      setIsStandalone(e.matches);
-    };
-
-    mql.addEventListener('change', handleChange);
-    return () => mql.removeEventListener('change', handleChange);
-  }, []);
 
   // Create bubbles on component mount
   useEffect(() => {
@@ -98,7 +75,7 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <div className={`app-container ${isStandalone ? 'standalone-mode' : ''}`}>
+      <div className="app-container">
         {/* Render bubbles */}
         {bubbles.map((bubble) => (
           <div 
