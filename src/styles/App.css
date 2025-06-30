@@ -256,11 +256,16 @@ button:active {
 @media (max-width: 768px) {
   .app {
     padding: 10px;
+    background-color: var(--background-color);
   }
   
   button {
     width: 100%;
     max-width: 300px;
+  }
+  
+  .error-boundary {
+    background: rgba(255, 0, 0, 0.1);
   }
 }
 

@@ -469,24 +469,35 @@
 @media (max-width: 768px) {
   .upload-section {
     padding: 20px;
+    background-color: var(--card-bg);
   }
   
   .dropzone {
     padding: 24px 16px;
+    background-color: rgba(13, 43, 69, 0.5);
+    border: 1px dashed rgba(0, 188, 212, 0.5);
   }
   
   .generate-button {
     max-width: 100%;
+  }
+  
+  .standard-sheet-info,
+  .two-n-t-info {
+    background-color: var(--card-bg);
   }
 }
 
 @media (max-width: 480px) {
   .upload-section {
     padding: 16px;
+    background-color: var(--card-bg);
   }
   
   .dropzone {
     padding: 20px 12px;
+    background-color: rgba(13, 43, 69, 0.5);
+    border: 1px dashed rgba(0, 188, 212, 0.5);
   }
   
   .dropzone-icon {
@@ -503,6 +514,7 @@
   
   .confirmation-content {
     padding: 20px 16px;
+    background-color: var(--card-bg);
   }
   
   .confirmation-buttons {
@@ -512,6 +524,11 @@
   
   .confirm-button, .cancel-button {
     width: 100%;
+  }
+  
+  .standard-sheet-info,
+  .two-n-t-info {
+    background-color: var(--card-bg);
   }
 }
 
