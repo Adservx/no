@@ -9,7 +9,7 @@ interface PDFContactSheetProps {
     columns: number;
     rows: number;
     spacing: number;
-    pageSize: string;
+    pageSize: 'A4' | 'A3' | 'Letter';
     resolution: number;
     layoutDirection: 'across' | 'down';
   };
@@ -88,6 +88,8 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
   const onDocumentLoadError = (error: Error) => {
     console.error('PDF load error:', error);
     setError(`Error loading PDF: ${error.message}`);
+    setNumPages(null);
+    setPdfFile(null);
   };
 
   const getGridPosition = (index: number) => {
@@ -133,10 +135,25 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
       const ctx = canvas.getContext('2d');
       if (!ctx) throw new Error('Could not get canvas context');
 
-      // Calculate dimensions with DPI
+      // Calculate dimensions with DPI based on page size
       const dpiScale = config.resolution / 72;
-      const pageWidth = 595 * dpiScale;
-      const pageHeight = 842 * dpiScale;
+      let pageWidth, pageHeight;
+      
+      switch(config.pageSize) {
+        case 'A3':
+          pageWidth = 842 * dpiScale; // A3 width in portrait (297mm)
+          pageHeight = 1191 * dpiScale; // A3 height in portrait (420mm)
+          break;
+        case 'Letter':
+          pageWidth = 612 * dpiScale; // Letter width in portrait (8.5in)
+          pageHeight = 792 * dpiScale; // Letter height in portrait (11in)
+          break;
+        case 'A4':
+        default:
+          pageWidth = 595 * dpiScale; // A4 width in portrait (210mm)
+          pageHeight = 842 * dpiScale; // A4 height in portrait (297mm)
+          break;
+      }
       
       // Calculate the available space for thumbnails
       const horizontalSpacing = config.spacing * (config.columns + 1) * dpiScale;
@@ -295,11 +312,19 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
           }
         }
 
-        // Create and save PDF for current sheet
+        // Create and save PDF for current sheet with proper page size
+        let pdfFormat;
+        switch(config.pageSize) {
+          case 'A3': pdfFormat = 'a3'; break;
+          case 'Letter': pdfFormat = 'letter'; break;
+          case 'A4':
+          default: pdfFormat = 'a4'; break;
+        }
+        
         const pdf = new jsPDF({
           orientation: pageHeight > pageWidth ? 'portrait' : 'landscape',
           unit: 'px',
-          format: [canvas.width, canvas.height]
+          format: pdfFormat
         });
 
         const imageData = canvas.toDataURL('image/jpeg', 1.0);
@@ -350,7 +375,7 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
           <Document
             file={pdfFile}
             onLoadSuccess={onDocumentLoadSuccess}
-            onLoadError={(error) => setError('Error loading PDF: ' + error.message)}
+            onLoadError={onDocumentLoadError}
             loading={<div className="loading">Loading PDF...</div>}
             error={<div className="error-message">Failed to load PDF</div>}
           >

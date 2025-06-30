@@ -1,11 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Document, pdfjs } from 'react-pdf';
 import { useDropzone } from 'react-dropzone';
 import jsPDF from 'jspdf';
 import './PDFContactSheet.css'; // Reusing the existing CSS
 
-// Initialize PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+// Worker is already initialized in main.tsx
+// No need to initialize PDF.js worker here
 
 interface HorizontalPDFContactSheetProps {
   config: {
@@ -35,6 +35,16 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Cleanup URLs when component unmounts or files change
+  useEffect(() => {
+    return () => {
+      // Cleanup on unmount
+      pdfFiles.forEach(file => {
+        URL.revokeObjectURL(URL.createObjectURL(file));
+      });
+    };
+  }, [pdfFiles]);
+
   const validateFile = (file: File): boolean => {
     if (file.size > MAX_FILE_SIZE) {
       setError('File size exceeds 100MB limit');
@@ -48,11 +58,12 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
   };
 
   const extractPagesFromPDF = async (file: File) => {
+    let fileUrl: string | null = null;
     try {
       setIsExtracting(true);
       setExtractionProgress(0);
       
-      const fileUrl = URL.createObjectURL(file);
+      fileUrl = URL.createObjectURL(file);
       const loadingTask = pdfjs.getDocument(fileUrl);
       
       const pdf = await loadingTask.promise;
@@ -70,11 +81,13 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
       }
       
       setPdfPages(prevPages => [...prevPages, ...newPages]);
-      URL.revokeObjectURL(fileUrl);
     } catch (err) {
       console.error('Error extracting pages:', err);
       setError(`Error extracting pages from ${file.name}: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
+      if (fileUrl) {
+        URL.revokeObjectURL(fileUrl);
+      }
       setIsExtracting(false);
       setExtractionProgress(100);
     }

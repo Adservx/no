@@ -6,7 +6,7 @@ interface ConfigPanelProps {
     columns: number;
     rows: number;
     spacing: number;
-    pageSize: string;
+    pageSize: 'A4' | 'A3' | 'Letter';
     resolution: number;
     layoutDirection: 'across' | 'down';
   };
