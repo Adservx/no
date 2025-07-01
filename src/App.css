@@ -462,6 +462,57 @@ h1, h2, h3, h4, h5, h6, p {
     -webkit-overflow-scrolling: touch;
 }
 
+/* Additional PWA specific styles */
+html.pwa-mode {
+    height: 100%;
+    overflow: hidden;
+}
+
+html.pwa-mode body {
+    height: 100%;
+    overflow: hidden;
+}
+
+html.pwa-mode .app-container {
+    height: 100vh;
+    overflow: hidden;
+}
+
+html.pwa-mode .sidebar {
+    height: auto;
+    max-height: 40vh;
+    position: relative;
+    width: 100% !important;
+    min-height: unset;
+    overflow-y: auto;
+}
+
+html.pwa-mode .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+    height: 60vh;
+    overflow-y: auto;
+}
+
+html.pwa-mode .sidebar-toggle {
+    display: none;
+}
+
+@media screen and (orientation: landscape) {
+    html.pwa-mode .sidebar {
+        width: 30% !important;
+        height: 100vh;
+        position: fixed;
+        max-height: none;
+    }
+    
+    html.pwa-mode .main-content {
+        margin-left: 30% !important;
+        width: 70% !important;
+        height: 100vh;
+    }
+}
+
 /* Hide address bar on iOS Safari */
 html.ios-standalone {
     height: calc(100% + 1px);
@@ -474,5 +525,17 @@ html.ios-standalone {
         padding-right: env(safe-area-inset-right);
         padding-top: env(safe-area-inset-top);
         padding-bottom: env(safe-area-inset-bottom);
+    }
+    
+    html.pwa-mode .sidebar {
+        padding-top: env(safe-area-inset-top);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+    }
+    
+    html.pwa-mode .main-content {
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
     }
 }

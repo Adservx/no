@@ -2,7 +2,7 @@
   "name": "PrajoL's Minimize Maker",
   "short_name": "Minimize Maker",
   "description": "A React-based web application that generates contact sheets from PDF files",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "display": "standalone",
   "background_color": "#0a192f",
   "theme_color": "#1a1a1a",
@@ -13,5 +13,6 @@
       "type": "image/svg+xml"
     }
   ],
-  "prefer_related_applications": true
+  "prefer_related_applications": true,
+  "orientation": "portrait"
 } 

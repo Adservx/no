@@ -53,10 +53,34 @@ function App() {
 
     setIsStandalone(isInStandaloneMode());
 
+    // Check URL parameters for PWA source
+    const urlParams = new URLSearchParams(window.location.search);
+    const isPwaSource = urlParams.get('source') === 'pwa';
+    
+    // When in standalone mode or launched from PWA, ensure sidebar is visible on mobile
+    if (isInStandaloneMode() || isPwaSource) {
+      setSidebarOpen(true);
+      
+      // Force the app to show proper layout in standalone mode
+      document.documentElement.classList.add('pwa-mode');
+      
+      // Add meta viewport settings for better mobile display
+      const metaViewport = document.querySelector('meta[name="viewport"]');
+      if (metaViewport) {
+        metaViewport.setAttribute('content', 'width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover');
+      }
+    }
+
     // Listen for changes (in case user switches between modes)
     const mql = window.matchMedia('(display-mode: standalone)');
     const handleChange = (e: MediaQueryListEvent) => {
       setIsStandalone(e.matches);
+      if (e.matches) {
+        setSidebarOpen(true);
+        document.documentElement.classList.add('pwa-mode');
+      } else {
+        document.documentElement.classList.remove('pwa-mode');
+      }
     };
 
     mql.addEventListener('change', handleChange);
