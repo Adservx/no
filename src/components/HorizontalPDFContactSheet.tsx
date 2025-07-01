@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Document, pdfjs } from 'react-pdf';
 import { useDropzone } from 'react-dropzone';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import './PDFContactSheet.css'; // Reusing the existing CSS
 
 // Worker is already initialized in main.tsx
@@ -493,44 +493,41 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
       }, 300);
     } catch (error) {
       console.error('Error generating contact sheet:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setError(errorMessage);
+      setIsExtracting(false);
       setIsGenerating(false);
       
       // Show error notification
-      processingNotification.classList.add('closing');
-      setTimeout(() => {
-        processingNotification.remove();
-        
-        // Create error notification
-        const errorNotification = document.createElement('div');
-        errorNotification.className = 'notification error';
-        errorNotification.innerHTML = `
-          <div class="notification-icon">❌</div>
-          <div class="notification-content">
-            <h4>Error</h4>
-            <p>Failed to generate PDF: ${error.message || 'Unknown error'}</p>
-          </div>
-          <button class="notification-close">✕</button>
-        `;
-        
-        notificationContainer.appendChild(errorNotification);
-        
-        // Add close event
-        const closeButton = errorNotification.querySelector('.notification-close');
-        closeButton?.addEventListener('click', () => {
-          errorNotification.classList.add('closing');
-          setTimeout(() => {
-            errorNotification.remove();
-          }, 300);
-        });
-        
-        // Auto remove after 5 seconds
+      const errorNotification = document.createElement('div');
+      errorNotification.className = 'notification error';
+      errorNotification.innerHTML = `
+        <div class="notification-icon">❌</div>
+        <div class="notification-content">
+          <h4>Error</h4>
+          <p>Failed to generate PDF: ${errorMessage}</p>
+        </div>
+        <button class="notification-close">✕</button>
+      `;
+      
+      notificationContainer.appendChild(errorNotification);
+      
+      // Add close event
+      const closeButton = errorNotification.querySelector('.notification-close');
+      closeButton?.addEventListener('click', () => {
+        errorNotification.classList.add('closing');
         setTimeout(() => {
-          errorNotification.classList.add('closing');
-          setTimeout(() => {
-            errorNotification.remove();
-          }, 300);
-        }, 5000);
-      }, 300);
+          errorNotification.remove();
+        }, 300);
+      });
+      
+      // Auto remove after 5 seconds
+      setTimeout(() => {
+        errorNotification.classList.add('closing');
+        setTimeout(() => {
+          errorNotification.remove();
+        }, 300);
+      }, 5000);
     }
   };
 

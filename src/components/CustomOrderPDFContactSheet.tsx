@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Document, pdfjs } from 'react-pdf';
 import { useDropzone } from 'react-dropzone';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import './PDFContactSheet.css';
 
 interface CustomOrderPDFContactSheetProps {

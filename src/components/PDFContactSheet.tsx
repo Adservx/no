@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Document, pdfjs } from 'react-pdf';
 import { useDropzone } from 'react-dropzone';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import './PDFContactSheet.css';
 
 interface PDFContactSheetProps {
@@ -162,19 +162,23 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
       // Add close event
       const closeButton = notification.querySelector('.notification-close');
       closeButton?.addEventListener('click', () => {
-        notification.classList.add('closing');
-        setTimeout(() => {
-          notification.remove();
-        }, 300);
+        if (notification) {
+          notification.classList.add('closing');
+          setTimeout(() => {
+            notification?.remove();
+          }, 300);
+        }
       });
       
       // Auto remove after some time for success/error
       if (type === 'success' || type === 'error') {
         setTimeout(() => {
-          notification.classList.add('closing');
-          setTimeout(() => {
-            notification.remove();
-          }, 300);
+          if (notification) {
+            notification.classList.add('closing');
+            setTimeout(() => {
+              notification?.remove();
+            }, 300);
+          }
         }, 5000);
       }
     } else {
@@ -425,8 +429,9 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
       showDownloadNotification('success', 'Contact sheet has been downloaded successfully!');
     } catch (err) {
       console.error('Generation error:', err);
-      setError(err instanceof Error ? err.message : 'Error generating contact sheet');
-      showDownloadNotification('error', `Failed to generate PDF: ${err.message || 'Unknown error'}`);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
+      showDownloadNotification('error', `Failed to generate PDF: ${errorMessage}`);
     } finally {
       setIsGenerating(false);
       setLoadingProgress(100);

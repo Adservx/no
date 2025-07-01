@@ -3,8 +3,8 @@ import ReactDOM from 'react-dom/client'
 import { pdfjs } from 'react-pdf';
 import App from './App'
 import './App.css'
-import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
-import 'react-pdf/dist/esm/Page/TextLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
 
 // Ensure PDF.js worker is properly loaded
 const pdfjsVersion = pdfjs.version;
