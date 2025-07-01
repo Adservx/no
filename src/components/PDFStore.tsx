@@ -386,10 +386,14 @@ export const PDFStore: React.FC = () => {
             );
           }
           
+          // Fix path to ensure it's properly resolved from the base URL
+          const basePath = window.location.origin;
+          const filePath = file.path.startsWith('/') ? `${basePath}${file.path}` : `${basePath}/${file.path}`;
+          
           // Create iframe for download
           const iframe = document.createElement('iframe');
           iframe.style.display = 'none';
-          iframe.src = file.path;
+          iframe.src = filePath;
           iframe.onload = () => {
             console.log(`Started download for ${file.name}`);
           };
@@ -466,8 +470,12 @@ export const PDFStore: React.FC = () => {
           );
         }
         
+        // Fix path to ensure it's properly resolved from the base URL
+        const basePath = window.location.origin;
+        const filePath = file.path.startsWith('/') ? `${basePath}${file.path}` : `${basePath}/${file.path}`;
+        
         const link = document.createElement('a');
-        link.href = file.path;
+        link.href = filePath;
         link.setAttribute('download', getShortFilename(subject, file, index));
         link.setAttribute('target', '_blank');
         document.body.appendChild(link);
@@ -530,9 +538,13 @@ export const PDFStore: React.FC = () => {
       );
     }
     
+    // Fix path to ensure it's properly resolved from the base URL
+    const basePath = window.location.origin;
+    const filePath = file.path.startsWith('/') ? `${basePath}${file.path}` : `${basePath}/${file.path}`;
+    
     // Use XMLHttpRequest to track download progress
     const xhr = new XMLHttpRequest();
-    xhr.open('GET', file.path, true);
+    xhr.open('GET', filePath, true);
     xhr.responseType = 'blob';
     
     // Track download progress
@@ -730,11 +742,12 @@ export const PDFStore: React.FC = () => {
                             </span>
                             <span className="file-name">{file.name}</span>
                             <a 
-                              href={file.path}
+                              href={`${window.location.origin}${file.path.startsWith('/') ? file.path : '/' + file.path}`}
                               download={getShortFilename(subject, file, fileIndex)}
                               className={`download-file-button ${isFileDownloading ? 'downloading' : ''}`}
                               target="_blank"
                               onClick={(e) => {
+                                e.preventDefault(); // Prevent default anchor behavior
                                 handleFileDownload(subject, file, fileIndex);
                               }}
                             >
