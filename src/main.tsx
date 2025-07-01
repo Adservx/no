@@ -26,6 +26,13 @@ const isPwaSource = urlParams.get('source') === 'pwa';
 // Add appropriate classes to html element
 if (isInStandaloneMode() || isPwaSource) {
   document.documentElement.classList.add('pwa-mode');
+  
+  // Add passive event listeners for better scroll performance on mobile
+  document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('touchstart', () => {}, { passive: true });
+    document.addEventListener('touchmove', () => {}, { passive: true });
+    document.addEventListener('wheel', () => {}, { passive: true });
+  });
 }
 
 // Add iOS standalone class to html element if needed

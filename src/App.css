@@ -465,33 +465,35 @@ h1, h2, h3, h4, h5, h6, p {
 /* Additional PWA specific styles */
 html.pwa-mode {
     height: 100%;
-    overflow: hidden;
+    overflow: auto;
 }
 
 html.pwa-mode body {
     height: 100%;
-    overflow: hidden;
+    overflow: auto;
 }
 
 html.pwa-mode .app-container {
     height: 100vh;
-    overflow: hidden;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
 }
 
 html.pwa-mode .sidebar {
     height: auto;
-    max-height: 40vh;
     position: relative;
     width: 100% !important;
     min-height: unset;
-    overflow-y: auto;
+    overflow: visible;
+    flex-shrink: 0;
 }
 
 html.pwa-mode .main-content {
     margin-left: 0 !important;
     width: 100% !important;
-    height: 60vh;
-    overflow-y: auto;
+    overflow: visible;
+    flex: 1;
 }
 
 html.pwa-mode .sidebar-toggle {
@@ -499,17 +501,22 @@ html.pwa-mode .sidebar-toggle {
 }
 
 @media screen and (orientation: landscape) {
+    html.pwa-mode .app-container {
+        flex-direction: row;
+    }
+    
     html.pwa-mode .sidebar {
         width: 30% !important;
         height: 100vh;
         position: fixed;
-        max-height: none;
+        overflow-y: auto;
     }
     
     html.pwa-mode .main-content {
         margin-left: 30% !important;
         width: 70% !important;
         height: 100vh;
+        overflow-y: auto;
     }
 }
 

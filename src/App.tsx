@@ -69,6 +69,16 @@ function App() {
       if (metaViewport) {
         metaViewport.setAttribute('content', 'width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover');
       }
+      
+      // Ensure sidebar is always visible in PWA mode on mobile
+      const handleResize = () => {
+        if (window.innerWidth <= 768) {
+          setSidebarOpen(true);
+        }
+      };
+      
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
     }
 
     // Listen for changes (in case user switches between modes)
