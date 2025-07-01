@@ -160,46 +160,118 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
     setPendingGeneration(false);
   };
 
-  const generateContactSheet = async () => {
-    if (pdfPages.length === 0) {
-      setError('Please upload at least one PDF file');
-      return;
+  // Function to show download notification when PDF is generated and downloaded
+  const showDownloadNotification = () => {
+    // Create notification container if it doesn't exist
+    let notificationContainer = document.querySelector('.notification-container');
+    if (!notificationContainer) {
+      notificationContainer = document.createElement('div');
+      notificationContainer.className = 'notification-container';
+      document.body.appendChild(notificationContainer);
     }
+    
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = 'notification success';
+    
+    // Add notification content
+    notification.innerHTML = `
+      <div class="notification-icon">✅</div>
+      <div class="notification-content">
+        <h4>Download Complete</h4>
+        <p>Your Two n T sheet has been downloaded successfully.</p>
+      </div>
+      <button class="notification-close">✕</button>
+    `;
+    
+    // Add to container
+    notificationContainer.appendChild(notification);
+    
+    // Add close event
+    const closeButton = notification.querySelector('.notification-close');
+    closeButton?.addEventListener('click', () => {
+      notification.classList.add('closing');
+      setTimeout(() => {
+        notification.remove();
+      }, 300);
+    });
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+      notification.classList.add('closing');
+      setTimeout(() => {
+        notification.remove();
+      }, 300);
+    }, 5000);
+  };
 
+  const generateContactSheet = async () => {
+    // Show processing notification
+    let notificationContainer = document.querySelector('.notification-container');
+    if (!notificationContainer) {
+      notificationContainer = document.createElement('div');
+      notificationContainer.className = 'notification-container';
+      document.body.appendChild(notificationContainer);
+    }
+    
+    const processingNotification = document.createElement('div');
+    processingNotification.className = 'notification downloading';
+    processingNotification.innerHTML = `
+      <div class="notification-icon">⬇️</div>
+      <div class="notification-content">
+        <h4>Processing PDF</h4>
+        <p>Generating Two n T layout...</p>
+        <div class="notification-progress">
+          <div class="notification-progress-bar" style="width: 0%"></div>
+        </div>
+      </div>
+    `;
+    
+    notificationContainer.appendChild(processingNotification);
+    const progressBar = processingNotification.querySelector('.notification-progress-bar') as HTMLElement;
+
+    if (!canvasRef.current) return;
+    
     setIsGenerating(true);
     setLoadingProgress(0);
     setError(null);
 
+    // A4 dimensions in landscape orientation
+    const dpiScale = config.resolution / 72;
+    const pageWidth = 842 * dpiScale; // A4 width in landscape (297mm)
+    const pageHeight = 595 * dpiScale; // A4 height in landscape (210mm)
+    
+    // Set canvas size
+    canvasRef.current.width = pageWidth;
+    canvasRef.current.height = pageHeight;
+
+    // Calculate dimensions for 2 PDFs per page with fixed aspect ratio
+    const spacing = config.spacing * dpiScale;
+    const thumbWidth = (pageWidth - (spacing * 3)) / 2; // 2 columns with spacing
+    
+    // Use a fixed aspect ratio (e.g., 1:1.414 which is A4 ratio)
+    const aspectRatio = 1.414; // Standard A4 ratio
+    const thumbHeight = thumbWidth / aspectRatio; // Divide by aspect ratio since we're in landscape
+    
+    // Check if the calculated height fits in the page
+    const requiredHeight = (thumbHeight + spacing * 2);
+    const finalThumbHeight = requiredHeight > pageHeight ? (pageHeight - spacing * 2) : thumbHeight;
+
+    // Calculate total sheets needed (2 PDFs per sheet)
+    const totalSheets = Math.ceil(pdfPages.length / 2);
+
+    // Update the notification progress bar
+    const updateNotificationProgress = (progress: number) => {
+      setLoadingProgress(progress);
+      if (progressBar) {
+        progressBar.style.width = `${progress}%`;
+      }
+    };
+
     try {
       const canvas = canvasRef.current;
-      if (!canvas) throw new Error('Canvas not available');
-      
       const ctx = canvas.getContext('2d');
       if (!ctx) throw new Error('Could not get canvas context');
-
-      // A4 dimensions in landscape orientation
-      const dpiScale = config.resolution / 72;
-      const pageWidth = 842 * dpiScale; // A4 width in landscape (297mm)
-      const pageHeight = 595 * dpiScale; // A4 height in landscape (210mm)
-      
-      // Set canvas size
-      canvas.width = pageWidth;
-      canvas.height = pageHeight;
-
-      // Calculate dimensions for 2 PDFs per page with fixed aspect ratio
-      const spacing = config.spacing * dpiScale;
-      const thumbWidth = (pageWidth - (spacing * 3)) / 2; // 2 columns with spacing
-      
-      // Use a fixed aspect ratio (e.g., 1:1.414 which is A4 ratio)
-      const aspectRatio = 1.414; // Standard A4 ratio
-      const thumbHeight = thumbWidth / aspectRatio; // Divide by aspect ratio since we're in landscape
-      
-      // Check if the calculated height fits in the page
-      const requiredHeight = (thumbHeight + spacing * 2);
-      const finalThumbHeight = requiredHeight > pageHeight ? (pageHeight - spacing * 2) : thumbHeight;
-
-      // Calculate total sheets needed (2 PDFs per sheet)
-      const totalSheets = Math.ceil(pdfPages.length / 2);
 
       for (let sheetIndex = 0; sheetIndex < totalSheets; sheetIndex++) {
         // Clear canvas for new sheet with peacock feather theme
@@ -397,12 +469,68 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
         const filename = `horizontal-contact-sheet-${sheetIndex + 1}.pdf`;
         pdf.save(filename);
       }
-    } catch (err) {
-      console.error('Generation error:', err);
-      setError(err instanceof Error ? err.message : 'Error generating contact sheet');
-    } finally {
+
+      // Update progress periodically
+      const progressInterval = setInterval(() => {
+        setLoadingProgress((prev) => {
+          const newProgress = Math.min(prev + 5, 95);
+          updateNotificationProgress(newProgress);
+          return newProgress;
+        });
+      }, 100);
+
+      // When PDF is ready to download
+      clearInterval(progressInterval);
+      updateNotificationProgress(100);
+      
+      // Remove processing notification
+      processingNotification.classList.add('closing');
+      setTimeout(() => {
+        processingNotification.remove();
+        
+        // Show download complete notification
+        showDownloadNotification();
+      }, 300);
+    } catch (error) {
+      console.error('Error generating contact sheet:', error);
       setIsGenerating(false);
-      setLoadingProgress(100);
+      
+      // Show error notification
+      processingNotification.classList.add('closing');
+      setTimeout(() => {
+        processingNotification.remove();
+        
+        // Create error notification
+        const errorNotification = document.createElement('div');
+        errorNotification.className = 'notification error';
+        errorNotification.innerHTML = `
+          <div class="notification-icon">❌</div>
+          <div class="notification-content">
+            <h4>Error</h4>
+            <p>Failed to generate PDF: ${error.message || 'Unknown error'}</p>
+          </div>
+          <button class="notification-close">✕</button>
+        `;
+        
+        notificationContainer.appendChild(errorNotification);
+        
+        // Add close event
+        const closeButton = errorNotification.querySelector('.notification-close');
+        closeButton?.addEventListener('click', () => {
+          errorNotification.classList.add('closing');
+          setTimeout(() => {
+            errorNotification.remove();
+          }, 300);
+        });
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+          errorNotification.classList.add('closing');
+          setTimeout(() => {
+            errorNotification.remove();
+          }, 300);
+        }, 5000);
+      }, 300);
     }
   };
 

@@ -242,6 +242,80 @@ export const CustomOrderPDFContactSheet: React.FC<CustomOrderPDFContactSheetProp
     setPendingGeneration(false);
   };
 
+  // Function to show download notifications
+  const showDownloadNotification = (type: 'downloading' | 'success' | 'error', message: string, progress?: number) => {
+    // Create notification container if it doesn't exist
+    let notificationContainer = document.querySelector('.notification-container');
+    if (!notificationContainer) {
+      notificationContainer = document.createElement('div');
+      notificationContainer.className = 'notification-container';
+      document.body.appendChild(notificationContainer);
+    }
+    
+    // Check if there's an existing download notification to update
+    let notification = document.querySelector('.notification.custom-order-pdf');
+    
+    if (!notification || type === 'success' || type === 'error') {
+      // Create new notification
+      notification = document.createElement('div');
+      notification.className = `notification ${type} custom-order-pdf`;
+      
+      // Add notification content based on type
+      const icon = type === 'downloading' ? '⬇️' : type === 'success' ? '✅' : '❌';
+      const title = type === 'downloading' ? 'Generating Custom PDF' : type === 'success' ? 'Download Complete' : 'Error';
+      
+      notification.innerHTML = `
+        <div class="notification-icon">${icon}</div>
+        <div class="notification-content">
+          <h4>${title}</h4>
+          <p>${message}</p>
+          ${progress !== undefined ? `
+          <div class="notification-progress">
+            <div class="notification-progress-bar" style="width: ${progress}%"></div>
+          </div>
+          ` : ''}
+        </div>
+        <button class="notification-close">✕</button>
+      `;
+      
+      // Add to container
+      notificationContainer.appendChild(notification);
+      
+      // Add close event
+      const closeButton = notification.querySelector('.notification-close');
+      closeButton?.addEventListener('click', () => {
+        notification!.classList.add('closing');
+        setTimeout(() => {
+          notification!.remove();
+        }, 300);
+      });
+      
+      // Auto remove after some time for success/error
+      if (type === 'success' || type === 'error') {
+        setTimeout(() => {
+          notification!.classList.add('closing');
+          setTimeout(() => {
+            notification!.remove();
+          }, 300);
+        }, 5000);
+      }
+    } else {
+      // Update existing notification
+      const progressBar = notification.querySelector('.notification-progress-bar') as HTMLElement;
+      const messageEl = notification.querySelector('.notification-content p') as HTMLElement;
+      
+      if (progressBar && progress !== undefined) {
+        progressBar.style.width = `${progress}%`;
+      }
+      
+      if (messageEl) {
+        messageEl.textContent = message;
+      }
+    }
+    
+    return notification;
+  };
+
   const generateContactSheet = async () => {
     if (!pdfFile || !numPages || !canvasRef.current) {
       setError('Please select a valid PDF file first');
@@ -307,6 +381,9 @@ export const CustomOrderPDFContactSheet: React.FC<CustomOrderPDFContactSheetProp
       const pdfUrl = URL.createObjectURL(pdfFile);
       const loadingTask = pdfjs.getDocument(pdfUrl);
       const loadedPdf = await loadingTask.promise;
+
+      // Add this at the beginning of generateContactSheet()
+      showDownloadNotification('downloading', 'Starting to generate custom contact sheet...', 0);
 
       // Generate each sheet
       for (let sheetIndex = 0; sheetIndex < totalSheets; sheetIndex++) {
@@ -472,6 +549,9 @@ export const CustomOrderPDFContactSheet: React.FC<CustomOrderPDFContactSheetProp
         // Save with sheet number in filename
         const filename = `custom-order-sheet-${sheetIndex + 1}-${pdfFile.name}`;
         pdf.save(filename);
+
+        // When the PDF is complete:
+        showDownloadNotification('success', 'Custom contact sheet has been downloaded successfully!');
       }
 
       // Cleanup
@@ -479,6 +559,9 @@ export const CustomOrderPDFContactSheet: React.FC<CustomOrderPDFContactSheetProp
     } catch (err) {
       console.error('Generation error:', err);
       setError(err instanceof Error ? err.message : 'Error generating contact sheet');
+
+      // In case of errors:
+      showDownloadNotification('error', `Failed to generate PDF: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setIsGenerating(false);
       setLoadingProgress(100);

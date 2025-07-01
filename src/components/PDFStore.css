@@ -271,21 +271,33 @@
 }
 
 .download-file-button {
-  background: linear-gradient(to right, var(--primary-color), var(--accent-color));
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
   color: white;
-  border: none;
-  padding: 5px 10px;
+  text-decoration: none;
   border-radius: var(--border-radius);
   font-size: 0.8rem;
-  text-decoration: none;
   transition: all 0.3s ease;
-  margin-left: 10px;
-  white-space: nowrap;
+  overflow: hidden;
 }
 
 .download-file-button:hover {
-  background: linear-gradient(to right, var(--primary-hover), var(--accent-hover));
-  box-shadow: 0 0 10px rgba(0, 188, 212, 0.3);
+  background: linear-gradient(135deg, var(--primary-hover), var(--accent-hover));
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 188, 212, 0.4);
+}
+
+.download-file-button:active {
+  transform: translateY(0);
+}
+
+.download-file-button.downloading {
+  background: var(--text-muted);
+  cursor: wait;
 }
 
 .no-files-message {
@@ -345,4 +357,137 @@
     margin-top: 5px;
     text-align: center;
   }
+}
+
+/* Download notifications */
+.notification-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 350px;
+}
+
+.notification {
+  background: linear-gradient(135deg, var(--card-bg), var(--sidebar-bg));
+  border-left: 4px solid var(--primary-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  padding: 16px;
+  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: slideIn 0.3s ease-out;
+  backdrop-filter: blur(10px);
+}
+
+.notification.success {
+  border-left-color: #4caf50;
+}
+
+.notification.downloading {
+  border-left-color: var(--primary-color);
+}
+
+.notification-icon {
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+}
+
+.notification-content {
+  flex: 1;
+}
+
+.notification h4 {
+  margin: 0 0 5px;
+  font-size: 16px;
+  text-align: left;
+}
+
+.notification p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.notification-progress {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+.notification-progress-bar {
+  height: 100%;
+  background: linear-gradient(to right, var(--primary-color), var(--accent-color));
+  transition: width 0.3s ease;
+}
+
+.notification-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.notification-close:hover {
+  opacity: 1;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.notification.closing {
+  animation: slideOut 0.3s ease-in forwards;
+}
+
+/* For PWA mode notifications */
+html.pwa-mode .notification-container {
+  bottom: calc(env(safe-area-inset-bottom) + 10px);
+  right: calc(env(safe-area-inset-right) + 10px);
+}
+
+/* More animations for downloading */
+@keyframes pulse-download {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
+.downloading {
+  animation: pulse-download 1.5s infinite ease-in-out;
 } 

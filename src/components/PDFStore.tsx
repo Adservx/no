@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './PDFStore.css';
 
 interface PDFFile {
@@ -15,6 +15,17 @@ interface Subject {
 interface SemesterData {
   name: string;
   subjects: Subject[];
+}
+
+interface Notification {
+  id: string;
+  type: 'downloading' | 'success' | 'error';
+  title: string;
+  message: string;
+  progress?: number;
+  fileName?: string;
+  fileType?: string;
+  closing?: boolean;
 }
 
 const electricalEngineeringSemesters: SemesterData[] = [
@@ -212,6 +223,8 @@ export const PDFStore: React.FC = () => {
   const [activeSemester, setActiveSemester] = useState<number>(0);
   const [expandedSubjects, setExpandedSubjects] = useState<{[key: string]: boolean}>({});
   const [isDownloading, setIsDownloading] = useState<{[key: string]: boolean}>({});
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [fileDownloads, setFileDownloads] = useState<{[key: string]: boolean}>({});
   const downloadLinksRef = useRef<HTMLDivElement>(null);
 
   const toggleSubject = (subjectName: string) => {
@@ -224,6 +237,41 @@ export const PDFStore: React.FC = () => {
   const isSubjectExpanded = (subjectName: string) => {
     return !!expandedSubjects[subjectName];
   };
+  
+  const addNotification = (notification: Omit<Notification, 'id'>) => {
+    const id = Math.random().toString(36).substring(2, 10);
+    setNotifications(prev => [...prev, { ...notification, id }]);
+    return id;
+  };
+  
+  const updateNotification = (id: string, updates: Partial<Notification>) => {
+    setNotifications(prev => prev.map(notif => 
+      notif.id === id ? { ...notif, ...updates } : notif
+    ));
+  };
+  
+  const removeNotification = (id: string) => {
+    // Mark the notification for closing animation
+    setNotifications(prev => prev.map(notif => 
+      notif.id === id ? { ...notif, closing: true } : notif
+    ));
+    
+    // Remove after animation completes
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(notif => notif.id !== id));
+    }, 300); // Match the slideOut animation duration
+  };
+  
+  // Clear completed notifications after some time
+  useEffect(() => {
+    const successNotifications = notifications.filter(n => n.type === 'success');
+    if (successNotifications.length > 0) {
+      const timer = setTimeout(() => {
+        successNotifications.forEach(n => removeNotification(n.id));
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [notifications]);
   
   // Generate a short filename for download
   const getShortFilename = (subject: Subject, file: PDFFile, index: number) => {
@@ -242,6 +290,14 @@ export const PDFStore: React.FC = () => {
     // Set downloading state for this subject
     setIsDownloading(prev => ({ ...prev, [subject.name]: true }));
     
+    // Show notification
+    const notifId = addNotification({
+      type: 'downloading',
+      title: `Downloading ${subject.name}`,
+      message: `Preparing ${subject.files.length} files...`,
+      progress: 0,
+    });
+    
     // Create hidden iframes for each download
     if (downloadLinksRef.current) {
       // Clear previous download frames
@@ -250,6 +306,13 @@ export const PDFStore: React.FC = () => {
       // Process each file in sequence with delays
       subject.files.forEach((file, index) => {
         setTimeout(() => {
+          // Update notification progress
+          const progress = Math.round(((index + 1) / subject.files.length) * 100);
+          updateNotification(notifId, {
+            progress,
+            message: `Downloading file ${index + 1} of ${subject.files.length}...`
+          });
+          
           // Create iframe for download
           const iframe = document.createElement('iframe');
           iframe.style.display = 'none';
@@ -265,6 +328,14 @@ export const PDFStore: React.FC = () => {
           if (index === subject.files.length - 1) {
             setTimeout(() => {
               setIsDownloading(prev => ({ ...prev, [subject.name]: false }));
+              
+              // Change to success notification
+              updateNotification(notifId, {
+                type: 'success',
+                title: 'Download Complete',
+                message: `All ${subject.files.length} files from ${subject.name} have been downloaded.`,
+                progress: 100
+              });
             }, 1000);
           }
         }, index * 1000); // 1 second delay between downloads
@@ -277,8 +348,23 @@ export const PDFStore: React.FC = () => {
     // Set downloading state for this subject
     setIsDownloading(prev => ({ ...prev, [subject.name]: true }));
     
+    // Show notification
+    const notifId = addNotification({
+      type: 'downloading',
+      title: `Downloading ${subject.name}`,
+      message: `Preparing ${subject.files.length} files...`,
+      progress: 0,
+    });
+    
     subject.files.forEach((file, index) => {
       setTimeout(() => {
+        // Update notification progress
+        const progress = Math.round(((index + 1) / subject.files.length) * 100);
+        updateNotification(notifId, {
+          progress,
+          message: `Downloading file ${index + 1} of ${subject.files.length}...`
+        });
+        
         const link = document.createElement('a');
         link.href = file.path;
         link.setAttribute('download', getShortFilename(subject, file, index));
@@ -291,10 +377,65 @@ export const PDFStore: React.FC = () => {
         if (index === subject.files.length - 1) {
           setTimeout(() => {
             setIsDownloading(prev => ({ ...prev, [subject.name]: false }));
+            
+            // Change to success notification
+            updateNotification(notifId, {
+              type: 'success',
+              title: 'Download Complete',
+              message: `All ${subject.files.length} files from ${subject.name} have been downloaded.`,
+              progress: 100
+            });
           }, 1000);
         }
       }, index * 1500); // 1.5 second delay between downloads
     });
+  };
+
+  // Function to handle single file download
+  const handleFileDownload = (subject: Subject, file: PDFFile, fileIndex: number) => {
+    const fileId = `${subject.name}-${file.name}`;
+    
+    // Already downloading
+    if (fileDownloads[fileId]) return;
+    
+    // Set downloading state
+    setFileDownloads(prev => ({ ...prev, [fileId]: true }));
+    
+    // Add notification
+    const notifId = addNotification({
+      type: 'downloading',
+      title: `Downloading ${file.name}`,
+      message: `Starting download...`,
+      progress: 0,
+      fileName: file.name,
+      fileType: file.isContactSheet ? 'image' : 'pdf'
+    });
+    
+    // Simulate download progress
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += 5;
+      if (progress <= 95) {
+        updateNotification(notifId, {
+          progress,
+          message: `Downloading... ${progress}%`
+        });
+      } else {
+        clearInterval(interval);
+      }
+    }, 100);
+    
+    // Mark as completed after a reasonable time
+    setTimeout(() => {
+      setFileDownloads(prev => ({ ...prev, [fileId]: false }));
+      updateNotification(notifId, {
+        type: 'success',
+        title: 'Download Complete',
+        message: `${file.name} has been downloaded.`,
+        progress: 100
+      });
+      clearInterval(interval);
+    }, 2500);
   };
 
   return (
@@ -306,6 +447,41 @@ export const PDFStore: React.FC = () => {
       
       {/* Hidden div to hold download iframes */}
       <div ref={downloadLinksRef} style={{ display: 'none' }}></div>
+      
+      {/* Notification container */}
+      <div className="notification-container">
+        {notifications.map((notification) => (
+          <div 
+            key={notification.id} 
+            className={`notification ${notification.type} ${notification.closing ? 'closing' : ''}`}
+          >
+            <div className="notification-icon">
+              {notification.type === 'downloading' && '⬇️'}
+              {notification.type === 'success' && '✅'}
+              {notification.type === 'error' && '❌'}
+            </div>
+            <div className="notification-content">
+              <h4>{notification.title}</h4>
+              <p>{notification.message}</p>
+              
+              {notification.progress !== undefined && (
+                <div className="notification-progress">
+                  <div 
+                    className="notification-progress-bar"
+                    style={{ width: `${notification.progress}%` }}
+                  ></div>
+                </div>
+              )}
+            </div>
+            <button 
+              className="notification-close"
+              onClick={() => removeNotification(notification.id)}
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+      </div>
       
       <div className="semester-tabs">
         {electricalEngineeringSemesters.map((semester, index) => (
@@ -353,22 +529,30 @@ export const PDFStore: React.FC = () => {
                   
                   {isSubjectExpanded(subject.name) && (
                     <div className="files-list">
-                      {subject.files.map((file, fileIndex) => (
-                        <div key={fileIndex} className="file-item">
-                          <span className={`file-icon ${file.isContactSheet ? 'image-file' : 'pdf-file'}`}>
-                            {file.isContactSheet ? '🖼️' : '📄'}
-                          </span>
-                          <span className="file-name">{file.name}</span>
-                          <a 
-                            href={file.path}
-                            download={getShortFilename(subject, file, fileIndex)}
-                            className="download-file-button"
-                            target="_blank"
-                          >
-                            Download
-                          </a>
-                        </div>
-                      ))}
+                      {subject.files.map((file, fileIndex) => {
+                        const fileId = `${subject.name}-${file.name}`;
+                        const isFileDownloading = fileDownloads[fileId];
+                        
+                        return (
+                          <div key={fileIndex} className="file-item">
+                            <span className={`file-icon ${file.isContactSheet ? 'image-file' : 'pdf-file'}`}>
+                              {file.isContactSheet ? '🖼️' : '📄'}
+                            </span>
+                            <span className="file-name">{file.name}</span>
+                            <a 
+                              href={file.path}
+                              download={getShortFilename(subject, file, fileIndex)}
+                              className={`download-file-button ${isFileDownloading ? 'downloading' : ''}`}
+                              target="_blank"
+                              onClick={(e) => {
+                                handleFileDownload(subject, file, fileIndex);
+                              }}
+                            >
+                              {isFileDownloading ? 'Downloading...' : 'Download'}
+                            </a>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </>
