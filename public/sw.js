@@ -1,13 +1,13 @@
 // Service Worker for Electrical Engineering PDF Store PWA
 
-const CACHE_NAME = 'ee-pdf-store-v1';
+const CACHE_NAME = 'ee-pdf-store-v2';
 
 // Assets to cache immediately when the service worker is installed
 const APP_ASSETS = [
-  '/',
-  '/index.html',
-  '/favicon.svg',
-  '/manifest.json'
+  './',
+  './index.html',
+  './favicon.svg',
+  './manifest.json'
 ];
 
 // Install event - cache basic app assets
@@ -17,6 +17,9 @@ self.addEventListener('install', (event) => {
       .then((cache) => {
         console.log('Opened cache');
         return cache.addAll(APP_ASSETS);
+      })
+      .catch(error => {
+        console.error('Service worker installation failed:', error);
       })
   );
   
@@ -54,11 +57,18 @@ self.addEventListener('fetch', (event) => {
       event.request.url.endsWith('.jpeg') ||
       event.request.url.endsWith('.png')) {
     
-    // For PDF/image downloads, we don't want to cache but we want to track progress
-    // We'll let the browser handle it normally
+    // For PDF/image downloads, we use a network-first strategy
+    event.respondWith(
+      fetch(event.request)
+        .catch(() => {
+          // If network fails, try the cache as fallback
+          return caches.match(event.request);
+        })
+    );
     return;
   }
   
+  // For everything else, use a cache-first strategy
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
@@ -70,8 +80,8 @@ self.addEventListener('fetch', (event) => {
         // Clone the request because it's a one-time use stream
         const fetchRequest = event.request.clone();
         
-        return fetch(fetchRequest).then(
-          (response) => {
+        return fetch(fetchRequest)
+          .then((response) => {
             // Check if we received a valid response
             if (!response || response.status !== 200 || response.type !== 'basic') {
               return response;
@@ -89,8 +99,12 @@ self.addEventListener('fetch', (event) => {
             }
             
             return response;
-          }
-        );
+          })
+          .catch((error) => {
+            console.error('Fetch failed:', error);
+            // Return a custom offline page if we have one
+            return caches.match('./index.html');
+          });
       })
   );
 });
@@ -103,9 +117,9 @@ self.addEventListener('message', (event) => {
     
     self.registration.showNotification(title, {
       body: message,
-      icon: icon || '/favicon.svg',
+      icon: icon || './favicon.svg',
       tag: tag || 'download',
-      badge: '/favicon.svg',
+      badge: './favicon.svg',
       vibrate: [200, 100, 200],
       renotify: true
     });
@@ -123,9 +137,9 @@ self.addEventListener('message', (event) => {
       // Show a new notification with the updated progress
       self.registration.showNotification(title, {
         body: message,
-        icon: '/favicon.svg',
+        icon: './favicon.svg',
         tag: tag,
-        badge: '/favicon.svg',
+        badge: './favicon.svg',
         vibrate: [100],
         renotify: false,
         data: { progress }
@@ -145,9 +159,9 @@ self.addEventListener('message', (event) => {
       // Show a completion notification
       self.registration.showNotification(title, {
         body: message,
-        icon: '/favicon.svg',
+        icon: './favicon.svg',
         tag: tag + '-complete',
-        badge: '/favicon.svg',
+        badge: './favicon.svg',
         vibrate: [200, 100, 200],
         renotify: true
       });

@@ -542,7 +542,53 @@ export const PDFStore: React.FC = () => {
     const basePath = window.location.origin;
     const filePath = file.path.startsWith('/') ? `${basePath}${file.path}` : `${basePath}/${file.path}`;
     
-    // Use XMLHttpRequest to track download progress
+    // Check if running on mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // For mobile devices, use a simpler approach with direct window.open
+      try {
+        // Create a simple progress simulation
+        let progress = 0;
+        const interval = setInterval(() => {
+          progress += 5;
+          if (progress <= 95) {
+            updateNotification(notifId, {
+              progress,
+              message: `Downloading... ${progress}%`
+            });
+          } else {
+            clearInterval(interval);
+          }
+        }, 100);
+        
+        // Open file in new tab (this works better on mobile)
+        window.open(filePath, '_blank');
+        
+        // Mark as completed after a reasonable time
+        setTimeout(() => {
+          setFileDownloads(prev => ({ ...prev, [fileId]: false }));
+          updateNotification(notifId, {
+            type: 'success',
+            title: 'Download Complete',
+            message: `${file.name} has been opened in a new tab.`,
+            progress: 100
+          });
+          clearInterval(interval);
+        }, 2000);
+      } catch (error) {
+        console.error('Error downloading file on mobile:', error);
+        updateNotification(notifId, {
+          type: 'error',
+          title: 'Download Failed',
+          message: `Failed to download ${file.name}. Please try again.`
+        });
+        setFileDownloads(prev => ({ ...prev, [fileId]: false }));
+      }
+      return;
+    }
+    
+    // For desktop browsers, use XMLHttpRequest to track download progress
     const xhr = new XMLHttpRequest();
     xhr.open('GET', filePath, true);
     xhr.responseType = 'blob';

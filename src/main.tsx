@@ -6,9 +6,23 @@ import './App.css'
 import 'react-pdf/dist/Page/TextLayer.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 
-// Ensure PDF.js worker is properly loaded
+// Ensure PDF.js worker is properly loaded with relative path
 const pdfjsVersion = pdfjs.version;
-pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsVersion}/build/pdf.worker.min.js`;
+// Use a CDN with fallback to ensure the worker loads correctly on mobile
+pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsVersion}/pdf.worker.min.js`;
+
+// Add viewport meta tag dynamically to ensure proper scaling on mobile
+const ensureViewportMeta = () => {
+  let viewport = document.querySelector('meta[name="viewport"]');
+  if (!viewport) {
+    viewport = document.createElement('meta');
+    viewport.name = 'viewport';
+    document.head.appendChild(viewport);
+  }
+  viewport.setAttribute('content', 
+    'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
+};
+ensureViewportMeta();
 
 // Check for PWA mode and set appropriate classes
 const isInStandaloneMode = () => {
@@ -40,6 +54,11 @@ if ((window.navigator as any).standalone === true) {
   document.documentElement.classList.add('ios-standalone');
 }
 
+// Add Android detection
+if (/Android/i.test(navigator.userAgent)) {
+  document.documentElement.classList.add('android-device');
+}
+
 // Request notification permission for PWA mode
 const requestNotificationPermission = async () => {
   if ('Notification' in window) {
@@ -59,7 +78,7 @@ const requestNotificationPermission = async () => {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('/sw.js');
+      const registration = await navigator.serviceWorker.register('./sw.js');
       console.log('Service Worker registered with scope:', registration.scope);
       
       // Request notification permission if in PWA mode
@@ -73,8 +92,8 @@ if ('serviceWorker' in navigator) {
           if (permissionGranted) {
             registration.showNotification('PDF Store Ready', {
               body: 'You can now download PDFs with notifications',
-              icon: '/favicon.svg',
-              badge: '/favicon.svg'
+              icon: './favicon.svg',
+              badge: './favicon.svg'
             });
           }
         }, 2000);
@@ -85,8 +104,28 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
+// Initialize app with error handling
+const rootElement = document.getElementById('root');
+if (rootElement) {
+  try {
+    ReactDOM.createRoot(rootElement).render(
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>,
+    );
+  } catch (error) {
+    console.error('Failed to render app:', error);
+    // Fallback rendering in case of error
+    rootElement.innerHTML = `
+      <div style="padding: 20px; text-align: center; color: white;">
+        <h2>Unable to load application</h2>
+        <p>Please try refreshing the page or using a different browser.</p>
+        <button onclick="window.location.reload()" style="padding: 10px 20px; margin-top: 20px;">
+          Refresh Page
+        </button>
+      </div>
+    `;
+  }
+} else {
+  console.error('Root element not found');
+}

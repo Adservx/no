@@ -328,34 +328,92 @@
 
 @media (max-width: 768px) {
   .subjects-grid {
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .pdf-store-container {
+    padding: 15px;
+    margin: 0;
+    width: 100%;
+    border-radius: 0;
+  }
+  
+  .store-header h2 {
+    font-size: 1.8rem;
+  }
+  
+  .store-header p {
+    font-size: 1rem;
+  }
+  
+  .semester-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 10px;
+    justify-content: flex-start;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .semester-tab {
+    flex: 0 0 auto;
+    white-space: nowrap;
   }
 }
 
 @media (max-width: 480px) {
   .semester-tabs {
-    flex-direction: column;
-    width: 100%;
+    gap: 8px;
   }
   
   .subjects-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
-
+  
   .file-item {
     flex-direction: column;
     align-items: flex-start;
+    padding: 12px 10px;
   }
-
+  
   .file-name {
     margin: 5px 0;
-  }
-
-  .download-file-button {
-    margin-left: 0;
     width: 100%;
-    margin-top: 5px;
+    text-align: left;
+  }
+  
+  .download-file-button {
+    width: 100%;
     text-align: center;
+    padding: 8px;
+  }
+  
+  .pdf-store-container {
+    padding: 10px;
+  }
+  
+  .subject-card {
+    padding: 15px;
+  }
+  
+  .subject-card h4 {
+    font-size: 1.1rem;
+  }
+  
+  .file-icon {
+    font-size: 1.5rem;
+  }
+}
+
+/* Fix for iOS Safari */
+@supports (-webkit-touch-callout: none) {
+  .pdf-store-container {
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+  }
+  
+  .notification-container {
+    bottom: env(safe-area-inset-bottom, 20px);
   }
 }
 
