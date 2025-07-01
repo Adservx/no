@@ -3,6 +3,7 @@ import { Document, pdfjs } from 'react-pdf';
 import { useDropzone } from 'react-dropzone';
 import { jsPDF } from 'jspdf';
 import './PDFContactSheet.css'; // Reusing the existing CSS
+import { notifyServiceWorkerDownload, notifyServiceWorkerComplete, updateServiceWorkerProgress, isPWA } from '../utils/notificationUtils';
 
 // Worker is already initialized in main.tsx
 // No need to initialize PDF.js worker here
@@ -160,8 +161,8 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
     setPendingGeneration(false);
   };
 
-  // Function to show download notification when PDF is generated and downloaded
-  const showDownloadNotification = () => {
+  // Function to show download notifications
+  const showDownloadNotification = (type: 'downloading' | 'success' | 'error', message: string, progress?: number) => {
     // Create notification container if it doesn't exist
     let notificationContainer = document.querySelector('.notification-container');
     if (!notificationContainer) {
@@ -170,39 +171,84 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
       document.body.appendChild(notificationContainer);
     }
     
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.className = 'notification success';
+    // Check if there's an existing download notification to update
+    let notification = document.querySelector('.notification.horizontal-pdf-contact-sheet');
     
-    // Add notification content
-    notification.innerHTML = `
-      <div class="notification-icon">✅</div>
-      <div class="notification-content">
-        <h4>Download Complete</h4>
-        <p>Your Two n T sheet has been downloaded successfully.</p>
-      </div>
-      <button class="notification-close">✕</button>
-    `;
+    // Generate a unique ID for this notification for service worker
+    const notificationId = 'horizontal-pdf-contact-sheet-' + new Date().getTime();
     
-    // Add to container
-    notificationContainer.appendChild(notification);
+    // Send notification to service worker if in PWA mode
+    if (type === 'downloading' && progress !== undefined) {
+      updateServiceWorkerProgress(progress, 'Generating 2nT PDF', message, notificationId);
+    } else if (type === 'success') {
+      notifyServiceWorkerComplete('2nT PDF Generated', message, notificationId);
+    } else if (type === 'error') {
+      notifyServiceWorkerDownload('Error', message, notificationId);
+    }
     
-    // Add close event
-    const closeButton = notification.querySelector('.notification-close');
-    closeButton?.addEventListener('click', () => {
-      notification.classList.add('closing');
-      setTimeout(() => {
-        notification.remove();
-      }, 300);
-    });
+    if (!notification || type === 'success' || type === 'error') {
+      // Create new notification
+      notification = document.createElement('div');
+      notification.className = `notification ${type} horizontal-pdf-contact-sheet`;
+      
+      // Add notification content based on type
+      const icon = type === 'downloading' ? '⬇️' : type === 'success' ? '✅' : '❌';
+      const title = type === 'downloading' ? 'Generating 2nT PDF' : type === 'success' ? 'Download Complete' : 'Error';
+      
+      notification.innerHTML = `
+        <div class="notification-icon">${icon}</div>
+        <div class="notification-content">
+          <h4>${title}</h4>
+          <p>${message}</p>
+          ${progress !== undefined ? `
+          <div class="notification-progress">
+            <div class="notification-progress-bar" style="width: ${progress}%"></div>
+          </div>
+          ` : ''}
+        </div>
+        <button class="notification-close">✕</button>
+      `;
+      
+      // Add to container
+      notificationContainer.appendChild(notification);
+      
+      // Add close event
+      const closeButton = notification.querySelector('.notification-close');
+      closeButton?.addEventListener('click', () => {
+        if (notification) {
+          notification.classList.add('closing');
+          setTimeout(() => {
+            notification?.remove();
+          }, 300);
+        }
+      });
+      
+      // Auto remove after some time for success/error
+      if (type === 'success' || type === 'error') {
+        setTimeout(() => {
+          if (notification) {
+            notification.classList.add('closing');
+            setTimeout(() => {
+              notification?.remove();
+            }, 300);
+          }
+        }, 5000);
+      }
+    } else {
+      // Update existing notification
+      const progressBar = notification.querySelector('.notification-progress-bar') as HTMLElement;
+      const messageEl = notification.querySelector('.notification-content p') as HTMLElement;
+      
+      if (progressBar && progress !== undefined) {
+        progressBar.style.width = `${progress}%`;
+      }
+      
+      if (messageEl) {
+        messageEl.textContent = message;
+      }
+    }
     
-    // Auto remove after 5 seconds
-    setTimeout(() => {
-      notification.classList.add('closing');
-      setTimeout(() => {
-        notification.remove();
-      }, 300);
-    }, 5000);
+    return notification;
   };
 
   const generateContactSheet = async () => {
@@ -489,7 +535,7 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
         processingNotification.remove();
         
         // Show download complete notification
-        showDownloadNotification();
+        showDownloadNotification('success', 'Two n T sheet has been downloaded successfully.');
       }, 300);
     } catch (error) {
       console.error('Error generating contact sheet:', error);
@@ -499,35 +545,7 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
       setIsGenerating(false);
       
       // Show error notification
-      const errorNotification = document.createElement('div');
-      errorNotification.className = 'notification error';
-      errorNotification.innerHTML = `
-        <div class="notification-icon">❌</div>
-        <div class="notification-content">
-          <h4>Error</h4>
-          <p>Failed to generate PDF: ${errorMessage}</p>
-        </div>
-        <button class="notification-close">✕</button>
-      `;
-      
-      notificationContainer.appendChild(errorNotification);
-      
-      // Add close event
-      const closeButton = errorNotification.querySelector('.notification-close');
-      closeButton?.addEventListener('click', () => {
-        errorNotification.classList.add('closing');
-        setTimeout(() => {
-          errorNotification.remove();
-        }, 300);
-      });
-      
-      // Auto remove after 5 seconds
-      setTimeout(() => {
-        errorNotification.classList.add('closing');
-        setTimeout(() => {
-          errorNotification.remove();
-        }, 300);
-      }, 5000);
+      showDownloadNotification('error', `Failed to generate PDF: ${errorMessage}`);
     }
   };
 

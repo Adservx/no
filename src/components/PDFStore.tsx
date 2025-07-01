@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './PDFStore.css';
+import { isPWA, requestNotificationPermission, notifyServiceWorkerDownload, notifyServiceWorkerComplete, updateServiceWorkerProgress, showBrowserNotification, sendServiceWorkerNotification } from '../utils/notificationUtils';
 
 interface PDFFile {
   name: string;
@@ -27,37 +28,6 @@ interface Notification {
   fileType?: string;
   closing?: boolean;
 }
-
-// Check if app is in PWA mode
-const isPWA = () => {
-  return (
-    window.matchMedia('(display-mode: standalone)').matches ||
-    (window.navigator as any).standalone === true ||
-    document.referrer.includes('android-app://')
-  );
-};
-
-// Check if browser supports service worker notifications
-const supportsNotifications = () => {
-  return 'serviceWorker' in navigator && 'Notification' in window;
-};
-
-// Request notification permission
-const requestNotificationPermission = async () => {
-  if (!supportsNotifications()) return false;
-  
-  if (Notification.permission === 'granted') {
-    return true;
-  }
-  
-  try {
-    const permission = await Notification.requestPermission();
-    return permission === 'granted';
-  } catch (error) {
-    console.error('Error requesting notification permission:', error);
-    return false;
-  }
-};
 
 const electricalEngineeringSemesters: SemesterData[] = [
   {
@@ -250,15 +220,6 @@ const electricalEngineeringSemesters: SemesterData[] = [
   }
 ];
 
-// Function to send notification to service worker
-const sendServiceWorkerNotification = (data: any) => {
-  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-    navigator.serviceWorker.controller.postMessage(data);
-    return true;
-  }
-  return false;
-};
-
 export const PDFStore: React.FC = () => {
   const [activeSemester, setActiveSemester] = useState<number>(0);
   const [expandedSubjects, setExpandedSubjects] = useState<{[key: string]: boolean}>({});
@@ -316,14 +277,7 @@ export const PDFStore: React.FC = () => {
     
     // Show system notification for PWA if permission granted
     if (isPWA() && notificationPermission && notification.type === 'success') {
-      try {
-        new Notification(notification.title, {
-          body: notification.message,
-          icon: '/favicon.svg'
-        });
-      } catch (error) {
-        console.error('Error showing system notification:', error);
-      }
+      showBrowserNotification(notification.title, notification.message);
     }
     
     return id;
@@ -338,14 +292,7 @@ export const PDFStore: React.FC = () => {
     if (isPWA() && notificationPermission && updates.type === 'success') {
       const notification = notifications.find(n => n.id === id);
       if (notification) {
-        try {
-          new Notification(updates.title || notification.title, {
-            body: updates.message || notification.message,
-            icon: '/favicon.svg'
-          });
-        } catch (error) {
-          console.error('Error updating system notification:', error);
-        }
+        showBrowserNotification(updates.title || notification.title, updates.message || notification.message);
       }
     }
   };
@@ -392,43 +339,6 @@ export const PDFStore: React.FC = () => {
     return `${subjectAbbr}_P${index + 1}.${file.isContactSheet ? 'jpg' : 'pdf'}`;
   };
   
-  // Function to notify service worker about download
-  const notifyServiceWorkerDownload = (title: string, message: string, tag: string) => {
-    if (isPWA() && serviceWorkerActive) {
-      sendServiceWorkerNotification({
-        type: 'DOWNLOAD_NOTIFICATION',
-        title,
-        message,
-        tag
-      });
-    }
-  };
-  
-  // Function to update service worker about download progress
-  const updateServiceWorkerProgress = (progress: number, title: string, message: string, tag: string) => {
-    if (isPWA() && serviceWorkerActive) {
-      sendServiceWorkerNotification({
-        type: 'DOWNLOAD_PROGRESS',
-        progress,
-        title,
-        message,
-        tag
-      });
-    }
-  };
-  
-  // Function to notify service worker about download completion
-  const notifyServiceWorkerComplete = (title: string, message: string, tag: string) => {
-    if (isPWA() && serviceWorkerActive) {
-      sendServiceWorkerNotification({
-        type: 'DOWNLOAD_COMPLETE',
-        title,
-        message,
-        tag
-      });
-    }
-  };
-  
   // Function to handle downloading all files for a subject
   const downloadAllFiles = (subject: Subject) => {
     // Set downloading state for this subject
@@ -441,6 +351,15 @@ export const PDFStore: React.FC = () => {
       message: `Preparing ${subject.files.length} files...`,
       progress: 0,
     });
+    
+    // Notify service worker for PWA
+    if (isPWA() && serviceWorkerActive) {
+      notifyServiceWorkerDownload(
+        `Downloading ${subject.name}`,
+        `Preparing ${subject.files.length} files...`,
+        `download-batch-${subject.name}`
+      );
+    }
     
     // Create hidden iframes for each download
     if (downloadLinksRef.current) {
@@ -456,6 +375,16 @@ export const PDFStore: React.FC = () => {
             progress,
             message: `Downloading file ${index + 1} of ${subject.files.length}...`
           });
+          
+          // Update service worker progress for PWA
+          if (isPWA() && serviceWorkerActive && index % 2 === 0) { // Update every other file
+            updateServiceWorkerProgress(
+              progress,
+              `Downloading ${subject.name}`,
+              `File ${index + 1} of ${subject.files.length}`,
+              `download-batch-${subject.name}`
+            );
+          }
           
           // Create iframe for download
           const iframe = document.createElement('iframe');
@@ -480,6 +409,15 @@ export const PDFStore: React.FC = () => {
                 message: `All ${subject.files.length} files from ${subject.name} have been downloaded.`,
                 progress: 100
               });
+              
+              // Notify service worker of completion for PWA
+              if (isPWA() && serviceWorkerActive) {
+                notifyServiceWorkerComplete(
+                  'Download Complete',
+                  `All ${subject.files.length} files from ${subject.name} have been downloaded.`,
+                  `download-batch-${subject.name}`
+                );
+              }
             }, 1000);
           }
         }, index * 1000); // 1 second delay between downloads

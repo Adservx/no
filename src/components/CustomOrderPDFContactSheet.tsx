@@ -3,6 +3,7 @@ import { Document, pdfjs } from 'react-pdf';
 import { useDropzone } from 'react-dropzone';
 import { jsPDF } from 'jspdf';
 import './PDFContactSheet.css';
+import { notifyServiceWorkerDownload, notifyServiceWorkerComplete, updateServiceWorkerProgress, isPWA } from '../utils/notificationUtils';
 
 interface CustomOrderPDFContactSheetProps {
   config: {
@@ -253,12 +254,24 @@ export const CustomOrderPDFContactSheet: React.FC<CustomOrderPDFContactSheetProp
     }
     
     // Check if there's an existing download notification to update
-    let notification = document.querySelector('.notification.custom-order-pdf');
+    let notification = document.querySelector('.notification.custom-pdf-contact-sheet');
+    
+    // Generate a unique ID for this notification for service worker
+    const notificationId = 'custom-pdf-contact-sheet-' + new Date().getTime();
+    
+    // Send notification to service worker if in PWA mode
+    if (type === 'downloading' && progress !== undefined) {
+      updateServiceWorkerProgress(progress, 'Generating Custom PDF', message, notificationId);
+    } else if (type === 'success') {
+      notifyServiceWorkerComplete('Custom PDF Generated', message, notificationId);
+    } else if (type === 'error') {
+      notifyServiceWorkerDownload('Error', message, notificationId);
+    }
     
     if (!notification || type === 'success' || type === 'error') {
       // Create new notification
       notification = document.createElement('div');
-      notification.className = `notification ${type} custom-order-pdf`;
+      notification.className = `notification ${type} custom-pdf-contact-sheet`;
       
       // Add notification content based on type
       const icon = type === 'downloading' ? '⬇️' : type === 'success' ? '✅' : '❌';
@@ -284,19 +297,23 @@ export const CustomOrderPDFContactSheet: React.FC<CustomOrderPDFContactSheetProp
       // Add close event
       const closeButton = notification.querySelector('.notification-close');
       closeButton?.addEventListener('click', () => {
-        notification!.classList.add('closing');
-        setTimeout(() => {
-          notification!.remove();
-        }, 300);
+        if (notification) {
+          notification.classList.add('closing');
+          setTimeout(() => {
+            notification?.remove();
+          }, 300);
+        }
       });
       
       // Auto remove after some time for success/error
       if (type === 'success' || type === 'error') {
         setTimeout(() => {
-          notification!.classList.add('closing');
-          setTimeout(() => {
-            notification!.remove();
-          }, 300);
+          if (notification) {
+            notification.classList.add('closing');
+            setTimeout(() => {
+              notification?.remove();
+            }, 300);
+          }
         }, 5000);
       }
     } else {

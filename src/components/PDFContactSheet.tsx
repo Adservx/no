@@ -3,6 +3,7 @@ import { Document, pdfjs } from 'react-pdf';
 import { useDropzone } from 'react-dropzone';
 import { jsPDF } from 'jspdf';
 import './PDFContactSheet.css';
+import { notifyServiceWorkerDownload, notifyServiceWorkerComplete, updateServiceWorkerProgress, isPWA } from '../utils/notificationUtils';
 
 interface PDFContactSheetProps {
   config: {
@@ -132,6 +133,18 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
     
     // Check if there's an existing download notification to update
     let notification = document.querySelector('.notification.pdf-contact-sheet');
+    
+    // Generate a unique ID for this notification for service worker
+    const notificationId = 'pdf-contact-sheet-' + new Date().getTime();
+    
+    // Send notification to service worker if in PWA mode
+    if (type === 'downloading' && progress !== undefined) {
+      updateServiceWorkerProgress(progress, 'Generating PDF', message, notificationId);
+    } else if (type === 'success') {
+      notifyServiceWorkerComplete('PDF Generated', message, notificationId);
+    } else if (type === 'error') {
+      notifyServiceWorkerDownload('Error', message, notificationId);
+    }
     
     if (!notification || type === 'success' || type === 'error') {
       // Create new notification
