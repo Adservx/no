@@ -1,0 +1,24 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6a11cb" />
+      <stop offset="100%" stop-color="#2575fc" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="1" stdDeviation="1" flood-opacity="0.3" />
+    </filter>
+  </defs>
+  
+  <!-- Rounded background -->
+  <rect width="32" height="32" rx="8" fill="url(#bgGradient)" />
+  
+  <!-- Minimalist "M" letter -->
+  <path d="M7 8L11 18L16 8L21 18L25 8V24H21V16L18 22L16 16L13 22L11 16V24H7V8Z" 
+        fill="white" filter="url(#shadow)" />
+  
+  <!-- Decorative elements -->
+  <circle cx="16" cy="5" r="1.5" fill="white" opacity="0.8" />
+  <circle cx="6" cy="6" r="1" fill="white" opacity="0.6" />
+  <circle cx="26" cy="6" r="1" fill="white" opacity="0.6" />
+</svg>

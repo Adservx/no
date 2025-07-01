@@ -1,0 +1,625 @@
+.pdf-contact-sheet {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.upload-section {
+  background-color: var(--card-bg);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  padding: 24px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.upload-section-title {
+  font-family: var(--font-family-elegant);
+  font-size: 1.4rem;
+  font-weight: 500;
+  color: var(--text-color);
+  margin-bottom: 16px;
+  text-align: center;
+  letter-spacing: 1.5px;
+}
+
+.dropzone {
+  border: 2px dashed var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 32px 24px;
+  text-align: center;
+  cursor: pointer;
+  background-color: rgba(255, 255, 255, 0.02);
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.dropzone:hover {
+  border-color: var(--primary-color);
+  background-color: rgba(99, 102, 241, 0.05);
+}
+
+.dropzone-icon {
+  font-size: 2rem;
+  color: var(--primary-color);
+}
+
+.dropzone p {
+  font-size: 1.1rem;
+  color: var(--text-color);
+  margin: 0;
+  font-family: var(--font-family-cursive);
+  letter-spacing: 0.5px;
+}
+
+.pdf-select-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+  margin-top: 8px;
+  font-family: var(--font-family-cursive);
+  letter-spacing: 0.5px;
+}
+
+.pdf-select-button:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.file-name {
+  font-size: 1rem;
+  color: var(--text-color);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 12px 16px;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  word-break: break-all;
+  font-family: var(--font-family-cursive);
+}
+
+.pdf-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.react-pdf__Document {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px;
+  background-color: var(--card-bg);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+}
+
+.react-pdf__Page {
+  margin: 8px;
+  box-shadow: var(--shadow);
+  border-radius: var(--border-radius);
+  transition: transform 0.2s ease;
+  background-color: white !important;
+  overflow: hidden;
+}
+
+.react-pdf__Page:hover {
+  transform: scale(1.02);
+}
+
+.react-pdf__Page canvas {
+  max-width: 100%;
+  height: auto !important;
+}
+
+.react-pdf__message {
+  padding: 16px;
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.generate-button {
+  padding: 14px 28px;
+  font-size: 1.3rem;
+  background-color: transparent;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.4s ease;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  font-family: var(--font-family-elegant);
+  letter-spacing: 2px;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+
+.generate-button:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+  z-index: -1;
+  transition: all 0.4s ease;
+}
+
+.generate-button:after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: rotate(45deg);
+  transition: all 0.8s ease;
+  opacity: 0;
+  z-index: -1;
+}
+
+.generate-button:hover:not(:disabled) {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 12px 25px rgba(56, 189, 248, 0.5);
+}
+
+.generate-button:hover:not(:disabled):before {
+  background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+}
+
+.generate-button:hover:not(:disabled):after {
+  animation: shine 1.5s ease;
+}
+
+@keyframes shine {
+  0% {
+    left: -50%;
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    left: 150%;
+    opacity: 0;
+  }
+}
+
+.generate-button:disabled {
+  background-color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.7;
+  border-color: transparent;
+}
+
+.generate-button.generating {
+  background-color: var(--accent-color);
+  opacity: 0.9;
+  cursor: not-allowed;
+}
+
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+
+.progress {
+  height: 100%;
+  background-color: var(--accent-color);
+  transition: width 0.3s ease;
+}
+
+.progress-bar span {
+  display: block;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-color);
+  margin-top: 4px;
+}
+
+.error-message {
+  color: #ef4444;
+  padding: 12px 16px;
+  margin: 8px 0;
+  border: 1px solid #ef4444;
+  border-radius: var(--border-radius);
+  background-color: rgba(239, 68, 68, 0.1);
+  font-size: 0.95rem;
+}
+
+.pdf-file-list {
+  margin-top: 16px;
+  text-align: center;
+  width: 100%;
+}
+
+.pdf-file-list h3 {
+  font-family: var(--font-family-elegant);
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: var(--text-color);
+  margin-bottom: 12px;
+  text-align: center;
+  letter-spacing: 1.5px;
+}
+
+.pdf-file-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pdf-file-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background-color: rgba(255, 255, 255, 0.03);
+  border-radius: var(--border-radius);
+  margin-bottom: 8px;
+  font-family: var(--font-family-cursive);
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+}
+
+.remove-button {
+  background-color: transparent;
+  color: #ef4444;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 0.85rem;
+  border-radius: var(--border-radius);
+  transition: all 0.2s ease;
+}
+
+.remove-button:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.clear-button {
+  background-color: transparent;
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  border-radius: var(--border-radius);
+  transition: all 0.2s ease;
+  margin-top: 12px;
+}
+
+.clear-button:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: var(--text-color);
+}
+
+.confirmation-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.confirmation-content {
+  background-color: var(--card-bg);
+  border-radius: var(--border-radius);
+  padding: 24px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: var(--shadow-lg);
+  animation: slideIn 0.3s ease;
+  text-align: center;
+}
+
+@keyframes slideIn {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.confirmation-content h4 {
+  font-family: var(--font-family-elegant);
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: var(--text-color);
+  margin-bottom: 16px;
+  text-align: center;
+  letter-spacing: 1.5px;
+}
+
+.confirmation-content p {
+  font-size: 1rem;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+  text-align: center;
+  font-family: var(--font-family-cursive);
+  letter-spacing: 0.5px;
+}
+
+.confirmation-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.confirm-button, .cancel-button {
+  padding: 10px 20px;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  font-family: var(--font-family-cursive);
+  letter-spacing: 0.5px;
+}
+
+.confirm-button {
+  background-color: var(--accent-color);
+  color: white;
+  border: 2px solid var(--accent-hover);
+}
+
+.confirm-button:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, rgba(16, 185, 129, 0.8), rgba(52, 211, 153, 0.8));
+  z-index: -1;
+  transition: all 0.4s ease;
+}
+
+.confirm-button:hover {
+  background-color: transparent;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.5);
+}
+
+.confirm-button:hover:before {
+  transform: scaleX(1.1) scaleY(1.1);
+  opacity: 0.9;
+}
+
+.cancel-button {
+  background-color: transparent;
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+}
+
+.cancel-button:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+@media (max-width: 768px) {
+  .upload-section {
+    padding: 20px;
+    background-color: var(--card-bg);
+  }
+  
+  .dropzone {
+    padding: 24px 16px;
+    background-color: rgba(13, 43, 69, 0.5);
+    border: 1px dashed rgba(0, 188, 212, 0.5);
+  }
+  
+  .generate-button {
+    max-width: 100%;
+  }
+  
+  .standard-sheet-info,
+  .two-n-t-info {
+    background-color: var(--card-bg);
+  }
+}
+
+@media (max-width: 480px) {
+  .upload-section {
+    padding: 16px;
+    background-color: var(--card-bg);
+  }
+  
+  .dropzone {
+    padding: 20px 12px;
+    background-color: rgba(13, 43, 69, 0.5);
+    border: 1px dashed rgba(0, 188, 212, 0.5);
+  }
+  
+  .dropzone-icon {
+    font-size: 1.5rem;
+  }
+  
+  .dropzone p {
+    font-size: 0.9rem;
+  }
+  
+  .pdf-select-button {
+    width: 100%;
+  }
+  
+  .confirmation-content {
+    padding: 20px 16px;
+    background-color: var(--card-bg);
+  }
+  
+  .confirmation-buttons {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .confirm-button, .cancel-button {
+    width: 100%;
+  }
+  
+  .standard-sheet-info,
+  .two-n-t-info {
+    background-color: var(--card-bg);
+  }
+}
+
+.pdf-pages-list {
+  margin-top: 16px;
+  text-align: center;
+  width: 100%;
+}
+
+.pdf-pages-list h3 {
+  font-family: var(--font-family-elegant);
+  font-size: 1.3rem;
+  font-weight: 500;
+  color: var(--text-color);
+  margin-bottom: 12px;
+  text-align: center;
+  letter-spacing: 1.5px;
+}
+
+.standard-sheet-info,
+.two-n-t-info {
+  background-color: var(--card-bg);
+  border-radius: var(--border-radius);
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
+}
+
+.standard-sheet-info {
+  border-left: 4px solid var(--accent-color);
+}
+
+.two-n-t-info {
+  border-left: 4px solid var(--primary-color);
+}
+
+.standard-sheet-features,
+.two-n-t-features {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.feature {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 150px;
+  text-align: center;
+  padding: 16px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: var(--border-radius);
+  transition: all 0.3s ease;
+}
+
+.feature:hover {
+  transform: translateY(-5px);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.feature-icon {
+  font-size: 2rem;
+  color: var(--accent-color);
+  margin-bottom: 8px;
+}
+
+.two-n-t-info .feature-icon {
+  color: var(--primary-color);
+}
+
+.feature-text {
+  font-size: 0.95rem;
+  color: var(--text-color);
+  font-family: var(--font-family-cursive);
+  letter-spacing: 0.5px;
+}
+
+@media (max-width: 768px) {
+  .standard-sheet-features,
+  .two-n-t-features {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  
+  .feature {
+    width: 100%;
+    max-width: 300px;
+  }
+}
