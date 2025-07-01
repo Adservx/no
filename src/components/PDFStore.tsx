@@ -1,0 +1,384 @@
+import React, { useState, useRef } from 'react';
+import './PDFStore.css';
+
+interface PDFFile {
+  name: string;
+  path: string;
+  isContactSheet?: boolean;
+}
+
+interface Subject {
+  name: string;
+  files: PDFFile[];
+}
+
+interface SemesterData {
+  name: string;
+  subjects: Subject[];
+}
+
+const electricalEngineeringSemesters: SemesterData[] = [
+  {
+    name: "First Semester",
+    subjects: [
+      { 
+        name: "Communication Nepali",
+        files: [
+          { name: "Paper 1", path: "/pdf-files/1st semester/Communication Nepali/1-p.pdf" },
+          { name: "Paper 1 (Alt)", path: "/pdf-files/1st semester/Communication Nepali/1-p''.pdf" },
+          { name: "Paper 2", path: "/pdf-files/1st semester/Communication Nepali/2-p.pdf" },
+          { name: "Paper 2 (Alt)", path: "/pdf-files/1st semester/Communication Nepali/2-p''.pdf" },
+          { name: "Paper 4", path: "/pdf-files/1st semester/Communication Nepali/4-p.pdf" },
+          { name: "Paper 4 (Alt)", path: "/pdf-files/1st semester/Communication Nepali/4-p''.pdf" }
+        ]
+      },
+      { 
+        name: "Communication English",
+        files: [
+          { name: "Paper 1", path: "/pdf-files/1st semester/Communication English/1-p.pdf" },
+          { name: "Paper 1 (Alt)", path: "/pdf-files/1st semester/Communication English/1-p''.pdf" }
+        ]
+      },
+      { 
+        name: "Engineering Mathematics I", 
+        files: [
+          { name: "Mathematics Paper", path: "/pdf-files/1st semester/Engineering Mathematics I/CamScanner 01-07-2025 11.32.pdf" }
+        ]
+      },
+      { 
+        name: "Engineering Physics I",
+        files: [
+          { name: "Physics Paper 1", path: "/pdf-files/1st semester/Engineering Physics I/phy-1p.pdf" },
+          { name: "Physics Paper 1 (Alt)", path: "/pdf-files/1st semester/Engineering Physics I/phy-1p'.pdf" }
+        ]
+      },
+      { 
+        name: "Engineering Chemistry I",
+        files: [
+          { name: "Paper 1", path: "/pdf-files/1st semester/Engineering Chemistry I/1-p.pdf" },
+          { name: "Paper 1 (Alt)", path: "/pdf-files/1st semester/Engineering Chemistry I/1-p''.pdf" },
+          { name: "Paper 2", path: "/pdf-files/1st semester/Engineering Chemistry I/2-p.pdf" },
+          { name: "Paper 2 (Alt)", path: "/pdf-files/1st semester/Engineering Chemistry I/2-p''.pdf" }
+        ]
+      },
+      { 
+        name: "Computer Application",
+        files: [
+          { name: "Paper 1", path: "/pdf-files/1st semester/Computer Application/1-p.pdf" },
+          { name: "Paper 1 (Alt)", path: "/pdf-files/1st semester/Computer Application/1-p'.pdf" },
+          { name: "Paper 2", path: "/pdf-files/1st semester/Computer Application/2-p.pdf" },
+          { name: "Paper 2 (Alt)", path: "/pdf-files/1st semester/Computer Application/2-p'.pdf" }
+        ]
+      }
+    ]
+  },
+  {
+    name: "Second Semester",
+    subjects: [
+      { 
+        name: "Engineering Mathematics II",
+        files: [
+          { name: "Math 1", path: "/pdf-files/2nd semester/Math-II/math 1.png", isContactSheet: true },
+          { name: "Math 2", path: "/pdf-files/2nd semester/Math-II/math 2.png", isContactSheet: true },
+          { name: "Math 3", path: "/pdf-files/2nd semester/Math-II/math 3.png", isContactSheet: true },
+          { name: "Math 4", path: "/pdf-files/2nd semester/Math-II/math 4.png", isContactSheet: true },
+          { name: "Math 5", path: "/pdf-files/2nd semester/Math-II/math 5.png", isContactSheet: true },
+          { name: "Math 6", path: "/pdf-files/2nd semester/Math-II/math 6.png", isContactSheet: true },
+          { name: "Math 7", path: "/pdf-files/2nd semester/Math-II/math 7.png", isContactSheet: true },
+          { name: "New 1", path: "/pdf-files/2nd semester/Math-II/new 1.png", isContactSheet: true },
+          { name: "New 2", path: "/pdf-files/2nd semester/Math-II/new 2.png", isContactSheet: true }
+        ]
+      },
+      { 
+        name: "Engineering Physics II",
+        files: [
+          { name: "Physics Paper 1", path: "/pdf-files/2nd semester/Physics-II/phy1-p.pdf" },
+          { name: "Physics Paper 1 (Alt)", path: "/pdf-files/2nd semester/Physics-II/phy1-p''.pdf" },
+          { name: "Physics Paper 2", path: "/pdf-files/2nd semester/Physics-II/phy2-p.pdf" },
+          { name: "Physics Paper 2 (Alt)", path: "/pdf-files/2nd semester/Physics-II/phy2-p''.pdf" }
+        ]
+      },
+      { 
+        name: "Engineering Chemistry II",
+        files: [
+          { name: "Chemistry 1", path: "/pdf-files/2nd semester/Chemistry-II/c1.png", isContactSheet: true },
+          { name: "Chemistry 2", path: "/pdf-files/2nd semester/Chemistry-II/c2.png", isContactSheet: true },
+          { name: "Chemistry 3", path: "/pdf-files/2nd semester/Chemistry-II/c3.png", isContactSheet: true },
+          { name: "Chemistry 4", path: "/pdf-files/2nd semester/Chemistry-II/c4.png", isContactSheet: true }
+        ]
+      },
+      { 
+        name: "Applied Mechanics",
+        files: [
+          { name: "Applied 1", path: "/pdf-files/2nd semester/Applied Mechanics/APPLIED 1.png", isContactSheet: true },
+          { name: "Applied 2", path: "/pdf-files/2nd semester/Applied Mechanics/APPLIED 2.png", isContactSheet: true }
+        ]
+      }
+    ]
+  },
+  {
+    name: "Third Semester",
+    subjects: [
+      { 
+        name: "Computer Programming",
+        files: [
+          { name: "Contact Sheet 1", path: "/pdf-files/3rd semester/computer programming/ContactSheet-001.jpg", isContactSheet: true },
+          { name: "Contact Sheet 2", path: "/pdf-files/3rd semester/computer programming/ContactSheet-002.jpg", isContactSheet: true }
+        ]
+      },
+      { 
+        name: "Basic Electronics",
+        files: [
+          { name: "Electronics Paper 1", path: "/pdf-files/3rd semester/basic electronic/b e-1p.pdf" },
+          { name: "Electronics Paper 1 (Alt)", path: "/pdf-files/3rd semester/basic electronic/b e-1p''.pdf" },
+          { name: "Electronics Paper 2", path: "/pdf-files/3rd semester/basic electronic/b e-2p.pdf" },
+          { name: "Electronics Paper 2 (Alt)", path: "/pdf-files/3rd semester/basic electronic/b e-2p''.pdf" },
+          { name: "Contact Sheet 1", path: "/pdf-files/3rd semester/basic electronic/ContactSheet-001.jpeg", isContactSheet: true },
+          { name: "Contact Sheet 2", path: "/pdf-files/3rd semester/basic electronic/ContactSheet-002.jpeg", isContactSheet: true },
+          { name: "Contact Sheet 3", path: "/pdf-files/3rd semester/basic electronic/ContactSheet-003.jpeg", isContactSheet: true },
+          { name: "Contact Sheet 4", path: "/pdf-files/3rd semester/basic electronic/ContactSheet-004.jpeg", isContactSheet: true }
+        ]
+      },
+      { 
+        name: "Civil Construction and Survey",
+        files: [
+          { name: "Paper 1", path: "/pdf-files/3rd semester/Civil Construction and Survey/1-p.jpg", isContactSheet: true },
+          { name: "Paper 1 (Alt)", path: "/pdf-files/3rd semester/Civil Construction and Survey/1-p''.jpg", isContactSheet: true },
+          { name: "Paper 2", path: "/pdf-files/3rd semester/Civil Construction and Survey/2-p.pdf" },
+          { name: "Paper 2 (Alt)", path: "/pdf-files/3rd semester/Civil Construction and Survey/2-p''.pdf" }
+        ]
+      },
+      { 
+        name: "Fundamental of Electrical Engineering",
+        files: [
+          { name: "Contact Sheet 1", path: "/pdf-files/3rd semester/fundamental of electrical engineering/ContactSheet-001.jpg", isContactSheet: true },
+          { name: "Contact Sheet 2", path: "/pdf-files/3rd semester/fundamental of electrical engineering/ContactSheet-002.jpg", isContactSheet: true },
+          { name: "Contact Sheet 3", path: "/pdf-files/3rd semester/fundamental of electrical engineering/ContactSheet-003.jpg", isContactSheet: true },
+          { name: "Contact Sheet 4", path: "/pdf-files/3rd semester/fundamental of electrical engineering/ContactSheet-004.jpg", isContactSheet: true }
+        ]
+      },
+      { 
+        name: "Engineering Material",
+        files: [
+          { name: "Material 1", path: "/pdf-files/3rd semester/Engineering Material/material 1.pdf" },
+          { name: "Material 2", path: "/pdf-files/3rd semester/Engineering Material/material 2.pdf" },
+          { name: "Material 3", path: "/pdf-files/3rd semester/Engineering Material/material 3.pdf" },
+          { name: "Material 4", path: "/pdf-files/3rd semester/Engineering Material/material 4.pdf" }
+        ]
+      },
+      { 
+        name: "Principle of Management and Costing",
+        files: [
+          { name: "Management 1", path: "/pdf-files/3rd semester/Principle of Management and Costing/management 1.pdf" },
+          { name: "Management 2", path: "/pdf-files/3rd semester/Principle of Management and Costing/management 2.pdf" },
+          { name: "Management 3", path: "/pdf-files/3rd semester/Principle of Management and Costing/management 3.pdf" },
+          { name: "Management 4", path: "/pdf-files/3rd semester/Principle of Management and Costing/management 4.pdf" }
+        ]
+      }
+    ]
+  },
+  {
+    name: "Fourth Semester",
+    subjects: [
+      { 
+        name: "Electrical Circuit Analysis",
+        files: []
+      },
+      { 
+        name: "Power Station",
+        files: []
+      },
+      { 
+        name: "Microprocessor & Microcontroller",
+        files: []
+      },
+      { 
+        name: "Electrical Measurements and Measuring Instruments",
+        files: []
+      },
+      { 
+        name: "CAD",
+        files: []
+      },
+      { 
+        name: "Electrical Machine I",
+        files: []
+      }
+    ]
+  }
+];
+
+export const PDFStore: React.FC = () => {
+  const [activeSemester, setActiveSemester] = useState<number>(0);
+  const [expandedSubjects, setExpandedSubjects] = useState<{[key: string]: boolean}>({});
+  const [isDownloading, setIsDownloading] = useState<{[key: string]: boolean}>({});
+  const downloadLinksRef = useRef<HTMLDivElement>(null);
+
+  const toggleSubject = (subjectName: string) => {
+    setExpandedSubjects(prev => ({
+      ...prev,
+      [subjectName]: !prev[subjectName]
+    }));
+  };
+
+  const isSubjectExpanded = (subjectName: string) => {
+    return !!expandedSubjects[subjectName];
+  };
+  
+  // Generate a short filename for download
+  const getShortFilename = (subject: Subject, file: PDFFile, index: number) => {
+    // Get subject abbreviation (first letters of each word)
+    const subjectAbbr = subject.name
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('');
+    
+    // Create a short name: Subject_Abbreviation_P1.pdf
+    return `${subjectAbbr}_P${index + 1}.${file.isContactSheet ? 'jpg' : 'pdf'}`;
+  };
+  
+  // Function to handle downloading all files for a subject
+  const downloadAllFiles = (subject: Subject) => {
+    // Set downloading state for this subject
+    setIsDownloading(prev => ({ ...prev, [subject.name]: true }));
+    
+    // Create hidden iframes for each download
+    if (downloadLinksRef.current) {
+      // Clear previous download frames
+      downloadLinksRef.current.innerHTML = '';
+      
+      // Process each file in sequence with delays
+      subject.files.forEach((file, index) => {
+        setTimeout(() => {
+          // Create iframe for download
+          const iframe = document.createElement('iframe');
+          iframe.style.display = 'none';
+          iframe.src = file.path;
+          iframe.onload = () => {
+            console.log(`Started download for ${file.name}`);
+          };
+          
+          // Add to document
+          downloadLinksRef.current?.appendChild(iframe);
+          
+          // If last file, reset downloading state after a delay
+          if (index === subject.files.length - 1) {
+            setTimeout(() => {
+              setIsDownloading(prev => ({ ...prev, [subject.name]: false }));
+            }, 1000);
+          }
+        }, index * 1000); // 1 second delay between downloads
+      });
+    }
+  };
+
+  // Alternative download method using anchor tags
+  const downloadAllFilesAlt = (subject: Subject) => {
+    // Set downloading state for this subject
+    setIsDownloading(prev => ({ ...prev, [subject.name]: true }));
+    
+    subject.files.forEach((file, index) => {
+      setTimeout(() => {
+        const link = document.createElement('a');
+        link.href = file.path;
+        link.setAttribute('download', getShortFilename(subject, file, index));
+        link.setAttribute('target', '_blank');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // If last file, reset downloading state after a delay
+        if (index === subject.files.length - 1) {
+          setTimeout(() => {
+            setIsDownloading(prev => ({ ...prev, [subject.name]: false }));
+          }, 1000);
+        }
+      }, index * 1500); // 1.5 second delay between downloads
+    });
+  };
+
+  return (
+    <div className="pdf-store-container">
+      <div className="store-header">
+        <h2>Electrical Engineering PDF Store</h2>
+        <p>Download resources for your semester</p>
+      </div>
+      
+      {/* Hidden div to hold download iframes */}
+      <div ref={downloadLinksRef} style={{ display: 'none' }}></div>
+      
+      <div className="semester-tabs">
+        {electricalEngineeringSemesters.map((semester, index) => (
+          <button 
+            key={index}
+            className={`semester-tab ${activeSemester === index ? 'active' : ''}`}
+            onClick={() => setActiveSemester(index)}
+          >
+            {semester.name}
+          </button>
+        ))}
+      </div>
+      
+      <div className="subject-list">
+        <h3>{electricalEngineeringSemesters[activeSemester].name} Subjects</h3>
+        <div className="subjects-grid">
+          {electricalEngineeringSemesters[activeSemester].subjects.map((subject, index) => (
+            <div className="subject-card" key={index}>
+              <div className="subject-icon">
+                {subject.files.some(file => file.isContactSheet) ? '🖼️' : '📄'}
+              </div>
+              <h4>{subject.name}</h4>
+              <div className="file-count">
+                {subject.files.length} {subject.files.length === 1 ? 'file' : 'files'} available
+              </div>
+              
+              {subject.files.length > 0 ? (
+                <>
+                  {subject.files.length > 1 && (
+                    <button 
+                      className={`download-all-button ${isDownloading[subject.name] ? 'downloading' : ''}`}
+                      onClick={() => downloadAllFilesAlt(subject)}
+                      disabled={isDownloading[subject.name]}
+                    >
+                      {isDownloading[subject.name] ? 'Downloading...' : 'Download All Files'}
+                    </button>
+                  )}
+                  
+                  <button 
+                    className="toggle-files-button"
+                    onClick={() => toggleSubject(subject.name)}
+                  >
+                    {isSubjectExpanded(subject.name) ? 'Hide Files' : 'Show Individual Files'}
+                  </button>
+                  
+                  {isSubjectExpanded(subject.name) && (
+                    <div className="files-list">
+                      {subject.files.map((file, fileIndex) => (
+                        <div key={fileIndex} className="file-item">
+                          <span className={`file-icon ${file.isContactSheet ? 'image-file' : 'pdf-file'}`}>
+                            {file.isContactSheet ? '🖼️' : '📄'}
+                          </span>
+                          <span className="file-name">{file.name}</span>
+                          <a 
+                            href={file.path}
+                            download={getShortFilename(subject, file, fileIndex)}
+                            className="download-file-button"
+                            target="_blank"
+                          >
+                            Download
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="no-files-message">No files available</div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}; 
