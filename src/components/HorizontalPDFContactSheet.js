@@ -4,6 +4,7 @@ import { pdfjs } from 'react-pdf';
 import { useDropzone } from 'react-dropzone';
 import { jsPDF } from 'jspdf';
 import './PDFContactSheet.css'; // Reusing the existing CSS
+import { notifyServiceWorkerDownload, notifyServiceWorkerComplete, updateServiceWorkerProgress } from '../utils/notificationUtils';
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 export const HorizontalPDFContactSheet = ({ config }) => {
     const [pdfFiles, setPdfFiles] = useState([]);
@@ -125,8 +126,8 @@ export const HorizontalPDFContactSheet = ({ config }) => {
         setShowConfirmDialog(false);
         setPendingGeneration(false);
     };
-    // Function to show download notification when PDF is generated and downloaded
-    const showDownloadNotification = () => {
+    // Function to show download notifications
+    const showDownloadNotification = (type, message, progress) => {
         // Create notification container if it doesn't exist
         let notificationContainer = document.querySelector('.notification-container');
         if (!notificationContainer) {
@@ -134,35 +135,76 @@ export const HorizontalPDFContactSheet = ({ config }) => {
             notificationContainer.className = 'notification-container';
             document.body.appendChild(notificationContainer);
         }
-        // Create notification element
-        const notification = document.createElement('div');
-        notification.className = 'notification success';
-        // Add notification content
-        notification.innerHTML = `
-      <div class="notification-icon">✅</div>
-      <div class="notification-content">
-        <h4>Download Complete</h4>
-        <p>Your Two n T sheet has been downloaded successfully.</p>
-      </div>
-      <button class="notification-close">✕</button>
-    `;
-        // Add to container
-        notificationContainer.appendChild(notification);
-        // Add close event
-        const closeButton = notification.querySelector('.notification-close');
-        closeButton?.addEventListener('click', () => {
-            notification.classList.add('closing');
-            setTimeout(() => {
-                notification.remove();
-            }, 300);
-        });
-        // Auto remove after 5 seconds
-        setTimeout(() => {
-            notification.classList.add('closing');
-            setTimeout(() => {
-                notification.remove();
-            }, 300);
-        }, 5000);
+        // Check if there's an existing download notification to update
+        let notification = document.querySelector('.notification.horizontal-pdf-contact-sheet');
+        // Generate a unique ID for this notification for service worker
+        const notificationId = 'horizontal-pdf-contact-sheet-' + new Date().getTime();
+        // Send notification to service worker if in PWA mode
+        if (type === 'downloading' && progress !== undefined) {
+            updateServiceWorkerProgress(progress, 'Generating 2nT PDF', message, notificationId);
+        }
+        else if (type === 'success') {
+            notifyServiceWorkerComplete('2nT PDF Generated', message, notificationId);
+        }
+        else if (type === 'error') {
+            notifyServiceWorkerDownload('Error', message, notificationId);
+        }
+        if (!notification || type === 'success' || type === 'error') {
+            // Create new notification
+            notification = document.createElement('div');
+            notification.className = `notification ${type} horizontal-pdf-contact-sheet`;
+            // Add notification content based on type
+            const icon = type === 'downloading' ? '⬇️' : type === 'success' ? '✅' : '❌';
+            const title = type === 'downloading' ? 'Generating 2nT PDF' : type === 'success' ? 'Download Complete' : 'Error';
+            notification.innerHTML = `
+        <div class="notification-icon">${icon}</div>
+        <div class="notification-content">
+          <h4>${title}</h4>
+          <p>${message}</p>
+          ${progress !== undefined ? `
+          <div class="notification-progress">
+            <div class="notification-progress-bar" style="width: ${progress}%"></div>
+          </div>
+          ` : ''}
+        </div>
+        <button class="notification-close">✕</button>
+      `;
+            // Add to container
+            notificationContainer.appendChild(notification);
+            // Add close event
+            const closeButton = notification.querySelector('.notification-close');
+            closeButton?.addEventListener('click', () => {
+                if (notification) {
+                    notification.classList.add('closing');
+                    setTimeout(() => {
+                        notification?.remove();
+                    }, 300);
+                }
+            });
+            // Auto remove after some time for success/error
+            if (type === 'success' || type === 'error') {
+                setTimeout(() => {
+                    if (notification) {
+                        notification.classList.add('closing');
+                        setTimeout(() => {
+                            notification?.remove();
+                        }, 300);
+                    }
+                }, 5000);
+            }
+        }
+        else {
+            // Update existing notification
+            const progressBar = notification.querySelector('.notification-progress-bar');
+            const messageEl = notification.querySelector('.notification-content p');
+            if (progressBar && progress !== undefined) {
+                progressBar.style.width = `${progress}%`;
+            }
+            if (messageEl) {
+                messageEl.textContent = message;
+            }
+        }
+        return notification;
     };
     const generateContactSheet = async () => {
         // Show processing notification
@@ -401,7 +443,7 @@ export const HorizontalPDFContactSheet = ({ config }) => {
             setTimeout(() => {
                 processingNotification.remove();
                 // Show download complete notification
-                showDownloadNotification();
+                showDownloadNotification('success', 'Two n T sheet has been downloaded successfully.');
             }, 300);
         }
         catch (error) {
@@ -411,32 +453,7 @@ export const HorizontalPDFContactSheet = ({ config }) => {
             setIsExtracting(false);
             setIsGenerating(false);
             // Show error notification
-            const errorNotification = document.createElement('div');
-            errorNotification.className = 'notification error';
-            errorNotification.innerHTML = `
-        <div class="notification-icon">❌</div>
-        <div class="notification-content">
-          <h4>Error</h4>
-          <p>Failed to generate PDF: ${errorMessage}</p>
-        </div>
-        <button class="notification-close">✕</button>
-      `;
-            notificationContainer.appendChild(errorNotification);
-            // Add close event
-            const closeButton = errorNotification.querySelector('.notification-close');
-            closeButton?.addEventListener('click', () => {
-                errorNotification.classList.add('closing');
-                setTimeout(() => {
-                    errorNotification.remove();
-                }, 300);
-            });
-            // Auto remove after 5 seconds
-            setTimeout(() => {
-                errorNotification.classList.add('closing');
-                setTimeout(() => {
-                    errorNotification.remove();
-                }, 300);
-            }, 5000);
+            showDownloadNotification('error', `Failed to generate PDF: ${errorMessage}`);
         }
     };
     return (_jsxs("div", { className: "pdf-contact-sheet", children: [_jsxs("div", { className: "upload-section", children: [_jsx("h3", { className: "upload-section-title", children: "Upload PDF Files" }), _jsxs("div", { ...getRootProps(), className: "dropzone", children: [_jsx("input", { ...getInputProps() }), _jsx("div", { className: "dropzone-icon", children: "\uD83D\uDCC4" }), _jsx("p", { children: "Drag & drop PDF files here" })] }), _jsx("button", { className: "pdf-select-button", onClick: openFileDialog, children: "Select PDF Files" }), _jsx("input", { ref: fileInputRef, type: "file", accept: "application/pdf", onChange: handleFileSelect, style: { display: 'none' }, multiple: true })] }), error && _jsx("div", { className: "error-message", children: error }), isExtracting && (_jsxs("div", { className: "extraction-status", children: [_jsx("p", { children: "Extracting pages from PDF..." }), _jsxs("div", { className: "progress-bar", children: [_jsx("div", { className: "progress", style: { width: `${extractionProgress}%` } }), _jsxs("span", { children: [extractionProgress, "%"] })] })] })), pdfFiles.length > 0 && (_jsxs("div", { className: "pdf-file-list", children: [_jsxs("h3", { children: ["Uploaded Files (", pdfFiles.length, ")"] }), _jsx("button", { className: "clear-button", onClick: clearAllFiles, children: "Clear All" }), _jsx("ul", { children: pdfFiles.map((file, index) => (_jsxs("li", { children: [file.name, _jsx("button", { onClick: () => removeFile(file), className: "remove-button", children: "\u2715" })] }, index))) })] })), pdfPages.length > 0 && (_jsxs(_Fragment, { children: [_jsxs("div", { className: "pdf-pages-list", children: [_jsxs("h3", { children: ["Extracted Pages (", pdfPages.length, ")"] }), _jsx("ul", { children: pdfPages.map((page, index) => (_jsxs("li", { children: [page.name, _jsx("button", { onClick: () => removePage(index), className: "remove-button", children: "\u2715" })] }, index))) })] }), _jsxs("div", { className: "pdf-preview", children: [_jsx("button", { className: `generate-button ${isGenerating ? 'generating' : ''}`, onClick: handleGenerateClick, disabled: isGenerating || pendingGeneration, children: isGenerating ? (_jsxs(_Fragment, { children: [_jsx("span", { className: "loading-spinner" }), "Generating... ", loadingProgress, "%"] })) : ('Generate Two n T') }), isGenerating && (_jsxs("div", { className: "progress-bar", children: [_jsx("div", { className: "progress", style: { width: `${loadingProgress}%` } }), _jsxs("span", { children: [loadingProgress, "%"] })] }))] })] })), showConfirmDialog && (_jsx("div", { className: "confirmation-dialog", children: _jsxs("div", { className: "confirmation-content", children: [_jsx("h4", { children: "Download Confirmation" }), _jsx("p", { children: "The Two n T sheet will be downloaded to your device. Do you want to proceed?" }), _jsxs("div", { className: "confirmation-buttons", children: [_jsx("button", { className: "confirm-button", onClick: handleConfirmGeneration, children: "Yes, Download" }), _jsx("button", { className: "cancel-button", onClick: handleCancelGeneration, children: "Cancel" })] })] }) })), _jsx("canvas", { ref: canvasRef, style: { display: 'none' } })] }));

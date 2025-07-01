@@ -24,6 +24,7 @@ function App() {
     const [activeTab, setActiveTab] = useState('pdfstore');
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [isStandalone, setIsStandalone] = useState(false);
+    const [hasNotificationPermission, setHasNotificationPermission] = useState(false);
     // Check if app is running in standalone mode (PWA)
     useEffect(() => {
         const isInStandaloneMode = () => {
@@ -69,13 +70,38 @@ function App() {
         mql.addEventListener('change', handleChange);
         return () => mql.removeEventListener('change', handleChange);
     }, []);
+    // Check notification permission
+    useEffect(() => {
+        const checkNotificationPermission = async () => {
+            if ('Notification' in window) {
+                const permission = Notification.permission;
+                setHasNotificationPermission(permission === 'granted');
+            }
+        };
+        checkNotificationPermission();
+    }, []);
     const toggleSidebar = () => {
         setSidebarOpen(!sidebarOpen);
+    };
+    // Request notification permission if in standalone mode
+    const requestNotificationPermission = async () => {
+        if ('Notification' in window && isStandalone && !hasNotificationPermission) {
+            try {
+                const permission = await Notification.requestPermission();
+                setHasNotificationPermission(permission === 'granted');
+                return permission === 'granted';
+            }
+            catch (error) {
+                console.error('Error requesting notification permission:', error);
+                return false;
+            }
+        }
+        return false;
     };
     return (_jsx(ErrorBoundary, { children: _jsxs("div", { className: `app-container ${isStandalone ? 'standalone-mode' : ''}`, children: [_jsxs("div", { className: `sidebar ${sidebarOpen ? 'open' : 'closed'}`, children: [_jsx("div", { className: "sidebar-toggle", onClick: toggleSidebar, children: sidebarOpen ? '◀' : '▶' }), _jsxs("div", { className: "sidebar-content", children: [_jsxs("div", { className: "logo", children: [_jsx("h1", { children: "Electrical" }), _jsx("h2", { children: "Engineering" })] }), _jsxs("div", { className: "tab-selector", children: [_jsxs("button", { className: `tab-button ${activeTab === 'pdfstore' ? 'active' : ''}`, onClick: () => setActiveTab('pdfstore'), children: [_jsx("span", { className: "icon", children: "\uD83D\uDCDA" }), _jsx("span", { className: "label", children: "PDF Store" })] }), _jsxs("button", { className: `tab-button ${activeTab === 'standard' ? 'active' : ''}`, onClick: () => setActiveTab('standard'), children: [_jsx("span", { className: "icon", children: "\uD83D\uDCC4" }), _jsx("span", { className: "label", children: "Standard Sheet" })] }), _jsxs("button", { className: `tab-button ${activeTab === 'horizontal' ? 'active' : ''}`, onClick: () => setActiveTab('horizontal'), children: [_jsx("span", { className: "icon", children: "\u21D4" }), _jsx("span", { className: "label", children: "Two n T" })] }), _jsxs("button", { className: `tab-button ${activeTab === 'custom' ? 'active' : ''}`, onClick: () => setActiveTab('custom'), children: [_jsx("span", { className: "icon", children: "\uD83D\uDD04" }), _jsx("span", { className: "label", children: "Custom Order" })] })] }), sidebarOpen && (_jsxs("div", { className: "config-wrapper", children: [_jsx("h3", { className: "config-section-title", children: activeTab === 'standard' ? 'Standard Sheet Settings' :
                                                 activeTab === 'horizontal' ? 'Two n T Settings' :
                                                     activeTab === 'custom' ? 'Custom Order Settings' :
-                                                        'PDF Store Settings' }), activeTab === 'standard' ? (_jsx(ConfigPanel, { config: standardConfig, onConfigChange: setStandardConfig })) : activeTab === 'horizontal' ? (_jsx(TwoNTConfigPanel, { config: twoNTConfig, onConfigChange: setTwoNTConfig })) : activeTab === 'custom' ? (_jsx(ConfigPanel, { config: standardConfig, onConfigChange: setStandardConfig })) : null] }))] })] }), _jsxs("div", { className: "main-content", children: [_jsx("div", { className: "content-header", children: _jsx("h2", { children: activeTab === 'standard' ? 'Standard Contact Sheet' :
+                                                        'PDF Store Settings' }), activeTab === 'standard' ? (_jsx(ConfigPanel, { config: standardConfig, onConfigChange: setStandardConfig })) : activeTab === 'horizontal' ? (_jsx(TwoNTConfigPanel, { config: twoNTConfig, onConfigChange: setTwoNTConfig })) : activeTab === 'custom' ? (_jsx(ConfigPanel, { config: standardConfig, onConfigChange: setStandardConfig })) : null, isStandalone && activeTab === 'pdfstore' && !hasNotificationPermission && (_jsxs("div", { className: "notification-permission-container", children: [_jsx("button", { className: "notification-permission-button", onClick: requestNotificationPermission, children: "Enable Download Notifications" }), _jsx("p", { className: "notification-permission-info", children: "Allow notifications to get updates about your PDF downloads" })] }))] }))] })] }), _jsxs("div", { className: "main-content", children: [_jsx("div", { className: "content-header", children: _jsx("h2", { children: activeTab === 'standard' ? 'Standard Contact Sheet' :
                                     activeTab === 'horizontal' ? 'Two n T Layout' :
                                         activeTab === 'custom' ? 'Custom Order Contact Sheet' :
                                             'Electrical Engineering PDF Store' }) }), _jsx("div", { className: "content-body", children: activeTab === 'standard' ? (_jsx("div", { className: "standard-sheet-section", children: _jsx(PDFContactSheet, { config: standardConfig }) })) : activeTab === 'horizontal' ? (_jsx("div", { className: "two-n-t-section", children: _jsx(HorizontalPDFContactSheet, { config: twoNTConfig }) })) : activeTab === 'custom' ? (_jsx("div", { className: "custom-order-section", children: _jsx(CustomOrderPDFContactSheet, { config: standardConfig }) })) : (_jsx("div", { className: "pdf-store-section", children: _jsx(PDFStore, {}) })) })] })] }) }));

@@ -13,9 +13,9 @@ pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pd
 
 // Add viewport meta tag dynamically to ensure proper scaling on mobile
 const ensureViewportMeta = () => {
-  let viewport = document.querySelector('meta[name="viewport"]');
+  let viewport = document.querySelector('meta[name="viewport"]') as HTMLMetaElement | null;
   if (!viewport) {
-    viewport = document.createElement('meta');
+    viewport = document.createElement('meta') as HTMLMetaElement;
     viewport.name = 'viewport';
     document.head.appendChild(viewport);
   }
