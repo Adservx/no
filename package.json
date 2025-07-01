@@ -15,7 +15,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "start": "serve -s dist"
+    "start": "serve -s dist",
+    "vercel-build": "tsc && vite build"
   },
   "dependencies": {
     "@types/jspdf": "^2.0.0",
