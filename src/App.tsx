@@ -40,6 +40,7 @@ function App() {
   const [activeTab, setActiveTab] = useState<'standard' | 'horizontal' | 'custom' | 'pdfstore'>('pdfstore');
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [isStandalone, setIsStandalone] = useState<boolean>(false);
+  const [hasNotificationPermission, setHasNotificationPermission] = useState<boolean>(false);
 
   // Check if app is running in standalone mode (PWA)
   useEffect(() => {
@@ -97,8 +98,35 @@ function App() {
     return () => mql.removeEventListener('change', handleChange);
   }, []);
 
+  // Check notification permission
+  useEffect(() => {
+    const checkNotificationPermission = async () => {
+      if ('Notification' in window) {
+        const permission = Notification.permission;
+        setHasNotificationPermission(permission === 'granted');
+      }
+    };
+    
+    checkNotificationPermission();
+  }, []);
+
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
+  };
+
+  // Request notification permission if in standalone mode
+  const requestNotificationPermission = async () => {
+    if ('Notification' in window && isStandalone && !hasNotificationPermission) {
+      try {
+        const permission = await Notification.requestPermission();
+        setHasNotificationPermission(permission === 'granted');
+        return permission === 'granted';
+      } catch (error) {
+        console.error('Error requesting notification permission:', error);
+        return false;
+      }
+    }
+    return false;
   };
 
   return (
@@ -159,6 +187,21 @@ function App() {
                 ) : activeTab === 'custom' ? (
                   <ConfigPanel config={standardConfig} onConfigChange={setStandardConfig} />
                 ) : null}
+                
+                {/* Show notification permission button in PWA mode */}
+                {isStandalone && activeTab === 'pdfstore' && !hasNotificationPermission && (
+                  <div className="notification-permission-container">
+                    <button 
+                      className="notification-permission-button"
+                      onClick={requestNotificationPermission}
+                    >
+                      Enable Download Notifications
+                    </button>
+                    <p className="notification-permission-info">
+                      Allow notifications to get updates about your PDF downloads
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>

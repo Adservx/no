@@ -546,3 +546,50 @@ html.ios-standalone {
         padding-right: env(safe-area-inset-right);
     }
 }
+
+/* Notification Permission Button */
+.notification-permission-container {
+  margin-top: 20px;
+  padding: 15px;
+  background: rgba(0, 188, 212, 0.1);
+  border-radius: var(--border-radius);
+  border: 1px solid rgba(0, 188, 212, 0.3);
+  text-align: center;
+}
+
+.notification-permission-button {
+  background: linear-gradient(to right, var(--primary-color), var(--accent-color));
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: var(--border-radius);
+  font-family: var(--font-family-base);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 10px;
+}
+
+.notification-permission-button:hover {
+  background: linear-gradient(to right, var(--primary-hover), var(--accent-hover));
+  box-shadow: 0 0 10px rgba(0, 188, 212, 0.5);
+  transform: translateY(-2px);
+}
+
+.notification-permission-info {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* PWA specific styles */
+html.pwa-mode .notification-permission-container {
+  margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+  .notification-permission-container {
+    margin-top: 15px;
+    padding: 12px;
+  }
+}
