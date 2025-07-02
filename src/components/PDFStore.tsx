@@ -29,6 +29,13 @@ interface Notification {
   closing?: boolean;
 }
 
+// Interface for download progress tracking
+interface DownloadProgress {
+  isDownloading: boolean;
+  progress: number;
+  isComplete: boolean;
+}
+
 const electricalEngineeringSemesters: SemesterData[] = [
   {
     name: "First Semester",
@@ -226,6 +233,7 @@ export const PDFStore: React.FC = () => {
   const [isDownloading, setIsDownloading] = useState<{[key: string]: boolean}>({});
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [fileDownloads, setFileDownloads] = useState<{[key: string]: boolean}>({});
+  const [downloadProgress, setDownloadProgress] = useState<{[key: string]: DownloadProgress}>({});
   const [notificationPermission, setNotificationPermission] = useState<boolean>(false);
   const downloadLinksRef = useRef<HTMLDivElement>(null);
   const activeDownloadsRef = useRef<{[key: string]: { xhr: XMLHttpRequest, notifId: string }}>({});
@@ -344,6 +352,16 @@ export const PDFStore: React.FC = () => {
     // Set downloading state for this subject
     setIsDownloading(prev => ({ ...prev, [subject.name]: true }));
     
+    // Initialize progress tracking
+    setDownloadProgress(prev => ({ 
+      ...prev, 
+      [subject.name]: { 
+        isDownloading: true, 
+        progress: 0,
+        isComplete: false
+      } 
+    }));
+    
     // Show notification
     const notifId = addNotification({
       type: 'downloading',
@@ -371,6 +389,16 @@ export const PDFStore: React.FC = () => {
         setTimeout(() => {
           // Update notification progress
           const progress = Math.round(((index + 1) / subject.files.length) * 100);
+          
+          // Update download progress state
+          setDownloadProgress(prev => ({ 
+            ...prev, 
+            [subject.name]: { 
+              ...prev[subject.name],
+              progress: progress
+            } 
+          }));
+          
           updateNotification(notifId, {
             progress,
             message: `Downloading file ${index + 1} of ${subject.files.length}...`
@@ -398,15 +426,23 @@ export const PDFStore: React.FC = () => {
             console.log(`Started download for ${file.name}`);
           };
           
-          // Add to document
           downloadLinksRef.current?.appendChild(iframe);
           
-          // If last file, reset downloading state after a delay
+          // If this is the last file, mark the batch as complete after a delay
           if (index === subject.files.length - 1) {
             setTimeout(() => {
               setIsDownloading(prev => ({ ...prev, [subject.name]: false }));
               
-              // Change to success notification
+              // Mark as complete
+              setDownloadProgress(prev => ({ 
+                ...prev, 
+                [subject.name]: { 
+                  isDownloading: false, 
+                  progress: 100,
+                  isComplete: true
+                } 
+              }));
+              
               updateNotification(notifId, {
                 type: 'success',
                 title: 'Download Complete',
@@ -414,7 +450,6 @@ export const PDFStore: React.FC = () => {
                 progress: 100
               });
               
-              // Notify service worker of completion for PWA
               if (isPWA() && serviceWorkerActive) {
                 notifyServiceWorkerComplete(
                   'Download Complete',
@@ -422,17 +457,34 @@ export const PDFStore: React.FC = () => {
                   `download-batch-${subject.name}`
                 );
               }
-            }, 1000);
+              
+              // Clean up iframes after a delay
+              setTimeout(() => {
+                if (downloadLinksRef.current) {
+                  downloadLinksRef.current.innerHTML = '';
+                }
+              }, 1000);
+            }, 1000 * subject.files.length / 2); // Allow time for all downloads to complete
           }
-        }, index * 1000); // 1 second delay between downloads
+        }, index * 800); // Stagger downloads by 800ms
       });
     }
   };
-
-  // Alternative download method using anchor tags
+  
+  // Alternative download method using XHR for better progress tracking
   const downloadAllFilesAlt = (subject: Subject) => {
     // Set downloading state for this subject
     setIsDownloading(prev => ({ ...prev, [subject.name]: true }));
+    
+    // Initialize progress tracking
+    setDownloadProgress(prev => ({ 
+      ...prev, 
+      [subject.name]: { 
+        isDownloading: true, 
+        progress: 0,
+        isComplete: false
+      } 
+    }));
     
     // Show notification
     const notifId = addNotification({
@@ -451,62 +503,153 @@ export const PDFStore: React.FC = () => {
       );
     }
     
-    subject.files.forEach((file, index) => {
-      setTimeout(() => {
-        // Update notification progress
-        const progress = Math.round(((index + 1) / subject.files.length) * 100);
+    // Track overall progress
+    let totalFiles = subject.files.length;
+    let completedFiles = 0;
+    
+    // Process each file sequentially
+    const downloadNextFile = (index: number) => {
+      if (index >= totalFiles) {
+        // All files completed
+        setIsDownloading(prev => ({ ...prev, [subject.name]: false }));
+        
+        // Mark as complete
+        setDownloadProgress(prev => ({ 
+          ...prev, 
+          [subject.name]: { 
+            isDownloading: false, 
+            progress: 100,
+            isComplete: true
+          } 
+        }));
+        
         updateNotification(notifId, {
-          progress,
-          message: `Downloading file ${index + 1} of ${subject.files.length}...`
+          type: 'success',
+          title: 'Download Complete',
+          message: `All ${totalFiles} files from ${subject.name} have been downloaded.`,
+          progress: 100
         });
         
-        // Update service worker progress for PWA
-        if (isPWA() && serviceWorkerActive && index % 2 === 0) { // Update every other file
-          updateServiceWorkerProgress(
-            progress,
-            `Downloading ${subject.name}`,
-            `File ${index + 1} of ${subject.files.length}`,
+        if (isPWA() && serviceWorkerActive) {
+          notifyServiceWorkerComplete(
+            'Download Complete',
+            `All ${totalFiles} files from ${subject.name} have been downloaded.`,
             `download-batch-${subject.name}`
           );
         }
         
-        // Fix path to ensure it's properly resolved from the base URL
-        const basePath = window.location.origin;
-        const filePath = file.path.startsWith('/') ? `${basePath}${file.path}` : `${basePath}/${file.path}`;
-        
-        const link = document.createElement('a');
-        link.href = filePath;
-        link.setAttribute('download', getShortFilename(subject, file, index));
-        link.setAttribute('target', '_blank');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        // If last file, reset downloading state after a delay
-        if (index === subject.files.length - 1) {
-          setTimeout(() => {
-            setIsDownloading(prev => ({ ...prev, [subject.name]: false }));
-            
-            // Change to success notification
-            updateNotification(notifId, {
-              type: 'success',
-              title: 'Download Complete',
-              message: `All ${subject.files.length} files from ${subject.name} have been downloaded.`,
-              progress: 100
-            });
-            
-            // Notify service worker of completion for PWA
-            if (isPWA() && serviceWorkerActive) {
-              notifyServiceWorkerComplete(
-                'Download Complete',
-                `All ${subject.files.length} files from ${subject.name} have been downloaded.`,
-                `download-batch-${subject.name}`
-              );
-            }
-          }, 1000);
+        return;
+      }
+      
+      const file = subject.files[index];
+      const fileId = `${subject.name}-${file.name}`;
+      
+      // Fix path to ensure it's properly resolved from the base URL
+      const basePath = window.location.origin;
+      const filePath = file.path.startsWith('/') ? `${basePath}${file.path}` : `${basePath}/${file.path}`;
+      
+      // For desktop browsers, use XMLHttpRequest to track download progress
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', filePath, true);
+      xhr.responseType = 'blob';
+      
+      // Track download progress
+      xhr.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const fileProgress = Math.round((event.loaded / event.total) * 100);
+          const overallProgress = Math.round(((completedFiles + (fileProgress / 100)) / totalFiles) * 100);
+          
+          // Update batch progress
+          setDownloadProgress(prev => ({ 
+            ...prev, 
+            [subject.name]: { 
+              ...prev[subject.name],
+              progress: overallProgress
+            } 
+          }));
+          
+          updateNotification(notifId, {
+            progress: overallProgress,
+            message: `Downloading file ${index + 1} of ${totalFiles}: ${fileProgress}%`
+          });
+          
+          // Update service worker progress for PWA
+          if (isPWA() && serviceWorkerActive && fileProgress % 20 === 0) { // Update every 20%
+            updateServiceWorkerProgress(
+              overallProgress,
+              `Downloading ${subject.name}`,
+              `File ${index + 1} of ${totalFiles}: ${fileProgress}%`,
+              `download-batch-${subject.name}`
+            );
+          }
         }
-      }, index * 1500); // 1.5 second delay between downloads
-    });
+      };
+      
+      // Handle download completion
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          // Create download link
+          const blob = new Blob([xhr.response], { 
+            type: file.isContactSheet ? 'image/jpeg' : 'application/pdf' 
+          });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = getShortFilename(subject, file, index);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          // Clean up
+          setTimeout(() => URL.revokeObjectURL(url), 100);
+          
+          // Increment completed files counter
+          completedFiles++;
+          
+          // Update overall progress
+          const overallProgress = Math.round((completedFiles / totalFiles) * 100);
+          
+          // Update batch progress
+          setDownloadProgress(prev => ({ 
+            ...prev, 
+            [subject.name]: { 
+              ...prev[subject.name],
+              progress: overallProgress
+            } 
+          }));
+          
+          updateNotification(notifId, {
+            progress: overallProgress,
+            message: `Downloaded file ${index + 1} of ${totalFiles}`
+          });
+          
+          // Download next file after a short delay
+          setTimeout(() => {
+            downloadNextFile(index + 1);
+          }, 800);
+        }
+      };
+      
+      // Handle download errors
+      xhr.onerror = () => {
+        updateNotification(notifId, {
+          type: 'error',
+          title: 'Download Failed',
+          message: `Failed to download ${file.name}. Continuing with next file...`
+        });
+        
+        // Try next file
+        setTimeout(() => {
+          downloadNextFile(index + 1);
+        }, 800);
+      };
+      
+      // Start download
+      xhr.send();
+    };
+    
+    // Start downloading the first file
+    downloadNextFile(0);
   };
 
   // Function to handle single file download with real progress tracking
@@ -518,6 +661,16 @@ export const PDFStore: React.FC = () => {
     
     // Set downloading state
     setFileDownloads(prev => ({ ...prev, [fileId]: true }));
+    
+    // Initialize progress tracking
+    setDownloadProgress(prev => ({ 
+      ...prev, 
+      [fileId]: { 
+        isDownloading: true, 
+        progress: 0,
+        isComplete: false
+      } 
+    }));
     
     // Add notification
     const notifId = addNotification({
@@ -553,6 +706,15 @@ export const PDFStore: React.FC = () => {
         const interval = setInterval(() => {
           progress += 5;
           if (progress <= 95) {
+            // Update download progress state
+            setDownloadProgress(prev => ({ 
+              ...prev, 
+              [fileId]: { 
+                ...prev[fileId],
+                progress: progress
+              } 
+            }));
+            
             updateNotification(notifId, {
               progress,
               message: `Downloading... ${progress}%`
@@ -568,6 +730,17 @@ export const PDFStore: React.FC = () => {
         // Mark as completed after a reasonable time
         setTimeout(() => {
           setFileDownloads(prev => ({ ...prev, [fileId]: false }));
+          
+          // Mark as complete
+          setDownloadProgress(prev => ({ 
+            ...prev, 
+            [fileId]: { 
+              isDownloading: false, 
+              progress: 100,
+              isComplete: true
+            } 
+          }));
+          
           updateNotification(notifId, {
             type: 'success',
             title: 'Download Complete',
@@ -584,6 +757,16 @@ export const PDFStore: React.FC = () => {
           message: `Failed to download ${file.name}. Please try again.`
         });
         setFileDownloads(prev => ({ ...prev, [fileId]: false }));
+        
+        // Reset progress state
+        setDownloadProgress(prev => ({ 
+          ...prev, 
+          [fileId]: { 
+            isDownloading: false, 
+            progress: 0,
+            isComplete: false
+          } 
+        }));
       }
       return;
     }
@@ -597,6 +780,16 @@ export const PDFStore: React.FC = () => {
     xhr.onprogress = (event) => {
       if (event.lengthComputable) {
         const progress = Math.round((event.loaded / event.total) * 100);
+        
+        // Update download progress state
+        setDownloadProgress(prev => ({ 
+          ...prev, 
+          [fileId]: { 
+            ...prev[fileId],
+            progress: progress
+          } 
+        }));
+        
         updateNotification(notifId, {
           progress,
           message: `Downloading... ${progress}%`
@@ -632,6 +825,16 @@ export const PDFStore: React.FC = () => {
         // Clean up
         setTimeout(() => URL.revokeObjectURL(url), 100);
         
+        // Mark as complete
+        setDownloadProgress(prev => ({ 
+          ...prev, 
+          [fileId]: { 
+            isDownloading: false, 
+            progress: 100,
+            isComplete: true
+          } 
+        }));
+        
         // Update notification
         updateNotification(notifId, {
           type: 'success',
@@ -664,6 +867,17 @@ export const PDFStore: React.FC = () => {
       });
       
       setFileDownloads(prev => ({ ...prev, [fileId]: false }));
+      
+      // Reset progress state
+      setDownloadProgress(prev => ({ 
+        ...prev, 
+        [fileId]: { 
+          isDownloading: false, 
+          progress: 0,
+          isComplete: false
+        } 
+      }));
+      
       delete activeDownloadsRef.current[notifId];
     };
     
@@ -676,6 +890,17 @@ export const PDFStore: React.FC = () => {
       });
       
       setFileDownloads(prev => ({ ...prev, [fileId]: false }));
+      
+      // Reset progress state
+      setDownloadProgress(prev => ({ 
+        ...prev, 
+        [fileId]: { 
+          isDownloading: false, 
+          progress: 0,
+          isComplete: false
+        } 
+      }));
+      
       delete activeDownloadsRef.current[notifId];
     };
     
@@ -684,6 +909,13 @@ export const PDFStore: React.FC = () => {
     
     // Store reference to active download
     activeDownloadsRef.current[notifId] = { xhr, notifId };
+  };
+  
+  // Function to open downloads folder
+  const handleOpenDownloadsFolder = () => {
+    import('../utils/notificationUtils').then(utils => {
+      utils.openDownloadsFolder();
+    });
   };
 
   return (
@@ -760,11 +992,32 @@ export const PDFStore: React.FC = () => {
                 <>
                   {subject.files.length > 1 && (
                     <button 
-                      className={`download-all-button ${isDownloading[subject.name] ? 'downloading' : ''}`}
-                      onClick={() => downloadAllFilesAlt(subject)}
+                      className={`download-all-button ${
+                        isDownloading[subject.name] ? 'downloading' : 
+                        downloadProgress[subject.name]?.isComplete ? 'success' : ''
+                      }`}
+                      onClick={() => {
+                        if (downloadProgress[subject.name]?.isComplete) {
+                          handleOpenDownloadsFolder();
+                        } else {
+                          downloadAllFilesAlt(subject);
+                        }
+                      }}
                       disabled={isDownloading[subject.name]}
+                      style={
+                        isDownloading[subject.name] && downloadProgress[subject.name] 
+                          ? { '--progress-width': `${downloadProgress[subject.name].progress}%` } as React.CSSProperties
+                          : undefined
+                      }
                     >
-                      {isDownloading[subject.name] ? 'Downloading...' : 'Download All Files'}
+                      <span>
+                        {isDownloading[subject.name] 
+                          ? `Downloading... ${downloadProgress[subject.name]?.progress || 0}%` 
+                          : downloadProgress[subject.name]?.isComplete 
+                            ? 'Open Downloads Folder' 
+                            : 'Download All Files'
+                        }
+                      </span>
                     </button>
                   )}
                   
@@ -780,6 +1033,7 @@ export const PDFStore: React.FC = () => {
                       {subject.files.map((file, fileIndex) => {
                         const fileId = `${subject.name}-${file.name}`;
                         const isFileDownloading = fileDownloads[fileId];
+                        const fileProgress = downloadProgress[fileId];
                         
                         return (
                           <div key={fileIndex} className="file-item">
@@ -790,14 +1044,33 @@ export const PDFStore: React.FC = () => {
                             <a 
                               href={`${window.location.origin}${file.path.startsWith('/') ? file.path : '/' + file.path}`}
                               download={getShortFilename(subject, file, fileIndex)}
-                              className={`download-file-button ${isFileDownloading ? 'downloading' : ''}`}
+                              className={`download-file-button ${
+                                isFileDownloading ? 'downloading' : 
+                                fileProgress?.isComplete ? 'success' : ''
+                              }`}
                               target="_blank"
                               onClick={(e) => {
                                 e.preventDefault(); // Prevent default anchor behavior
-                                handleFileDownload(subject, file, fileIndex);
+                                if (fileProgress?.isComplete) {
+                                  handleOpenDownloadsFolder();
+                                } else {
+                                  handleFileDownload(subject, file, fileIndex);
+                                }
                               }}
+                              style={
+                                isFileDownloading && fileProgress 
+                                  ? { '--progress-width': `${fileProgress.progress}%` } as React.CSSProperties
+                                  : undefined
+                              }
                             >
-                              {isFileDownloading ? 'Downloading...' : 'Download'}
+                              <span>
+                                {isFileDownloading 
+                                  ? `${fileProgress?.progress || 0}%` 
+                                  : fileProgress?.isComplete 
+                                    ? 'Open Location' 
+                                    : 'Download'
+                                }
+                              </span>
                             </a>
                           </div>
                         );
