@@ -450,6 +450,7 @@ export const PDFStore: React.FC = () => {
                 progress: 100
               });
               
+              // Notify service worker of completion for PWA
               if (isPWA() && serviceWorkerActive) {
                 notifyServiceWorkerComplete(
                   'Download Complete',
