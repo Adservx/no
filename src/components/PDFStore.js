@@ -488,19 +488,49 @@ export const PDFStore = () => {
                         clearInterval(interval);
                     }
                 }, 100);
-                // Open file in new tab (this works better on mobile)
-                window.open(filePath, '_blank');
-                // Mark as completed after a reasonable time
-                setTimeout(() => {
-                    setFileDownloads(prev => ({ ...prev, [fileId]: false }));
-                    updateNotification(notifId, {
-                        type: 'success',
-                        title: 'Download Complete',
-                        message: `${file.name} has been opened in a new tab.`,
-                        progress: 100
+                
+                // Use fetch API to get the file as blob first
+                fetch(filePath)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.blob();
+                    })
+                    .then(blob => {
+                        // Create a temporary URL for the blob
+                        const url = URL.createObjectURL(blob);
+                        
+                        // Create a link to download the file
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = getShortFilename(subject, file, fileIndex);
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        
+                        // Clean up the URL
+                        setTimeout(() => URL.revokeObjectURL(url), 100);
+                        
+                        // Mark as completed
+                        clearInterval(interval);
+                        setFileDownloads(prev => ({ ...prev, [fileId]: false }));
+                        
+                        updateNotification(notifId, {
+                            type: 'success',
+                            title: 'Download Complete',
+                            message: `${file.name} has been downloaded.`,
+                            progress: 100
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error downloading file on mobile:', error);
+                        clearInterval(interval);
+                        updateNotification(notifId, {
+                            type: 'error',
+                            title: 'Download Failed',
+                            message: `Failed to download ${file.name}. Please try again.`
+                        });
+                        setFileDownloads(prev => ({ ...prev, [fileId]: false }));
                     });
-                    clearInterval(interval);
-                }, 2000);
             }
             catch (error) {
                 console.error('Error downloading file on mobile:', error);
@@ -531,40 +561,9 @@ export const PDFStore = () => {
                 }
             }
         };
-        // Handle download completion
-        xhr.onload = () => {
-            if (xhr.status === 200) {
-                // Create download link
-                const blob = new Blob([xhr.response], {
-                    type: file.isContactSheet ? 'image/jpeg' : 'application/pdf'
-                });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = getShortFilename(subject, file, fileIndex);
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                // Clean up
-                setTimeout(() => URL.revokeObjectURL(url), 100);
-                // Update notification
-                updateNotification(notifId, {
-                    type: 'success',
-                    title: 'Download Complete',
-                    message: `${file.name} has been downloaded.`,
-                    progress: 100
-                });
-                // Notify service worker of completion for PWA
-                if (isPWA() && serviceWorkerActive) {
-                    notifyServiceWorkerComplete('Download Complete', `${file.name} has been downloaded.`, `download-${fileId}`);
-                }
-                // Clean up download tracking
-                setFileDownloads(prev => ({ ...prev, [fileId]: false }));
-                delete activeDownloadsRef.current[notifId];
-            }
-        };
-        // Handle download errors
-        xhr.onerror = () => {
+        
+        // Helper function for error handling
+        const handleDownloadError = () => {
             updateNotification(notifId, {
                 type: 'error',
                 title: 'Download Failed',
@@ -573,6 +572,50 @@ export const PDFStore = () => {
             setFileDownloads(prev => ({ ...prev, [fileId]: false }));
             delete activeDownloadsRef.current[notifId];
         };
+        
+        // Handle download completion
+        xhr.onload = () => {
+            if (xhr.status === 200) {
+                try {
+                    // Create download link
+                    const blob = new Blob([xhr.response], {
+                        type: file.isContactSheet ? 'image/jpeg' : 'application/pdf'
+                    });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = getShortFilename(subject, file, fileIndex);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    // Clean up
+                    setTimeout(() => URL.revokeObjectURL(url), 100);
+                    // Update notification
+                    updateNotification(notifId, {
+                        type: 'success',
+                        title: 'Download Complete',
+                        message: `${file.name} has been downloaded.`,
+                        progress: 100
+                    });
+                    // Notify service worker of completion for PWA
+                    if (isPWA() && serviceWorkerActive) {
+                        notifyServiceWorkerComplete('Download Complete', `${file.name} has been downloaded.`, `download-${fileId}`);
+                    }
+                    // Clean up download tracking
+                    setFileDownloads(prev => ({ ...prev, [fileId]: false }));
+                    delete activeDownloadsRef.current[notifId];
+                } catch (error) {
+                    console.error('Error creating download link:', error);
+                    handleDownloadError();
+                }
+            } else {
+                handleDownloadError();
+            }
+        };
+        
+        // Handle download errors
+        xhr.onerror = handleDownloadError;
+        
         // Handle download abort
         xhr.onabort = () => {
             updateNotification(notifId, {
