@@ -1,0 +1,6 @@
+# Ignore JavaScript files that have TypeScript equivalents
+src/**/*.js
+# Ignore node_modules
+node_modules
+# Ignore build artifacts
+dist 

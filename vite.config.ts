@@ -7,7 +7,7 @@ import { resolve } from 'path'
 export default defineConfig({
   plugins: [
     react({
-      include: '**/*.{jsx,tsx,js,ts}',
+      include: '**/*.{jsx,tsx}',
       babel: {
         parserOpts: {
           plugins: ['jsx', 'typescript']
@@ -85,7 +85,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src')
-    }
+    },
+    extensions: ['.tsx', '.ts', '.jsx', '.js']
   },
   esbuild: {
     logOverride: { 'this-is-undefined-in-esm': 'silent' },
