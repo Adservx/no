@@ -262,16 +262,29 @@ button:active {
 @media (max-width: 768px) {
   .app {
     padding: 10px;
-    background-color: var(--background-color);
+    min-height: 100vh;
+    min-height: -webkit-fill-available; /* iOS viewport height fix */
   }
   
   button {
-    width: 100%;
-    max-width: 300px;
+    padding: 10px 20px;
+    font-size: 1rem;
   }
   
   .error-boundary {
-    background: rgba(255, 0, 0, 0.1);
+    padding: 1rem;
+    margin: 1rem auto;
+  }
+  
+  /* Improve touch targets on mobile */
+  .files-list::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  button, 
+  .download-file-button,
+  .file-item {
+    min-height: 44px; /* Minimum Apple recommended touch target size */
   }
 }
 
@@ -290,4 +303,17 @@ p {
   text-align: center;
   font-family: var(--font-family-cursive);
   font-size: 1.1rem;
+}
+
+/* Add touch scrolling support for all devices */
+* {
+  -webkit-overflow-scrolling: touch;
+  -ms-overflow-style: -ms-autohiding-scrollbar;
+}
+
+/* Force scroll snapping to work better on iOS */
+.files-list {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }

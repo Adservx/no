@@ -12,6 +12,47 @@
   overflow: hidden;
 }
 
+/* Error state for PDF Store */
+.pdf-store-error {
+  width: 100%;
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 30px;
+  text-align: center;
+  background-color: var(--card-bg);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg), 0 0 15px rgba(255, 0, 0, 0.2);
+  border: 1px solid rgba(255, 0, 0, 0.2);
+  backdrop-filter: blur(5px);
+}
+
+.pdf-store-error h2 {
+  color: #f44336;
+  font-size: 1.8rem;
+  margin-bottom: 15px;
+}
+
+.pdf-store-error p {
+  color: var(--text-color);
+  margin-bottom: 20px;
+}
+
+.pdf-store-error button {
+  background: linear-gradient(to right, #f44336, #d32f2f);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.pdf-store-error button:hover {
+  background: linear-gradient(to right, #d32f2f, #b71c1c);
+  box-shadow: 0 0 10px rgba(244, 67, 54, 0.3);
+}
+
 .pdf-store-container::before {
   content: '';
   position: absolute;
@@ -247,6 +288,9 @@
   margin-top: 5px;
   max-height: 250px;
   overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; /* Enables smooth scrolling on iOS devices */
+  scrollbar-width: thin; /* For Firefox */
 }
 
 .file-item {
@@ -372,6 +416,11 @@
   background: var(--primary-hover);
 }
 
+/* Firefox scrollbar */
+.files-list {
+  scrollbar-color: var(--primary-color) rgba(255, 255, 255, 0.05);
+}
+
 @media (max-width: 768px) {
   .subjects-grid {
     grid-template-columns: 1fr;
@@ -446,8 +495,25 @@
     font-size: 1.1rem;
   }
   
-  .file-icon {
-    font-size: 1.5rem;
+  .files-list {
+    max-height: 200px; /* Slightly smaller for mobile */
+    -webkit-overflow-scrolling: touch; /* Ensure smooth scrolling on iOS */
+    /* Fix iOS 15+ momentum scrolling issues */
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    position: relative; /* Needed for proper scrolling */
+    z-index: 10; /* Ensure it's above other elements */
+  }
+  
+  /* Add momentum scrolling polyfill for older iOS versions */
+  .files-list::before {
+    content: "";
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    left: -1px;
+    top: -1px;
+    z-index: -1;
   }
 }
 

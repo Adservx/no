@@ -228,22 +228,28 @@ const electricalEngineeringSemesters: SemesterData[] = [
 ];
 
 export const PDFStore: React.FC = () => {
-  const [activeSemester, setActiveSemester] = useState<number>(0);
-  const [expandedSubjects, setExpandedSubjects] = useState<{[key: string]: boolean}>({});
-  const [isDownloading, setIsDownloading] = useState<{[key: string]: boolean}>({});
+  const [activeSemester, setActiveSemester] = useState(0);
+  const [expandedSubjects, setExpandedSubjects] = useState<Record<string, boolean>>({});
+  const [isDownloading, setIsDownloading] = useState<Record<string, boolean>>({});
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [fileDownloads, setFileDownloads] = useState<{[key: string]: boolean}>({});
-  const [downloadProgress, setDownloadProgress] = useState<{[key: string]: DownloadProgress}>({});
-  const [notificationPermission, setNotificationPermission] = useState<boolean>(false);
+  const [fileDownloads, setFileDownloads] = useState<Record<string, boolean>>({});
+  const [notificationPermission, setNotificationPermission] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState<Record<string, DownloadProgress>>({});
+  const [loadError, setLoadError] = useState<string | null>(null);
   const downloadLinksRef = useRef<HTMLDivElement>(null);
-  const activeDownloadsRef = useRef<{[key: string]: { xhr: XMLHttpRequest, notifId: string }}>({});
-  const [serviceWorkerActive, setServiceWorkerActive] = useState<boolean>(false);
+  const activeDownloadsRef = useRef<Record<string, {xhr: XMLHttpRequest, notifId: string}>>({});
+  const [serviceWorkerActive, setServiceWorkerActive] = useState(false);
+  const filesListRefs = useRef<Record<string, React.RefObject<HTMLDivElement>>>({});
 
   // Check notification permission on component mount
   useEffect(() => {
     const checkPermission = async () => {
-      const hasPermission = await requestNotificationPermission();
-      setNotificationPermission(hasPermission);
+      try {
+        const hasPermission = await requestNotificationPermission();
+        setNotificationPermission(hasPermission);
+      } catch (error) {
+        console.error("Failed to check notification permission:", error);
+      }
     };
     
     if (isPWA()) {
@@ -251,103 +257,147 @@ export const PDFStore: React.FC = () => {
     }
   }, []);
 
-  // Check service worker status on component mount
+  // Check for service worker activation
   useEffect(() => {
     const checkServiceWorker = async () => {
-      if ('serviceWorker' in navigator) {
-        try {
-          // Check if service worker is active
-          const registration = await navigator.serviceWorker.ready;
-          setServiceWorkerActive(!!registration.active);
-        } catch (error) {
-          console.error('Service worker error:', error);
+      try {
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          setServiceWorkerActive(registrations.length > 0);
         }
+      } catch (error) {
+        console.error("Service worker check failed:", error);
+        setServiceWorkerActive(false);
       }
     };
     
     checkServiceWorker();
   }, []);
 
+  // Create refs for each subject's files list
+  useEffect(() => {
+    try {
+      const refs: Record<string, React.RefObject<HTMLDivElement>> = {};
+      
+      electricalEngineeringSemesters.forEach(semester => {
+        semester.subjects.forEach(subject => {
+          refs[subject.name] = React.createRef<HTMLDivElement>();
+        });
+      });
+      
+      filesListRefs.current = refs;
+    } catch (error) {
+      console.error("Failed to create refs:", error);
+      setLoadError("Failed to initialize file references");
+    }
+  }, []);
+
+  // Fix for scroll issue in mobile browsers
+  useEffect(() => {
+    const handleScrollFix = () => {
+      try {
+        if (typeof window !== 'undefined') {
+          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+          
+          if (isIOS) {
+            document.addEventListener('touchmove', function(e) {
+              if (e.target !== document.documentElement) {
+                e.stopPropagation();
+              }
+            }, { passive: false });
+          }
+        }
+      } catch (error) {
+        console.error("Scroll fix error:", error);
+      }
+    };
+    
+    handleScrollFix();
+  }, []);
+
+  // Toggle subject expansion
   const toggleSubject = (subjectName: string) => {
-    setExpandedSubjects(prev => ({
-      ...prev,
-      [subjectName]: !prev[subjectName]
-    }));
+    try {
+      setExpandedSubjects(prev => {
+        const newState = { ...prev, [subjectName]: !prev[subjectName] };
+        
+        // Scroll to files list if expanded
+        if (newState[subjectName] && filesListRefs.current[subjectName]?.current) {
+          setTimeout(() => {
+            filesListRefs.current[subjectName]?.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }, 100);
+        }
+        
+        return newState;
+      });
+    } catch (error) {
+      console.error("Toggle subject error:", error);
+      addNotification({
+        type: 'error',
+        title: 'Error Expanding Subject',
+        message: 'There was a problem expanding this subject'
+      });
+    }
   };
 
+  // Check if subject is expanded
   const isSubjectExpanded = (subjectName: string) => {
     return !!expandedSubjects[subjectName];
   };
-  
+
+  // Add notification
   const addNotification = (notification: Omit<Notification, 'id'>) => {
-    const id = Math.random().toString(36).substring(2, 10);
-    setNotifications(prev => [...prev, { ...notification, id }]);
+    const id = `notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const newNotification = { ...notification, id };
     
-    // Show system notification for PWA if permission granted
-    if (isPWA() && notificationPermission && notification.type === 'success') {
-      showBrowserNotification(notification.title, notification.message);
-    }
+    setNotifications(prev => [...prev, newNotification]);
     
     return id;
   };
-  
+
+  // Update notification
   const updateNotification = (id: string, updates: Partial<Notification>) => {
-    setNotifications(prev => prev.map(notif => 
-      notif.id === id ? { ...notif, ...updates } : notif
+    setNotifications(prev => prev.map(n => 
+      n.id === id ? { ...n, ...updates } : n
+    ));
+  };
+
+  // Remove notification
+  const removeNotification = (id: string) => {
+    // Mark notification for closing animation
+    setNotifications(prev => prev.map(n => 
+      n.id === id ? { ...n, closing: true } : n
     ));
     
-    // Update system notification for PWA if it's a success update
-    if (isPWA() && notificationPermission && updates.type === 'success') {
-      const notification = notifications.find(n => n.id === id);
-      if (notification) {
-        showBrowserNotification(updates.title || notification.title, updates.message || notification.message);
+    // Cancel active download if exists
+    if (activeDownloadsRef.current[id]) {
+      try {
+        activeDownloadsRef.current[id].xhr.abort();
+        delete activeDownloadsRef.current[id];
+      } catch (error) {
+        console.error("Error cancelling download:", error);
       }
     }
-  };
-  
-  const removeNotification = (id: string) => {
-    // Cancel download if it's active
-    const activeDownload = activeDownloadsRef.current[id];
-    if (activeDownload) {
-      activeDownload.xhr.abort();
-      delete activeDownloadsRef.current[id];
-    }
     
-    // Mark the notification for closing animation
-    setNotifications(prev => prev.map(notif => 
-      notif.id === id ? { ...notif, closing: true } : notif
-    ));
-    
-    // Remove after animation completes
+    // Remove after animation
     setTimeout(() => {
-      setNotifications(prev => prev.filter(notif => notif.id !== id));
-    }, 300); // Match the slideOut animation duration
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, 300); // Match CSS animation duration
   };
-  
-  // Clear completed notifications after some time
-  useEffect(() => {
-    const successNotifications = notifications.filter(n => n.type === 'success');
-    if (successNotifications.length > 0) {
-      const timer = setTimeout(() => {
-        successNotifications.forEach(n => removeNotification(n.id));
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [notifications]);
-  
-  // Generate a short filename for download
+
+  // Get short filename for download
   const getShortFilename = (subject: Subject, file: PDFFile, index: number) => {
-    // Get subject abbreviation (first letters of each word)
-    const subjectAbbr = subject.name
-      .split(' ')
-      .map(word => word.charAt(0))
-      .join('');
-    
-    // Create a short name: Subject_Abbreviation_P1.pdf
-    return `${subjectAbbr}_P${index + 1}.${file.isContactSheet ? 'jpg' : 'pdf'}`;
+    try {
+      const baseName = file.path.split('/').pop() || `file-${index}.${file.isContactSheet ? 'jpg' : 'pdf'}`;
+      const cleanName = baseName.replace(/['"`]/g, '');
+      return `${subject.name.replace(/\s+/g, '_')}_${cleanName}`;
+    } catch (error) {
+      console.error("Error generating filename:", error);
+      return `file-${subject.name}-${index}.${file.isContactSheet ? 'jpg' : 'pdf'}`;
+    }
   };
-  
-  // Function to handle downloading all files for a subject
+
+  // Function to handle all file downloads for a subject
   const downloadAllFiles = (subject: Subject) => {
     // Set downloading state for this subject
     setIsDownloading(prev => ({ ...prev, [subject.name]: true }));
@@ -497,11 +547,15 @@ export const PDFStore: React.FC = () => {
     
     // Notify service worker for PWA
     if (isPWA() && serviceWorkerActive) {
-      notifyServiceWorkerDownload(
-        `Downloading ${subject.name}`,
-        `Preparing ${subject.files.length} files...`,
-        `download-batch-${subject.name}`
-      );
+      try {
+        notifyServiceWorkerDownload(
+          `Downloading ${subject.name}`,
+          `Preparing ${subject.files.length} files...`,
+          `download-batch-${subject.name}`
+        );
+      } catch (error) {
+        console.error("Service worker notification error:", error);
+      }
     }
     
     // Track overall progress
@@ -532,11 +586,15 @@ export const PDFStore: React.FC = () => {
         });
         
         if (isPWA() && serviceWorkerActive) {
-          notifyServiceWorkerComplete(
-            'Download Complete',
-            `All ${totalFiles} files from ${subject.name} have been downloaded.`,
-            `download-batch-${subject.name}`
-          );
+          try {
+            notifyServiceWorkerComplete(
+              'Download Complete',
+              `All ${totalFiles} files from ${subject.name} have been downloaded.`,
+              `download-batch-${subject.name}`
+            );
+          } catch (error) {
+            console.error("Service worker notification error:", error);
+          }
         }
         
         return;
@@ -551,102 +609,146 @@ export const PDFStore: React.FC = () => {
       
       // For desktop browsers, use XMLHttpRequest to track download progress
       const xhr = new XMLHttpRequest();
-      xhr.open('GET', filePath, true);
-      xhr.responseType = 'blob';
       
-      // Track download progress
-      xhr.onprogress = (event) => {
-        if (event.lengthComputable) {
-          const fileProgress = Math.round((event.loaded / event.total) * 100);
-          const overallProgress = Math.round(((completedFiles + (fileProgress / 100)) / totalFiles) * 100);
-          
-          // Update batch progress
-          setDownloadProgress(prev => ({ 
-            ...prev, 
-            [subject.name]: { 
-              ...prev[subject.name],
-              progress: overallProgress
-            } 
-          }));
-          
-          updateNotification(notifId, {
-            progress: overallProgress,
-            message: `Downloading file ${index + 1} of ${totalFiles}: ${fileProgress}%`
-          });
-          
-          // Update service worker progress for PWA
-          if (isPWA() && serviceWorkerActive && fileProgress % 20 === 0) { // Update every 20%
-            updateServiceWorkerProgress(
-              overallProgress,
-              `Downloading ${subject.name}`,
-              `File ${index + 1} of ${totalFiles}: ${fileProgress}%`,
-              `download-batch-${subject.name}`
-            );
+      try {
+        xhr.open('GET', filePath, true);
+        xhr.responseType = 'blob';
+        
+        // Track download progress
+        xhr.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const fileProgress = Math.round((event.loaded / event.total) * 100);
+            const overallProgress = Math.round(((completedFiles + (fileProgress / 100)) / totalFiles) * 100);
+            
+            // Update batch progress
+            setDownloadProgress(prev => ({ 
+              ...prev, 
+              [subject.name]: { 
+                ...prev[subject.name],
+                progress: overallProgress
+              } 
+            }));
+            
+            updateNotification(notifId, {
+              progress: overallProgress,
+              message: `Downloading file ${index + 1} of ${totalFiles}: ${fileProgress}%`
+            });
+            
+            // Update service worker progress for PWA
+            if (isPWA() && serviceWorkerActive && fileProgress % 20 === 0) { // Update every 20%
+              try {
+                updateServiceWorkerProgress(
+                  overallProgress,
+                  `Downloading ${subject.name}`,
+                  `File ${index + 1} of ${totalFiles}: ${fileProgress}%`,
+                  `download-batch-${subject.name}`
+                );
+              } catch (error) {
+                console.error("Service worker progress update error:", error);
+              }
+            }
           }
-        }
-      };
-      
-      // Handle download completion
-      xhr.onload = () => {
-        if (xhr.status === 200) {
-          // Create download link
-          const blob = new Blob([xhr.response], { 
-            type: file.isContactSheet ? 'image/jpeg' : 'application/pdf' 
-          });
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = getShortFilename(subject, file, index);
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          
-          // Clean up
-          setTimeout(() => URL.revokeObjectURL(url), 100);
-          
-          // Increment completed files counter
-          completedFiles++;
-          
-          // Update overall progress
-          const overallProgress = Math.round((completedFiles / totalFiles) * 100);
-          
-          // Update batch progress
-          setDownloadProgress(prev => ({ 
-            ...prev, 
-            [subject.name]: { 
-              ...prev[subject.name],
-              progress: overallProgress
-            } 
-          }));
-          
+        };
+        
+        // Handle download completion
+        xhr.onload = () => {
+          if (xhr.status === 200) {
+            try {
+              // Create download link
+              const blob = new Blob([xhr.response], { 
+                type: file.isContactSheet ? 'image/jpeg' : 'application/pdf' 
+              });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = getShortFilename(subject, file, index);
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              
+              // Clean up
+              setTimeout(() => URL.revokeObjectURL(url), 100);
+              
+              // Increment completed files counter
+              completedFiles++;
+              
+              // Update overall progress
+              const overallProgress = Math.round((completedFiles / totalFiles) * 100);
+              
+              // Update batch progress
+              setDownloadProgress(prev => ({ 
+                ...prev, 
+                [subject.name]: { 
+                  ...prev[subject.name],
+                  progress: overallProgress
+                } 
+              }));
+              
+              updateNotification(notifId, {
+                progress: overallProgress,
+                message: `Downloaded file ${index + 1} of ${totalFiles}`
+              });
+              
+              // Download next file after a short delay
+              setTimeout(() => {
+                downloadNextFile(index + 1);
+              }, 800);
+            } catch (error) {
+              console.error("Download processing error:", error);
+              updateNotification(notifId, {
+                type: 'error',
+                title: 'Download Processing Failed',
+                message: `Failed to process ${file.name}. Continuing with next file...`
+              });
+              
+              // Try next file
+              setTimeout(() => {
+                downloadNextFile(index + 1);
+              }, 800);
+            }
+          } else {
+            updateNotification(notifId, {
+              type: 'error',
+              title: 'Download Failed',
+              message: `Failed to download ${file.name} (HTTP ${xhr.status}). Continuing with next file...`
+            });
+            
+            // Try next file
+            setTimeout(() => {
+              downloadNextFile(index + 1);
+            }, 800);
+          }
+        };
+        
+        // Handle download errors
+        xhr.onerror = () => {
           updateNotification(notifId, {
-            progress: overallProgress,
-            message: `Downloaded file ${index + 1} of ${totalFiles}`
+            type: 'error',
+            title: 'Download Failed',
+            message: `Failed to download ${file.name}. Continuing with next file...`
           });
           
-          // Download next file after a short delay
+          // Try next file
           setTimeout(() => {
             downloadNextFile(index + 1);
           }, 800);
-        }
-      };
-      
-      // Handle download errors
-      xhr.onerror = () => {
+        };
+        
+        // Start download
+        xhr.send();
+      } catch (error) {
+        console.error("XHR setup error:", error);
         updateNotification(notifId, {
           type: 'error',
-          title: 'Download Failed',
-          message: `Failed to download ${file.name}. Continuing with next file...`
+          title: 'Download Setup Failed',
+          message: `Failed to set up download for ${file.name}. Continuing with next file...`
         });
         
         // Try next file
         setTimeout(() => {
           downloadNextFile(index + 1);
         }, 800);
-      };
-      
-      // Start download
-      xhr.send();
+      }
     };
     
     // Start downloading the first file
@@ -919,6 +1021,17 @@ export const PDFStore: React.FC = () => {
     });
   };
 
+  // Show error message if load error occurred
+  if (loadError) {
+    return (
+      <div className="pdf-store-error">
+        <h2>Error Loading PDF Store</h2>
+        <p>{loadError}</p>
+        <button onClick={() => window.location.reload()}>Refresh Page</button>
+      </div>
+    );
+  }
+
   return (
     <div className="pdf-store-container">
       <div className="store-header">
@@ -1030,7 +1143,10 @@ export const PDFStore: React.FC = () => {
                   </button>
                   
                   {isSubjectExpanded(subject.name) && (
-                    <div className="files-list">
+                    <div 
+                      className="files-list"
+                      ref={filesListRefs.current[subject.name]}
+                    >
                       {subject.files.map((file, fileIndex) => {
                         const fileId = `${subject.name}-${file.name}`;
                         const isFileDownloading = fileDownloads[fileId];

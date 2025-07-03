@@ -6,10 +6,15 @@ import './App.css'
 import 'react-pdf/dist/Page/TextLayer.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 
-// Ensure PDF.js worker is properly loaded with relative path
+// Ensure PDF.js worker is properly loaded
 const pdfjsVersion = pdfjs.version;
-// Use a CDN with fallback to ensure the worker loads correctly on mobile
-pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsVersion}/pdf.worker.min.js`;
+// Configure worker with multiple fallback options
+try {
+  pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsVersion}/pdf.worker.min.js`;
+} catch (error) {
+  console.error('Failed to set worker from CDN, using local fallback:', error);
+  pdfjs.GlobalWorkerOptions.workerSrc = `./pdfjs-dist/${pdfjsVersion}/pdf.worker.min.js`;
+}
 
 // Add viewport meta tag dynamically to ensure proper scaling on mobile
 const ensureViewportMeta = () => {

@@ -7,6 +7,7 @@ interface Props {
 interface State {
   hasError: boolean;
   error?: Error;
+  errorInfo?: ErrorInfo;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
@@ -20,16 +21,35 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('Uncaught error:', error, errorInfo);
+    this.setState({ errorInfo });
   }
 
   public render() {
     if (this.state.hasError) {
+      // Error details to help debugging
+      const errorMessage = this.state.error?.message || 'Unknown error';
+      const errorStack = this.state.error?.stack || '';
+      const errorName = this.state.error?.name || 'Error';
+      
       return (
         <div className="error-boundary">
           <h2>Something went wrong</h2>
-          <button onClick={() => window.location.reload()}>
-            Refresh Page
-          </button>
+          <p>{errorName}: {errorMessage}</p>
+          <div className="error-actions">
+            <button onClick={() => window.location.reload()}>
+              Refresh Page
+            </button>
+            <button onClick={() => this.setState({ hasError: false })}>
+              Try Again
+            </button>
+          </div>
+          {process.env.NODE_ENV === 'development' && (
+            <details>
+              <summary>Error Details</summary>
+              <pre>{errorStack}</pre>
+              <pre>{this.state.errorInfo?.componentStack}</pre>
+            </details>
+          )}
         </div>
       );
     }

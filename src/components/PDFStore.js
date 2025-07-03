@@ -202,6 +202,7 @@ export const PDFStore = () => {
     const downloadLinksRef = useRef(null);
     const activeDownloadsRef = useRef({});
     const [serviceWorkerActive, setServiceWorkerActive] = useState(false);
+    const filesListRefs = useRef({});
     // Check notification permission on component mount
     useEffect(() => {
         const checkPermission = async () => {
@@ -228,11 +229,43 @@ export const PDFStore = () => {
         };
         checkServiceWorker();
     }, []);
+    // Add effect to ensure scrolling works properly on mobile
+    useEffect(() => {
+        // Get all the files-list elements once they're available
+        const handleScrollFix = () => {
+            Object.values(filesListRefs.current).forEach(ref => {
+                if (ref && ref.current) {
+                    // Touch events for iOS devices
+                    ref.current.addEventListener('touchstart', function() {
+                        // This empty handler is needed to enable smooth scrolling
+                    }, { passive: true });
+                }
+            });
+        };
+        
+        handleScrollFix();
+        
+        // Clean up event listeners
+        return () => {
+            Object.values(filesListRefs.current).forEach(ref => {
+                if (ref && ref.current) {
+                    ref.current.removeEventListener('touchstart', function() {}, { passive: true });
+                }
+            });
+        };
+    }, [expandedSubjects]); // Re-run when expandedSubjects changes
     const toggleSubject = (subjectName) => {
         setExpandedSubjects(prev => ({
             ...prev,
             [subjectName]: !prev[subjectName]
         }));
+        
+        // Initialize ref for this subject's files list if it's being expanded
+        if (!expandedSubjects[subjectName]) {
+            if (!filesListRefs.current[subjectName]) {
+                filesListRefs.current[subjectName] = { current: null };
+            }
+        }
     };
     const isSubjectExpanded = (subjectName) => {
         return !!expandedSubjects[subjectName];
@@ -555,12 +588,172 @@ export const PDFStore = () => {
         // Store reference to active download
         activeDownloadsRef.current[notifId] = { xhr, notifId };
     };
-    return (_jsxs("div", { className: "pdf-store-container", children: [_jsxs("div", { className: "store-header", children: [_jsx("h2", { children: "Electrical Engineering PDF Store" }), _jsx("p", { children: "Download resources for your semester" })] }), _jsx("div", { ref: downloadLinksRef, style: { display: 'none' } }), _jsx("div", { className: `notification-container ${isPWA() ? 'pwa-notifications' : ''}`, children: notifications.map((notification) => (_jsxs("div", { className: `notification ${notification.type} ${notification.closing ? 'closing' : ''}`, children: [_jsxs("div", { className: "notification-icon", children: [notification.type === 'downloading' && '⬇️', notification.type === 'success' && '✅', notification.type === 'error' && '❌'] }), _jsxs("div", { className: "notification-content", children: [_jsx("h4", { children: notification.title }), _jsx("p", { children: notification.message }), notification.progress !== undefined && (_jsx("div", { className: "notification-progress", children: _jsx("div", { className: "notification-progress-bar", style: { width: `${notification.progress}%` } }) }))] }), _jsx("button", { className: "notification-close", onClick: () => removeNotification(notification.id), children: "\u2715" })] }, notification.id))) }), _jsx("div", { className: "semester-tabs", children: electricalEngineeringSemesters.map((semester, index) => (_jsx("button", { className: `semester-tab ${activeSemester === index ? 'active' : ''}`, onClick: () => setActiveSemester(index), children: semester.name }, index))) }), _jsxs("div", { className: "subject-list", children: [_jsxs("h3", { children: [electricalEngineeringSemesters[activeSemester].name, " Subjects"] }), _jsx("div", { className: "subjects-grid", children: electricalEngineeringSemesters[activeSemester].subjects.map((subject, index) => (_jsxs("div", { className: "subject-card", children: [_jsx("div", { className: "subject-icon", children: subject.files.some(file => file.isContactSheet) ? '🖼️' : '📄' }), _jsx("h4", { children: subject.name }), _jsxs("div", { className: "file-count", children: [subject.files.length, " ", subject.files.length === 1 ? 'file' : 'files', " available"] }), subject.files.length > 0 ? (_jsxs(_Fragment, { children: [subject.files.length > 1 && (_jsx("button", { className: `download-all-button ${isDownloading[subject.name] ? 'downloading' : ''}`, onClick: () => downloadAllFilesAlt(subject), disabled: isDownloading[subject.name], children: isDownloading[subject.name] ? 'Downloading...' : 'Download All Files' })), _jsx("button", { className: "toggle-files-button", onClick: () => toggleSubject(subject.name), children: isSubjectExpanded(subject.name) ? 'Hide Files' : 'Show Individual Files' }), isSubjectExpanded(subject.name) && (_jsx("div", { className: "files-list", children: subject.files.map((file, fileIndex) => {
-                                                const fileId = `${subject.name}-${file.name}`;
-                                                const isFileDownloading = fileDownloads[fileId];
-                                                return (_jsxs("div", { className: "file-item", children: [_jsx("span", { className: `file-icon ${file.isContactSheet ? 'image-file' : 'pdf-file'}`, children: file.isContactSheet ? '🖼️' : '📄' }), _jsx("span", { className: "file-name", children: file.name }), _jsx("a", { href: `${window.location.origin}${file.path.startsWith('/') ? file.path : '/' + file.path}`, download: getShortFilename(subject, file, fileIndex), className: `download-file-button ${isFileDownloading ? 'downloading' : ''}`, target: "_blank", onClick: (e) => {
-                                                                e.preventDefault(); // Prevent default anchor behavior
-                                                                handleFileDownload(subject, file, fileIndex);
-                                                            }, children: isFileDownloading ? 'Downloading...' : 'Download' })] }, fileIndex));
-                                            }) }))] })) : (_jsx("div", { className: "no-files-message", children: "No files available" }))] }, index))) })] })] }));
+    return (
+      _jsxs("div", { 
+        className: "pdf-store-container", 
+        children: [
+          _jsxs("div", { 
+            className: "store-header", 
+            children: [
+              _jsx("h2", { children: "Electrical Engineering PDF Store" }), 
+              _jsx("p", { children: "Download resources for your semester" })
+            ] 
+          }), 
+          _jsx("div", { 
+            ref: downloadLinksRef, 
+            style: { display: 'none' } 
+          }),
+          _jsx("div", { 
+            className: `notification-container ${isPWA() ? 'pwa-notifications' : ''}`, 
+            children: notifications.map((notification) => (
+              _jsxs("div", { 
+                className: `notification ${notification.type} ${notification.closing ? 'closing' : ''}`, 
+                children: [
+                  _jsxs("div", { 
+                    className: "notification-icon", 
+                    children: [
+                      notification.type === 'downloading' && '⬇️', 
+                      notification.type === 'success' && '✅', 
+                      notification.type === 'error' && '❌'
+                    ] 
+                  }), 
+                  _jsxs("div", { 
+                    className: "notification-content", 
+                    children: [
+                      _jsx("h4", { children: notification.title }), 
+                      _jsx("p", { children: notification.message }), 
+                      notification.progress !== undefined && (
+                        _jsx("div", { 
+                          className: "notification-progress", 
+                          children: _jsx("div", { 
+                            className: "notification-progress-bar", 
+                            style: { width: `${notification.progress}%` } 
+                          }) 
+                        })
+                      )
+                    ] 
+                  }), 
+                  _jsx("button", { 
+                    className: "notification-close", 
+                    onClick: () => removeNotification(notification.id), 
+                    children: "×" 
+                  })
+                ] 
+              }, notification.id)
+            )) 
+          }),
+          _jsx("div", { 
+            className: "semester-tabs", 
+            children: electricalEngineeringSemesters.map((semester, index) => (
+              _jsx("button", { 
+                className: `semester-tab ${activeSemester === index ? 'active' : ''}`, 
+                onClick: () => setActiveSemester(index), 
+                children: semester.name 
+              }, index)
+            )) 
+          }),
+          _jsxs("div", { 
+            className: "subject-list", 
+            children: [
+              _jsxs("h3", { 
+                children: [
+                  electricalEngineeringSemesters[activeSemester].name, 
+                  " Subjects"
+                ] 
+              }), 
+              _jsx("div", { 
+                className: "subjects-grid", 
+                children: electricalEngineeringSemesters[activeSemester].subjects.map((subject, index) => (
+                  _jsxs("div", { 
+                    className: "subject-card", 
+                    children: [
+                      _jsx("div", { 
+                        className: "subject-icon", 
+                        children: subject.files.some(file => file.isContactSheet) ? '🖼️' : '📄' 
+                      }), 
+                      _jsx("h4", { 
+                        children: subject.name 
+                      }), 
+                      _jsxs("div", { 
+                        className: "file-count", 
+                        children: [
+                          subject.files.length, 
+                          " ", 
+                          subject.files.length === 1 ? 'file' : 'files', 
+                          " available"
+                        ] 
+                      }), 
+                      subject.files.length > 0 ? (
+                        _jsxs(_Fragment, { 
+                          children: [
+                            subject.files.length > 1 && (
+                              _jsx("button", { 
+                                className: `download-all-button ${isDownloading[subject.name] ? 'downloading' : ''}`, 
+                                onClick: () => downloadAllFilesAlt(subject), 
+                                disabled: isDownloading[subject.name], 
+                                children: isDownloading[subject.name] ? 'Downloading...' : 'Download All Files' 
+                              })
+                            ), 
+                            _jsx("button", { 
+                              className: "toggle-files-button", 
+                              onClick: () => toggleSubject(subject.name), 
+                              children: isSubjectExpanded(subject.name) ? 'Hide Files' : 'Show Individual Files' 
+                            }), 
+                            isSubjectExpanded(subject.name) && (
+                              _jsx("div", { 
+                                className: "files-list", 
+                                ref: (el) => {
+                                  if (filesListRefs.current[subject.name]) {
+                                    filesListRefs.current[subject.name].current = el;
+                                  }
+                                },
+                                children: subject.files.map((file, fileIndex) => {
+                                  const fileId = `${subject.name}-${file.name}`;
+                                  const isFileDownloading = fileDownloads[fileId];
+                                  return (
+                                    _jsxs("div", { 
+                                      className: "file-item", 
+                                      children: [
+                                        _jsx("span", { 
+                                          className: `file-icon ${file.isContactSheet ? 'image-file' : 'pdf-file'}`, 
+                                          children: file.isContactSheet ? '🖼️' : '📄' 
+                                        }), 
+                                        _jsx("span", { 
+                                          className: "file-name", 
+                                          children: file.name 
+                                        }), 
+                                        _jsx("a", { 
+                                          href: `${window.location.origin}${file.path.startsWith('/') ? file.path : '/' + file.path}`, 
+                                          download: getShortFilename(subject, file, fileIndex), 
+                                          className: `download-file-button ${isFileDownloading ? 'downloading' : ''}`, 
+                                          target: "_blank", 
+                                          onClick: (e) => {
+                                            e.preventDefault(); // Prevent default anchor behavior
+                                            handleFileDownload(subject, file, fileIndex);
+                                          }, 
+                                          children: isFileDownloading ? 'Downloading...' : 'Download' 
+                                        })
+                                      ] 
+                                    }, fileIndex)
+                                  );
+                                })
+                              })
+                            )
+                          ] 
+                        })
+                      ) : (
+                        _jsx("div", { 
+                          className: "no-files-message", 
+                          children: "No files available" 
+                        })
+                      )
+                    ] 
+                  }, index)
+                )) 
+              })
+            ] 
+          })
+        ] 
+      })
+    );
 };
