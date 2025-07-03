@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 
 interface Props {
   children: ReactNode;
@@ -6,47 +6,53 @@ interface Props {
 
 interface State {
   hasError: boolean;
-  error?: Error;
-  errorInfo?: ErrorInfo;
+  error: Error | null;
+  errorInfo: ErrorInfo | null;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
-    hasError: false
-  };
-
-  public static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: null,
+      errorInfo: null,
+    };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught error:', error, errorInfo);
-    this.setState({ errorInfo });
+  static getDerivedStateFromError(error: Error): State {
+    return {
+      hasError: true,
+      error,
+      errorInfo: null,
+    };
   }
 
-  public render() {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    this.setState({
+      error,
+      errorInfo,
+    });
+    
+    console.error('Error caught by ErrorBoundary:', error, errorInfo);
+  }
+
+  render(): ReactNode {
     if (this.state.hasError) {
-      // Error details to help debugging
-      const errorMessage = this.state.error?.message || 'Unknown error';
-      const errorStack = this.state.error?.stack || '';
-      const errorName = this.state.error?.name || 'Error';
-      
       return (
-        <div className="error-boundary">
-          <h2>Something went wrong</h2>
-          <p>{errorName}: {errorMessage}</p>
-          <div className="error-actions">
-            <button onClick={() => window.location.reload()}>
-              Refresh Page
-            </button>
-            <button onClick={() => this.setState({ hasError: false })}>
-              Try Again
-            </button>
-          </div>
-          {process.env.NODE_ENV === 'development' && (
-            <details>
+        <div className="error-boundary-container">
+          <h2>Something went wrong.</h2>
+          <p>Please try refreshing the page or using a different browser.</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="refresh-button"
+          >
+            Refresh Page
+          </button>
+          {import.meta.env.DEV && (
+            <details className="error-details">
               <summary>Error Details</summary>
-              <pre>{errorStack}</pre>
+              <p>{this.state.error?.toString()}</p>
               <pre>{this.state.errorInfo?.componentStack}</pre>
             </details>
           )}

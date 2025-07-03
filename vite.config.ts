@@ -36,9 +36,33 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,pdf,jpg,jpeg}'],
-        navigateFallback: 'index.html',
+        // Only precache small assets
+        globPatterns: ['**/*.{js,css,html,ico,svg}'],
+        // Exclude large files from pre-caching
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB limit
+        // Exclude specific file patterns that are too large
+        globIgnores: [
+          '**/*semester/**/*.png',
+          '**/*semester/**/*.pdf',
+          '**/*semester/**/*.jpg',
+          '**/*semester/**/*.jpeg',
+          '**/pdfs/**/*.pdf'
+        ],
         runtimeCaching: [
+          {
+            urlPattern: /\.(?:pdf|jpg|jpeg|png)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'large-files-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: 'CacheFirst',
@@ -64,17 +88,6 @@ export default defineConfig({
               },
               cacheableResponse: {
                 statuses: [0, 200]
-              }
-            }
-          },
-          {
-            urlPattern: /\.(?:png|jpg|jpeg|svg|pdf)$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'images-cache',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
               }
             }
           }

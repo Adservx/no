@@ -1,6 +1,14 @@
 # Ignore JavaScript files that have TypeScript equivalents
-src/**/*.js
+/src/App.js
+/src/components/ConfigPanel.js
+/src/components/CustomOrderPDFContactSheet.js
+/src/components/ErrorBoundary.js
+/src/components/HorizontalPDFContactSheet.js
+/src/components/PDFContactSheet.js
+/src/components/PDFStore.js
+/src/components/TwoNTConfigPanel.js
+/src/main.js
+/src/utils/notificationUtils.js
+
 # Ignore node_modules
-node_modules
-# Ignore build artifacts
-dist 
+node_modules 
