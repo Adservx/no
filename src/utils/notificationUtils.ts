@@ -59,4 +59,65 @@ export const openDownloadsFolder = (): void => {
     // Fallback for security restrictions
     alert('Your browser prevented opening the downloads folder. Please check your Downloads folder manually.');
   }
+};
+
+// Check if the application is running as a Progressive Web App
+export const isPWA = (): boolean => {
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.matchMedia('(display-mode: minimal-ui)').matches ||
+    (window.navigator as any).standalone === true ||
+    document.referrer.includes('android-app://')
+  );
+};
+
+// Send notification to service worker for download started
+export const notifyServiceWorkerDownload = (title: string, message: string, notificationId: string): void => {
+  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({
+      type: 'download-started',
+      title: title,
+      message: message,
+      id: notificationId
+    });
+  } else {
+    showBrowserNotification(title, message);
+  }
+};
+
+// Send notification to service worker for download completed
+export const notifyServiceWorkerComplete = (title: string, message: string, notificationId: string): void => {
+  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({
+      type: 'download-complete',
+      title: title,
+      message: message,
+      id: notificationId
+    });
+  } else {
+    showBrowserNotification(title, message);
+  }
+};
+
+// Update progress in service worker notification
+export const updateServiceWorkerProgress = (progress: number, title: string, message: string, notificationId: string): void => {
+  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({
+      type: 'download-progress',
+      progress: progress,
+      title: title,
+      message: message,
+      id: notificationId
+    });
+  }
+};
+
+// Send a generic notification to service worker
+export const sendServiceWorkerNotification = (type: string, data: any): void => {
+  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({
+      type: type,
+      ...data
+    });
+  }
 }; 
