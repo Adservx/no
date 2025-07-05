@@ -1082,7 +1082,7 @@ export const PDFStore: React.FC = () => {
   return (
     <div className="pdf-store-container">
       <div className="store-header">
-        <h2>Electrical Engineering PDF Store</h2>
+                      <h2>[Prajol's Web] 🕷️🕸️</h2>
         <p>Download resources for your semester</p>
       </div>
       
