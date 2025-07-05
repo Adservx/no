@@ -138,8 +138,7 @@ function App() {
           </div>
           <div className="sidebar-content">
             <div className="logo">
-              <h1>Electrical</h1>
-              <h2>Engineering</h2>
+              <h1>[Prajol's Web] 🕷️🕸️</h1>
             </div>
             <div className="tab-selector">
               <button 
@@ -213,7 +212,7 @@ function App() {
               {activeTab === 'standard' ? 'Standard Contact Sheet' : 
                activeTab === 'horizontal' ? 'Two n T Layout' : 
                activeTab === 'custom' ? 'Custom Order Contact Sheet' :
-               'Electrical Engineering PDF Store'}
+               '[Prajol\'s Web] 🕷️🕸️'}
             </h2>
           </div>
           
