@@ -6,6 +6,8 @@ import { PDFStore } from './components/PDFStore';
 import { ConfigPanel } from './components/ConfigPanel';
 import { TwoNTConfigPanel } from './components/TwoNTConfigPanel';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { SpiderWebLogo, SpiderWebCorner } from './components/SpiderWeb';
+import './styles/SpiderWeb.css';
 import './App.css';
 
 export interface Config {
@@ -68,7 +70,7 @@ function App() {
       // Add meta viewport settings for better mobile display
       const metaViewport = document.querySelector('meta[name="viewport"]');
       if (metaViewport) {
-        metaViewport.setAttribute('content', 'width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover');
+        metaViewport.setAttribute('content', 'width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
       }
       
       // Ensure sidebar is always visible in PWA mode on mobile
@@ -82,20 +84,17 @@ function App() {
       return () => window.removeEventListener('resize', handleResize);
     }
 
-    // Listen for changes (in case user switches between modes)
-    const mql = window.matchMedia('(display-mode: standalone)');
-    const handleChange = (e: MediaQueryListEvent) => {
-      setIsStandalone(e.matches);
-      if (e.matches) {
-        setSidebarOpen(true);
-        document.documentElement.classList.add('pwa-mode');
-      } else {
-        document.documentElement.classList.remove('pwa-mode');
+    // Fix for desktop layout - ensure proper rendering
+    const fixDesktopLayout = () => {
+      if (window.innerWidth > 768) {
+        document.documentElement.style.setProperty('--app-width', '100%');
+        document.documentElement.style.setProperty('--app-height', '100vh');
       }
     };
-
-    mql.addEventListener('change', handleChange);
-    return () => mql.removeEventListener('change', handleChange);
+    
+    fixDesktopLayout();
+    window.addEventListener('resize', fixDesktopLayout);
+    return () => window.removeEventListener('resize', fixDesktopLayout);
   }, []);
 
   // Check notification permission
@@ -133,13 +132,13 @@ function App() {
     <ErrorBoundary>
       <div className={`app-container ${isStandalone ? 'standalone-mode' : ''}`}>
         <div className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
+          <SpiderWebCorner className="spider-web-top-left" />
           <div className="sidebar-toggle" onClick={toggleSidebar}>
             {sidebarOpen ? '◀' : '▶'}
           </div>
           <div className="sidebar-content">
             <div className="logo">
-              <h1>Electrical</h1>
-              <h2>Engineering</h2>
+              <h1>Prajol's Web <SpiderWebLogo /></h1>
             </div>
             <div className="tab-selector">
               <button 
@@ -173,6 +172,7 @@ function App() {
             </div>
             {sidebarOpen && (
               <div className="config-wrapper">
+                <SpiderWebCorner className="spider-web-top-right" />
                 <h3 className="config-section-title">
                   {activeTab === 'standard' ? 'Standard Sheet Settings' : 
                    activeTab === 'horizontal' ? 'Two n T Settings' : 
@@ -202,40 +202,54 @@ function App() {
                     </p>
                   </div>
                 )}
+                <SpiderWebCorner className="spider-web-bottom-left" />
               </div>
             )}
           </div>
+          <SpiderWebCorner className="spider-web-bottom-right" />
         </div>
         
         <div className="main-content">
+          <SpiderWebCorner className="spider-web-top-left" />
           <div className="content-header">
             <h2>
               {activeTab === 'standard' ? 'Standard Contact Sheet' : 
                activeTab === 'horizontal' ? 'Two n T Layout' : 
                activeTab === 'custom' ? 'Custom Order Contact Sheet' :
-               'Electrical Engineering PDF Store'}
+               'Prajol\'s Web PDF Store'} <SpiderWebLogo />
             </h2>
           </div>
           
           <div className="content-body">
+            <SpiderWebCorner className="spider-web-top-right" />
             {activeTab === 'standard' ? (
               <div className="standard-sheet-section">
+                <SpiderWebCorner className="spider-web-top-left" />
                 <PDFContactSheet config={standardConfig} />
+                <SpiderWebCorner className="spider-web-bottom-right" />
               </div>
             ) : activeTab === 'horizontal' ? (
               <div className="two-n-t-section">
+                <SpiderWebCorner className="spider-web-top-left" />
                 <HorizontalPDFContactSheet config={twoNTConfig} />
+                <SpiderWebCorner className="spider-web-bottom-right" />
               </div>
             ) : activeTab === 'custom' ? (
               <div className="custom-order-section">
+                <SpiderWebCorner className="spider-web-top-left" />
                 <CustomOrderPDFContactSheet config={standardConfig} />
+                <SpiderWebCorner className="spider-web-bottom-right" />
               </div>
             ) : (
               <div className="pdf-store-section">
+                <SpiderWebCorner className="spider-web-top-left" />
                 <PDFStore />
+                <SpiderWebCorner className="spider-web-bottom-right" />
               </div>
             )}
+            <SpiderWebCorner className="spider-web-bottom-left" />
           </div>
+          <SpiderWebCorner className="spider-web-bottom-right" />
         </div>
       </div>
     </ErrorBoundary>

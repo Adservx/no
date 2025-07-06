@@ -6,10 +6,29 @@ import App from './App';
 import './App.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
-// Ensure PDF.js worker is properly loaded with relative path
+// Ensure PDF.js worker is properly loaded
 const pdfjsVersion = pdfjs.version;
-// Use a CDN with fallback to ensure the worker loads correctly on mobile
-pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsVersion}/pdf.worker.min.js`;
+console.log('PDF.js version:', pdfjsVersion);
+// Configure worker with multiple fallback options
+try {
+    // For PDF.js 5.x, the worker is in the build directory with .mjs extension
+    pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+        'pdfjs-dist/build/pdf.worker.min.mjs',
+        import.meta.url,
+    ).toString();
+}
+catch (error) {
+    console.error('Failed to set worker from local path, trying CDN:', error);
+    try {
+        // Fallback to CDN with correct version
+        pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsVersion}/build/pdf.worker.min.mjs`;
+    }
+    catch (cdnError) {
+        console.error('Failed to set worker from CDN:', cdnError);
+        // Last resort fallback to the copied file in public directory
+        pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+    }
+}
 // Add viewport meta tag dynamically to ensure proper scaling on mobile
 const ensureViewportMeta = () => {
     let viewport = document.querySelector('meta[name="viewport"]');

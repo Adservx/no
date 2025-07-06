@@ -1,0 +1,55 @@
+/* Spider Web CSS */
+.spider-web-logo {
+  display: inline-block;
+  margin-left: 5px;
+  vertical-align: middle;
+}
+
+/* Spider Web Corner Elements */
+.spider-web-corner {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  pointer-events: none;
+  opacity: 0.7;
+  z-index: 1;
+}
+
+.spider-web-top-left {
+  top: 0;
+  left: 0;
+  transform: rotate(0deg);
+}
+
+.spider-web-top-right {
+  top: 0;
+  right: 0;
+  transform: rotate(90deg);
+}
+
+.spider-web-bottom-left {
+  bottom: 0;
+  left: 0;
+  transform: rotate(270deg);
+}
+
+.spider-web-bottom-right {
+  bottom: 0;
+  right: 0;
+  transform: rotate(180deg);
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+  .spider-web-corner {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .spider-web-corner {
+    width: 40px;
+    height: 40px;
+  }
+} 
