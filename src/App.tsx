@@ -90,6 +90,18 @@ function App() {
         document.documentElement.style.setProperty('--app-width', '100%');
         document.documentElement.style.setProperty('--app-height', '100vh');
       }
+      
+      // Add specific fixes for laptop screens
+      if (window.innerWidth > 1024 && window.innerWidth <= 1440) {
+        // Optimize layout for laptop screens
+        document.documentElement.classList.add('laptop-mode');
+        // Adjust sidebar based on screen width
+        if (window.innerWidth < 1200) {
+          setSidebarOpen(false);
+        }
+      } else {
+        document.documentElement.classList.remove('laptop-mode');
+      }
     };
     
     fixDesktopLayout();

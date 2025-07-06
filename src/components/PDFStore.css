@@ -702,14 +702,13 @@ html.pwa-mode .notification-container {
 /* Mobile responsiveness for notifications */
 @media (max-width: 480px) {
   .notification-container {
-    bottom: 10px;
-    right: 10px;
-    left: 10px;
-    max-width: none;
+    width: 100%;
+    right: 0;
+    padding: 10px;
   }
   
   .notification {
-    width: 100%;
+    padding: 10px;
   }
 }
 
@@ -722,5 +721,43 @@ html.pwa-mode .notification-container {
   
   .notification-progress {
     background: rgba(255, 255, 255, 0.05);
+  }
+}
+
+/* Add laptop screen specific styles */
+@media screen and (min-width: 1025px) and (max-width: 1440px) {
+  .pdf-store-container {
+    max-width: 95%;
+    padding: 15px;
+  }
+  
+  .subjects-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 16px;
+  }
+  
+  .subject-card {
+    padding: 15px;
+  }
+  
+  .subject-card h4 {
+    font-size: 1.1rem;
+    min-height: 2.6rem;
+  }
+  
+  .files-list {
+    max-height: 280px;
+  }
+  
+  .file-item {
+    padding: 8px 12px;
+  }
+  
+  .semester-tabs {
+    gap: 8px;
+  }
+  
+  .semester-tab {
+    padding: 10px 16px;
   }
 } 
