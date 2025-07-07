@@ -91,17 +91,12 @@ function App() {
         document.documentElement.style.setProperty('--app-height', '100vh');
       }
       
-      // Add specific fixes for laptop screens
-      if (window.innerWidth > 1024 && window.innerWidth <= 1440) {
-        // Optimize layout for laptop screens
-        document.documentElement.classList.add('laptop-mode');
-        // Adjust sidebar based on screen width
-        if (window.innerWidth < 1200) {
-          setSidebarOpen(false);
-        }
-      } else {
-        document.documentElement.classList.remove('laptop-mode');
-      }
+      // Apply mobile-like UI to all laptop screens
+      // Always add laptop-mode for desktop screens to make UI like mobile
+      document.documentElement.classList.add('laptop-mode');
+      
+      // Always ensure sidebar is open for mobile-like experience
+      setSidebarOpen(true);
     };
     
     fixDesktopLayout();
@@ -144,9 +139,16 @@ function App() {
     <ErrorBoundary>
       <div className={`app-container ${isStandalone ? 'standalone-mode' : ''}`}>
         <div className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
-          <SpiderWebCorner className="spider-web-top-left" />
+          <SpiderWebCorner className="spider-web-top-left" size={100} />
           <div className="sidebar-toggle" onClick={toggleSidebar}>
-            {sidebarOpen ? '◀' : '▶'}
+            {sidebarOpen ? 
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path fillRule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+              </svg> : 
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path fillRule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+              </svg>
+            }
           </div>
           <div className="sidebar-content">
             <div className="logo">
@@ -184,7 +186,7 @@ function App() {
             </div>
             {sidebarOpen && (
               <div className="config-wrapper">
-                <SpiderWebCorner className="spider-web-top-right" />
+                <SpiderWebCorner className="spider-web-top-right" size={100} />
                 <h3 className="config-section-title">
                   {activeTab === 'standard' ? 'Standard Sheet Settings' : 
                    activeTab === 'horizontal' ? 'Two n T Settings' : 
@@ -214,15 +216,15 @@ function App() {
                     </p>
                   </div>
                 )}
-                <SpiderWebCorner className="spider-web-bottom-left" />
+                <SpiderWebCorner className="spider-web-bottom-left" size={100} />
               </div>
             )}
           </div>
-          <SpiderWebCorner className="spider-web-bottom-right" />
+          <SpiderWebCorner className="spider-web-bottom-right" size={100} />
         </div>
         
         <div className="main-content">
-          <SpiderWebCorner className="spider-web-top-left" />
+          <SpiderWebCorner className="spider-web-top-left" size={100} />
           <div className="content-header">
             <h2>
               {activeTab === 'standard' ? 'Standard Contact Sheet' : 
@@ -233,35 +235,35 @@ function App() {
           </div>
           
           <div className="content-body">
-            <SpiderWebCorner className="spider-web-top-right" />
+            <SpiderWebCorner className="spider-web-top-right" size={100} />
             {activeTab === 'standard' ? (
               <div className="standard-sheet-section">
-                <SpiderWebCorner className="spider-web-top-left" />
+                <SpiderWebCorner className="spider-web-top-left" size={100} />
                 <PDFContactSheet config={standardConfig} />
-                <SpiderWebCorner className="spider-web-bottom-right" />
+                <SpiderWebCorner className="spider-web-bottom-right" size={100} />
               </div>
             ) : activeTab === 'horizontal' ? (
               <div className="two-n-t-section">
-                <SpiderWebCorner className="spider-web-top-left" />
+                <SpiderWebCorner className="spider-web-top-left" size={100} />
                 <HorizontalPDFContactSheet config={twoNTConfig} />
-                <SpiderWebCorner className="spider-web-bottom-right" />
+                <SpiderWebCorner className="spider-web-bottom-right" size={100} />
               </div>
             ) : activeTab === 'custom' ? (
               <div className="custom-order-section">
-                <SpiderWebCorner className="spider-web-top-left" />
+                <SpiderWebCorner className="spider-web-top-left" size={100} />
                 <CustomOrderPDFContactSheet config={standardConfig} />
-                <SpiderWebCorner className="spider-web-bottom-right" />
+                <SpiderWebCorner className="spider-web-bottom-right" size={100} />
               </div>
             ) : (
               <div className="pdf-store-section">
-                <SpiderWebCorner className="spider-web-top-left" />
+                <SpiderWebCorner className="spider-web-top-left" size={100} />
                 <PDFStore />
-                <SpiderWebCorner className="spider-web-bottom-right" />
+                <SpiderWebCorner className="spider-web-bottom-right" size={100} />
               </div>
             )}
-            <SpiderWebCorner className="spider-web-bottom-left" />
+            <SpiderWebCorner className="spider-web-bottom-left" size={100} />
           </div>
-          <SpiderWebCorner className="spider-web-bottom-right" />
+          <SpiderWebCorner className="spider-web-bottom-right" size={100} />
         </div>
       </div>
     </ErrorBoundary>
