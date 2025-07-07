@@ -16,14 +16,31 @@ export const PDFContactSheet = ({ config }) => {
     const [pendingGeneration, setPendingGeneration] = useState(false);
     const canvasRef = useRef(null);
     const fileInputRef = useRef(null);
+    const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+    const buttonRef = useRef(null);
     useEffect(() => {
+        // Create sparkles when component mounts
+        if (buttonRef.current) {
+            const sparkleInterval = setInterval(() => {
+                createRandomSparkle();
+            }, 1000);
+            
+            return () => {
+                clearInterval(sparkleInterval);
+                // Cleanup on unmount
+                if (pdfFile) {
+                    URL.revokeObjectURL(URL.createObjectURL(pdfFile));
+                }
+            };
+        }
+        
         return () => {
             // Cleanup on unmount
             if (pdfFile) {
                 URL.revokeObjectURL(URL.createObjectURL(pdfFile));
             }
         };
-    }, [pdfFile]);
+    }, [pdfFile, buttonRef.current]);
     const validateFile = (file) => {
         if (file.size > MAX_FILE_SIZE) {
             setError('File size exceeds 100MB limit');
@@ -86,9 +103,87 @@ export const PDFContactSheet = ({ config }) => {
             return { row, col };
         }
     };
-    const handleGenerateClick = () => {
+    const handleGenerateClick = (event) => {
+        // Create particle burst effect on click
+        createParticleBurst(event);
+        
+        // Play sound effect
+        playButtonSound();
+        
+        // Show confirmation dialog
         setShowConfirmDialog(true);
         setPendingGeneration(true);
+    };
+    
+    // Function to create a particle burst effect
+    const createParticleBurst = (event) => {
+        if (!event || !event.currentTarget) return;
+        
+        const button = event.currentTarget;
+        const buttonRect = button.getBoundingClientRect();
+        const buttonCenterX = buttonRect.left + buttonRect.width / 2;
+        const buttonCenterY = buttonRect.top + buttonRect.height / 2;
+        
+        // Create a container for the particles if it doesn't exist
+        let particleContainer = document.querySelector('.particle-container');
+        if (!particleContainer) {
+            particleContainer = document.createElement('div');
+            particleContainer.className = 'particle-container';
+            document.body.appendChild(particleContainer);
+        }
+        
+        // Create particles
+        const particleCount = 30;
+        const colors = ['#3b82f6', '#06b6d4', '#8b5cf6', '#f472b6', '#22d3ee'];
+        
+        for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            
+            // Random position around click point
+            const angle = Math.random() * Math.PI * 2;
+            const distance = Math.random() * 80 + 20;
+            const x = buttonCenterX + Math.cos(angle) * distance;
+            const y = buttonCenterY + Math.sin(angle) * distance;
+            
+            // Set random color
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            particle.style.backgroundColor = randomColor;
+            
+            // Set random size
+            const size = Math.random() * 10 + 5;
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            
+            // Set initial position
+            particle.style.left = `${buttonCenterX}px`;
+            particle.style.top = `${buttonCenterY}px`;
+            
+            // Set custom properties for animation
+            particle.style.setProperty('--x', `${Math.cos(angle) * (distance * 3)}px`);
+            particle.style.setProperty('--y', `${Math.sin(angle) * (distance * 3)}px`);
+            
+            // Add to container
+            particleContainer.appendChild(particle);
+            
+            // Animate and remove after animation completes
+            particle.style.animation = `particleDrift ${Math.random() * 1 + 0.5}s ease-out forwards`;
+            setTimeout(() => {
+                particle.remove();
+            }, 1500);
+        }
+    };
+    
+    // Function to play button sound effect
+    const playButtonSound = () => {
+        try {
+            const audio = new Audio();
+            audio.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAAbsAb29vb29vb29vb29vb29vb29vb29vb29vbm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubm4AAABMYXZjNTguMTM0LjEwMQAAAAAAAAAAAAAA/+MYxAAAAANIAAAAAExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxDsAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxHYAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxMQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
+            audio.volume = 0.3;
+            audio.play().catch(e => console.log('Audio play failed:', e));
+        } catch (error) {
+            console.log('Sound effect failed to play:', error);
+        }
     };
     const handleConfirmGeneration = () => {
         setShowConfirmDialog(false);
@@ -380,5 +475,111 @@ export const PDFContactSheet = ({ config }) => {
             setLoadingProgress(100);
         }
     };
-    return (_jsxs("div", { className: "pdf-contact-sheet", children: [_jsxs("div", { className: "upload-section", children: [_jsx("h3", { className: "upload-section-title", children: "Upload PDF" }), _jsxs("div", { ...getRootProps(), className: "dropzone", children: [_jsx("input", { ...getInputProps() }), _jsx("div", { className: "dropzone-icon", children: "\uD83D\uDCC4" }), _jsx("p", { children: "Drag & drop a PDF file here" })] }), _jsx("button", { className: "pdf-select-button", onClick: openFileDialog, children: "Select PDF File" }), _jsx("input", { ref: fileInputRef, type: "file", accept: "application/pdf", onChange: handleFileSelect, style: { display: 'none' } })] }), error && _jsx("div", { className: "error-message", children: error }), pdfFile && (_jsxs(_Fragment, { children: [_jsx(Document, { file: pdfFile, onLoadSuccess: onDocumentLoadSuccess, onLoadError: onDocumentLoadError, loading: _jsx("div", { className: "loading", children: "Loading PDF..." }), error: _jsx("div", { className: "error-message", children: "Failed to load PDF" }), children: null /* We don't need to render pages here */ }), _jsxs("div", { className: "pdf-preview", children: [_jsx("p", { className: "file-name", children: pdfFile.name }), _jsx("button", { onClick: handleGenerateClick, disabled: isGenerating || !numPages || pendingGeneration, className: `generate-button ${isGenerating ? 'generating' : ''}`, children: isGenerating ? (_jsxs(_Fragment, { children: [_jsx("span", { className: "loading-spinner" }), "Generating... ", loadingProgress, "%"] })) : ('Generate Contact Sheet') }), isGenerating && (_jsxs("div", { className: "progress-bar", children: [_jsx("div", { className: "progress", style: { width: `${loadingProgress}%` } }), _jsxs("span", { children: [loadingProgress, "%"] })] }))] })] })), showConfirmDialog && (_jsx("div", { className: "confirmation-dialog", children: _jsxs("div", { className: "confirmation-content", children: [_jsx("h4", { children: "Download Confirmation" }), _jsx("p", { children: "The contact sheet will be downloaded to your device. Do you want to proceed?" }), _jsxs("div", { className: "confirmation-buttons", children: [_jsx("button", { className: "confirm-button", onClick: handleConfirmGeneration, children: "Yes, Download" }), _jsx("button", { className: "cancel-button", onClick: handleCancelGeneration, children: "Cancel" })] })] }) })), _jsx("canvas", { ref: canvasRef, style: { display: 'none' } })] }));
+    // Function to create random sparkles around the button
+    const createRandomSparkle = () => {
+        if (!buttonRef.current) return;
+        
+        const button = buttonRef.current;
+        const buttonRect = button.getBoundingClientRect();
+        
+        // Create sparkle container if it doesn't exist
+        let sparkleContainer = document.querySelector('.sparkle-container');
+        if (!sparkleContainer) {
+            sparkleContainer = document.createElement('div');
+            sparkleContainer.className = 'particle-container';
+            document.body.appendChild(sparkleContainer);
+        }
+        
+        // Create a new sparkle
+        const sparkle = document.createElement('div');
+        sparkle.className = 'sparkle';
+        
+        // Set random position around the button (with a bit of margin)
+        const margin = 40;
+        const posX = buttonRect.left - margin + Math.random() * (buttonRect.width + margin * 2);
+        const posY = buttonRect.top - margin + Math.random() * (buttonRect.height + margin * 2);
+        
+        sparkle.style.left = `${posX}px`;
+        sparkle.style.top = `${posY}px`;
+        
+        // Set random size
+        const size = Math.random() * 15 + 10;
+        sparkle.style.width = `${size}px`;
+        sparkle.style.height = `${size}px`;
+        
+        // Set random animation duration
+        const duration = Math.random() * 2 + 1;
+        sparkle.style.animation = `sparkle ${duration}s ease-in-out forwards`;
+        
+        // Add to container
+        sparkleContainer.appendChild(sparkle);
+        
+        // Remove after animation completes
+        setTimeout(() => {
+            sparkle.remove();
+        }, duration * 1000);
+    };
+    // Function to handle mouse move for magnetic effect
+    const handleButtonMouseMove = (event) => {
+        if (!buttonRef.current) return;
+        
+        const button = buttonRef.current;
+        const buttonRect = button.getBoundingClientRect();
+        
+        // Randomly create sparkles during mouse movement (20% chance)
+        if (Math.random() < 0.2) {
+            createRandomSparkle();
+        }
+        
+        // Calculate mouse position relative to button center
+        const buttonCenterX = buttonRect.left + buttonRect.width / 2;
+        const buttonCenterY = buttonRect.top + buttonRect.height / 2;
+        const mouseX = event.clientX - buttonCenterX;
+        const mouseY = event.clientY - buttonCenterY;
+        
+        // Calculate distance from center (normalized)
+        const distanceX = mouseX / (buttonRect.width / 2);
+        const distanceY = mouseY / (buttonRect.height / 2);
+        
+        // Calculate transform amount (maximum 10px movement)
+        const transformX = distanceX * 10;
+        const transformY = distanceY * 10;
+        
+        // Apply transform
+        button.style.transform = `translate3d(${transformX}px, ${transformY}px, 30px) rotateX(${-distanceY * 10}deg) rotateY(${distanceX * 10}deg)`;
+        
+        // Update mouse position for glow effect
+        setMousePosition({ x: distanceX, y: distanceY });
+        
+        // Add glow effect
+        const glowX = 50 + distanceX * 40; // 10-90% range
+        const glowY = 50 + distanceY * 40; // 10-90% range
+        
+        // Create radial gradient for glow
+        button.style.background = `radial-gradient(circle at ${glowX}% ${glowY}%, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 60%), linear-gradient(135deg, #3b82f6, #06b6d4, #8b5cf6, #06b6d4, #3b82f6)`;
+        button.style.backgroundSize = '200% 200%, 400% 400%';
+    };
+    
+    // Function to handle mouse leave
+    const handleButtonMouseLeave = () => {
+        if (!buttonRef.current) return;
+        
+        const button = buttonRef.current;
+        
+        // Reset transform and background
+        button.style.transform = '';
+        button.style.background = '';
+        
+        // Reset mouse position
+        setMousePosition({ x: 0, y: 0 });
+    };
+    return (_jsxs("div", { className: "pdf-contact-sheet", children: [_jsxs("div", { className: "upload-section", children: [_jsx("h3", { className: "upload-section-title", children: "Upload PDF" }), _jsxs("div", { ...getRootProps(), className: "dropzone", children: [_jsx("input", { ...getInputProps() }), _jsx("div", { className: "dropzone-icon", children: "\uD83D\uDCC4" }), _jsx("p", { children: "Drag & drop a PDF file here" })] }), _jsx("button", { className: "pdf-select-button", onClick: openFileDialog, children: "Select PDF File" }), _jsx("input", { ref: fileInputRef, type: "file", accept: "application/pdf", onChange: handleFileSelect, style: { display: 'none' } })] }), error && _jsx("div", { className: "error-message", children: error }), pdfFile && (_jsxs(_Fragment, { children: [_jsx(Document, { file: pdfFile, onLoadSuccess: onDocumentLoadSuccess, onLoadError: onDocumentLoadError, loading: _jsx("div", { className: "loading", children: "Loading PDF..." }), error: _jsx("div", { className: "error-message", children: "Failed to load PDF" }), children: null /* We don't need to render pages here */ }), _jsxs("div", { className: "pdf-preview", children: [_jsx("p", { className: "file-name", children: pdfFile.name }), _jsx("button", { 
+        ref: buttonRef,
+        onClick: handleGenerateClick, 
+        onMouseMove: handleButtonMouseMove,
+        onMouseLeave: handleButtonMouseLeave,
+        disabled: isGenerating || !numPages || pendingGeneration, 
+        className: `generate-button ${isGenerating ? 'generating' : ''}`, 
+        children: isGenerating ? (_jsxs(_Fragment, { children: [_jsx("span", { className: "loading-spinner" }), _jsx("span", { children: `Generating... ${loadingProgress}%` })] })) : (_jsx("span", { children: 'Generate Contact Sheet' })) 
+    }), isGenerating && (_jsxs("div", { className: "progress-bar", children: [_jsx("div", { className: "progress", style: { width: `${loadingProgress}%` } }), _jsxs("span", { children: [loadingProgress, "%"] })] }))] })] }), showConfirmDialog && (_jsx("div", { className: "confirmation-dialog", children: _jsxs("div", { className: "confirmation-content", children: [_jsx("h4", { children: "Download Confirmation" }), _jsx("p", { children: "The contact sheet will be downloaded to your device. Do you want to proceed?" }), _jsxs("div", { className: "confirmation-buttons", children: [_jsx("button", { className: "confirm-button", onClick: handleConfirmGeneration, children: "Yes, Download" }), _jsx("button", { className: "cancel-button", onClick: handleCancelGeneration, children: "Cancel" })] })] }) })), _jsx("canvas", { ref: canvasRef, style: { display: 'none' } })] }));
 };
