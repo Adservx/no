@@ -629,14 +629,6 @@ export const CustomOrderPDFContactSheet: React.FC<CustomOrderPDFContactSheetProp
                 <li><strong>First set of sheets:</strong> Odd pages in ascending order</li>
                 <li><strong>Second set of sheets:</strong> Even pages in descending order within each row</li>
               </ul>
-              <p>For a 3×3 grid example:</p>
-              <ul>
-                <li>Sheet 1: Pages 1, 3, 5, 7, 9, 11, 13, 15, 17</li>
-                <li>Sheet 2: Pages 6, 4, 2, 12, 10, 8, 18, 16, 14</li>
-                <li>Sheet 3: Pages 19, 21, 23, 25, 27, 29, 31, 33, 35</li>
-                <li>Sheet 4: Pages 24, 22, 20, 30, 28, 26, 36, 34, 32</li>
-                <li>And so on...</li>
-              </ul>
             </div>
             <button 
               onClick={handleGenerateClick} 
