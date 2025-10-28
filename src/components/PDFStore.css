@@ -74,6 +74,7 @@
   font-size: 2.2rem;
   font-weight: 700;
   background: linear-gradient(to right, var(--primary-color), var(--accent-color));
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   margin-bottom: 10px;
@@ -390,6 +391,16 @@
   box-shadow: 0 2px 8px rgba(76, 175, 80, 0.4);
 }
 
+.download-file-button.queued {
+  background: linear-gradient(135deg, #ff9800, #f57c00);
+  cursor: wait;
+}
+
+.download-file-button.queued:hover {
+  background: linear-gradient(135deg, #fb8c00, #ef6c00);
+  box-shadow: 0 2px 8px rgba(255, 152, 0, 0.4);
+}
+
 .no-files-message {
   color: var(--text-muted);
   font-style: italic;
@@ -431,60 +442,145 @@
     padding: 15px;
     margin: 0;
     width: 100%;
-    border-radius: 0;
+    border-radius: 8px;
   }
   
   .store-header h2 {
     font-size: 1.8rem;
+    line-height: 1.3;
   }
   
   .store-header p {
     font-size: 1rem;
+    padding: 0 10px;
   }
   
   .semester-tabs {
     flex-wrap: wrap;
     justify-content: center;
     padding-bottom: 10px;
+    gap: 10px;
   }
   
   .semester-tab {
     margin-bottom: 8px;
+    padding: 10px 16px;
+    font-size: 0.95rem;
+    min-height: 44px; /* Better touch target */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .subject-card {
+    padding: 18px;
+  }
+  
+  .subject-card h4 {
+    font-size: 1.15rem;
+    min-height: 2.5rem;
+  }
+  
+  .download-button {
+    padding: 12px 18px;
+    font-size: 1rem;
+    min-height: 44px; /* Better touch target */
+  }
+  
+  .download-all-button {
+    min-height: 44px;
+    font-size: 1rem;
   }
 }
 
 @media (max-width: 480px) {
+  .pdf-store-container {
+    padding: 12px;
+    border-radius: 0;
+  }
+  
+  .store-header h2 {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+  }
+  
+  .store-header p {
+    font-size: 0.9rem;
+  }
+  
   .semester-tabs {
-    gap: 8px;
+    gap: 6px;
     flex-wrap: wrap;
     justify-content: center;
   }
   
+  .semester-tab {
+    padding: 8px 14px;
+    font-size: 0.9rem;
+    min-height: 44px;
+  }
+  
   .subjects-grid {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 14px;
+  }
+  
+  .subject-card {
+    padding: 16px;
+  }
+  
+  .subject-card h4 {
+    font-size: 1.05rem;
+    min-height: 2.2rem;
+  }
+  
+  .subject-icon {
+    font-size: 2rem;
   }
   
   .file-item {
     flex-direction: column;
     align-items: flex-start;
-    padding: 12px 10px;
+    padding: 14px 12px;
+    gap: 10px;
+    min-height: 44px;
   }
   
   .file-name {
     margin: 5px 0;
     width: 100%;
     text-align: left;
+    font-size: 0.95rem;
   }
   
   .download-file-button {
     width: 100%;
     text-align: center;
-    padding: 8px;
+    padding: 10px;
+    min-height: 44px;
+    font-size: 0.95rem;
   }
   
-  .pdf-store-container {
-    padding: 10px;
+  .download-button {
+    padding: 12px 16px;
+    font-size: 0.95rem;
+  }
+  
+  .files-list {
+    max-height: 180px;
+  }
+  
+  .download-progress-content {
+    padding: 30px 20px;
+    width: 95%;
+  }
+  
+  .download-progress-title {
+    font-size: 20px;
+  }
+  
+  .download-progress-icon {
+    font-size: 48px;
   }
   
   .subject-card {
@@ -528,16 +624,230 @@
   }
 }
 
+/* Full-screen download progress overlay */
+.download-progress-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(10px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.download-progress-content {
+  background: linear-gradient(135deg, var(--card-bg), var(--sidebar-bg));
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+
+.download-progress-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+  animation: bounce 1s infinite;
+}
+
+.download-progress-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  background: linear-gradient(to right, var(--primary-color), var(--accent-color));
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.download-progress-path {
+  font-size: 14px;
+  color: var(--text-color);
+  margin-bottom: 15px;
+  padding: 8px 16px;
+  background: rgba(0, 188, 212, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 188, 212, 0.3);
+  font-family: var(--font-family-base);
+  font-weight: 500;
+}
+
+.download-progress-message {
+  font-size: 16px;
+  color: var(--text-muted);
+  margin-bottom: 30px;
+}
+
+.download-progress-bar-container {
+  width: 100%;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 15px;
+  position: relative;
+}
+
+.download-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+  border-radius: 10px;
+  transition: width 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.download-progress-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  animation: shimmer 2s infinite;
+}
+
+.download-progress-percentage {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-top: 10px;
+}
+
+.download-time-info {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 20px;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.time-elapsed,
+.time-remaining {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.time-elapsed {
+  color: var(--primary-color);
+}
+
+.time-remaining {
+  color: #ff9800;
+}
+
+.queue-indicator {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.queue-count {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.queue-list {
+  max-height: 200px;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.queue-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: rgba(255, 152, 0, 0.1);
+  border-left: 3px solid #ff9800;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.queue-position {
+  font-weight: 700;
+  color: #ff9800;
+  min-width: 30px;
+}
+
+.queue-file-name {
+  flex: 1;
+  color: var(--text-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.queue-item-more {
+  text-align: center;
+  padding: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-style: italic;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 /* Download notifications */
 .notification-container {
   position: fixed;
   bottom: 20px;
   right: 20px;
+  max-width: 400px;
+  width: 100%;
   z-index: 1000;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-width: 350px;
   transition: all 0.3s ease;
 }
 

@@ -7,7 +7,12 @@ import { ConfigPanel } from './components/ConfigPanel';
 import { TwoNTConfigPanel } from './components/TwoNTConfigPanel';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SpiderWebLogo, SpiderWebCorner } from './components/SpiderWeb';
+import { SecretLogin, SecretLoginButton } from './components/SecretLogin';
+import { AdminFileUpload } from './components/AdminFileUpload';
+import { AdminFileManager } from './components/AdminFileManager';
+import { authHelpers } from './utils/supabase';
 import './styles/SpiderWeb.css';
+import './styles/SecretLogin.css';
 import './App.css';
 
 export interface Config {
@@ -43,6 +48,11 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [isStandalone, setIsStandalone] = useState<boolean>(false);
   const [hasNotificationPermission, setHasNotificationPermission] = useState<boolean>(false);
+  const [showLogin, setShowLogin] = useState<boolean>(false);
+  const [showAdminUpload, setShowAdminUpload] = useState<boolean>(false);
+  const [showAdminManage, setShowAdminManage] = useState<boolean>(false);
+  const [user, setUser] = useState<any>(null);
+  const [refreshPDFStore, setRefreshPDFStore] = useState<number>(0);
 
   // Check if app is running in standalone mode (PWA)
   useEffect(() => {
@@ -116,6 +126,36 @@ function App() {
     checkNotificationPermission();
   }, []);
 
+  // Check auth state
+  useEffect(() => {
+    // Get initial session
+    authHelpers.getSession().then(({ session }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = authHelpers.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await authHelpers.signOut();
+    setUser(null);
+  };
+
+  const handleUploadSuccess = () => {
+    // Trigger PDFStore refresh by updating the key
+    setRefreshPDFStore(prev => prev + 1);
+  };
+
+  const handleFileDeleted = () => {
+    // Trigger PDFStore refresh after file deletion
+    setRefreshPDFStore(prev => prev + 1);
+  };
+
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
@@ -138,6 +178,33 @@ function App() {
   return (
     <ErrorBoundary>
       <div className={`app-container ${isStandalone ? 'standalone-mode' : ''}`}>
+        {/* Secret Login Button */}
+        <SecretLoginButton 
+          user={user}
+          onLogout={handleLogout}
+          onLoginClick={() => setShowLogin(true)}
+          onAdminUploadClick={() => setShowAdminUpload(true)}
+          onAdminManageClick={() => setShowAdminManage(true)}
+        />
+        
+        {/* Secret Login Modal */}
+        {showLogin && <SecretLogin onClose={() => setShowLogin(false)} />}
+        
+        {/* Admin File Upload Modal */}
+        {showAdminUpload && (
+          <AdminFileUpload 
+            onClose={() => setShowAdminUpload(false)} 
+            onUploadSuccess={handleUploadSuccess}
+          />
+        )}
+        
+        {/* Admin File Manager Modal */}
+        {showAdminManage && (
+          <AdminFileManager 
+            onClose={() => setShowAdminManage(false)} 
+            onFileDeleted={handleFileDeleted}
+          />
+        )}
         <div className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
           <SpiderWebCorner className="spider-web-top-left" size={100} />
           <div className="sidebar-toggle" onClick={toggleSidebar}>
@@ -257,7 +324,7 @@ function App() {
             ) : (
               <div className="pdf-store-section">
                 <SpiderWebCorner className="spider-web-top-left" size={100} />
-                <PDFStore />
+                <PDFStore key={refreshPDFStore} />
                 <SpiderWebCorner className="spider-web-bottom-right" size={100} />
               </div>
             )}

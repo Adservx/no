@@ -1,0 +1,343 @@
+/* Admin Manager Overlay */
+.admin-manager-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Admin Manager Modal */
+.admin-manager-modal {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 2px solid #ff0000;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 1200px;
+  width: 95%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(255, 0, 0, 0.3),
+              0 0 40px rgba(255, 0, 0, 0.1);
+  position: relative;
+  animation: slideUp 0.4s ease-out;
+}
+
+/* Header */
+.admin-manager-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.admin-manager-header h2 {
+  color: #ff0000;
+  font-size: 28px;
+  margin: 0 0 8px 0;
+  font-weight: 700;
+  text-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+}
+
+.admin-manager-header p {
+  color: #a0a0a0;
+  font-size: 14px;
+  margin: 0;
+}
+
+/* Filters */
+.admin-manager-filters {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  flex: 1;
+  min-width: 250px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filter-group label {
+  color: #ff0000;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filter-group select,
+.filter-group input {
+  background: rgba(255, 0, 0, 0.05);
+  border: 2px solid rgba(255, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: #ffffff;
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+.filter-group select:focus,
+.filter-group input:focus {
+  outline: none;
+  border-color: #ff0000;
+  background: rgba(255, 0, 0, 0.1);
+  box-shadow: 0 0 20px rgba(255, 0, 0, 0.2);
+}
+
+.filter-group select option {
+  background: #1a1a2e;
+  color: #ffffff;
+}
+
+/* Files Table Container */
+.files-table-container {
+  margin: 24px 0;
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 0, 0, 0.2);
+}
+
+.files-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(255, 0, 0, 0.02);
+}
+
+.files-table thead {
+  background: rgba(255, 0, 0, 0.1);
+  border-bottom: 2px solid rgba(255, 0, 0, 0.3);
+}
+
+.files-table th {
+  padding: 12px 16px;
+  text-align: left;
+  color: #ff0000;
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.files-table tbody tr {
+  border-bottom: 1px solid rgba(255, 0, 0, 0.1);
+  transition: background 0.2s ease;
+}
+
+.files-table tbody tr:hover {
+  background: rgba(255, 0, 0, 0.05);
+}
+
+.files-table td {
+  padding: 12px 16px;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.file-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.file-icon {
+  font-size: 18px;
+}
+
+/* Delete Button */
+.delete-button {
+  background: rgba(255, 68, 68, 0.2);
+  border: 1px solid rgba(255, 68, 68, 0.5);
+  border-radius: 6px;
+  padding: 8px 16px;
+  color: #ff4444;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px; /* Better touch target */
+}
+
+.delete-button:hover:not(:disabled) {
+  background: rgba(255, 68, 68, 0.3);
+  border-color: #ff4444;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 68, 68, 0.3);
+}
+
+.delete-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Messages */
+.loading-message,
+.empty-message {
+  text-align: center;
+  padding: 48px 24px;
+  color: #a0a0a0;
+  font-size: 16px;
+}
+
+.error-message,
+.success-message {
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  text-align: center;
+  margin-bottom: 16px;
+  animation: slideDown 0.3s ease-out;
+}
+
+.error-message {
+  background: rgba(255, 68, 68, 0.1);
+  border: 1px solid rgba(255, 68, 68, 0.5);
+  color: #ff4444;
+}
+
+.success-message {
+  background: rgba(0, 255, 0, 0.1);
+  border: 1px solid rgba(0, 255, 0, 0.5);
+  color: #00ff00;
+}
+
+/* Footer */
+.manager-footer {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 0, 0, 0.2);
+  text-align: center;
+}
+
+.file-count {
+  color: #a0a0a0;
+  font-size: 14px;
+  margin: 0;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .admin-manager-modal {
+    padding: 24px 20px;
+    max-width: 95%;
+    max-height: 85vh;
+  }
+
+  .admin-manager-header h2 {
+    font-size: 24px;
+    line-height: 1.3;
+  }
+  
+  .admin-manager-header p {
+    font-size: 13px;
+  }
+
+  .admin-manager-filters {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .filter-group {
+    min-width: 100%;
+  }
+  
+  .filter-group label {
+    font-size: 13px;
+  }
+  
+  .filter-group select,
+  .filter-group input {
+    padding: 12px 14px;
+    font-size: 15px;
+  }
+
+  .files-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .files-table {
+    font-size: 13px;
+    min-width: 600px; /* Ensure horizontal scroll on small screens */
+  }
+
+  .files-table th,
+  .files-table td {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .file-name-cell {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .delete-button {
+    padding: 8px 12px;
+    font-size: 12px;
+    min-height: 40px;
+  }
+  
+  .loading-message,
+  .empty-message {
+    padding: 32px 16px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-manager-modal {
+    padding: 20px 16px;
+    max-width: 98%;
+    border-radius: 12px;
+  }
+  
+  .admin-manager-header h2 {
+    font-size: 22px;
+  }
+  
+  .filter-group select,
+  .filter-group input {
+    padding: 12px;
+    font-size: 14px;
+  }
+  
+  .files-table {
+    font-size: 12px;
+  }
+  
+  .files-table th,
+  .files-table td {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+  
+  .file-name-cell {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .delete-button {
+    padding: 8px 10px;
+    font-size: 11px;
+    width: 100%;
+  }
+  
+  .file-count {
+    font-size: 13px;
+  }
+}
