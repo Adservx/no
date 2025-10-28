@@ -311,12 +311,6 @@ const hardcodedSemesters: SemesterData[] = [
   }
 ];
 
-// Helper function to detect mobile devices
-const isMobileDevice = (): boolean => {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-    ((navigator.maxTouchPoints || 0) > 2 && /MacIntel/.test(navigator.platform));
-};
-
 export const PDFStore = () => {
   const [semesters, setSemesters] = useState<SemesterData[]>(hardcodedSemesters);
   const [activeSemester, setActiveSemester] = useState(0);
@@ -327,8 +321,6 @@ export const PDFStore = () => {
   const [subjectDownloadProgress, setSubjectDownloadProgress] = useState<Record<string, { downloading: boolean; progress: number }>>({});
   const [downloadQueue, setDownloadQueue] = useState<QueueItem[]>([]);
   const [isProcessingQueue, setIsProcessingQueue] = useState(false);
-  const [showPermissionDialog, setShowPermissionDialog] = useState(false);
-  const [pendingDownload, setPendingDownload] = useState<{ subject: Subject; semesterName: string } | null>(null);
   const downloadLinksRef = useRef<HTMLDivElement>(null);
   const queueRef = useRef<QueueItem[]>([]);
 
@@ -405,6 +397,12 @@ export const PDFStore = () => {
         // Remove from queue after download completes
         queueRef.current.shift();
         setDownloadQueue([...queueRef.current]);
+        
+        // Add small delay between downloads to prevent browser throttling
+        // This helps with domains that have stricter download policies
+        if (queueRef.current.length > 0) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
       }
     } finally {
       isProcessingRef.current = false;
@@ -664,21 +662,6 @@ export const PDFStore = () => {
     // Already downloading
     if (subjectDownloadProgress[subjectId]?.downloading) return;
     
-    // Check if mobile and show permission dialog
-    if (isMobileDevice() && subject.files.length > 1) {
-      setPendingDownload({ subject, semesterName });
-      setShowPermissionDialog(true);
-      return;
-    }
-    
-    // Proceed with download
-    startDownloadAll(subject, semesterName);
-  };
-  
-  // Function to actually start downloading all files
-  const startDownloadAll = (subject: Subject, semesterName: string) => {
-    const subjectId = subject.name;
-    
     // Set downloading state
     setSubjectDownloadProgress(prev => ({
       ...prev,
@@ -697,21 +680,6 @@ export const PDFStore = () => {
       message: `${subject.files.length} files added to download queue`,
       progress: 0
     });
-  };
-  
-  // Handle permission dialog confirmation
-  const handlePermissionConfirm = () => {
-    setShowPermissionDialog(false);
-    if (pendingDownload) {
-      startDownloadAll(pendingDownload.subject, pendingDownload.semesterName);
-      setPendingDownload(null);
-    }
-  };
-  
-  // Handle permission dialog cancel
-  const handlePermissionCancel = () => {
-    setShowPermissionDialog(false);
-    setPendingDownload(null);
   };
 
   // Toggle subject expansion
@@ -772,36 +740,6 @@ export const PDFStore = () => {
       
       {/* Hidden div to hold download iframes */}
       <div ref={downloadLinksRef} style={{ display: 'none' }}></div>
-      
-      {/* Mobile Download Permission Dialog */}
-      {showPermissionDialog && pendingDownload && (
-        <div className="permission-dialog-overlay">
-          <div className="permission-dialog">
-            <div className="permission-dialog-icon">📥</div>
-            <h3 className="permission-dialog-title">Download Multiple Files?</h3>
-            <p className="permission-dialog-message">
-              You're about to download <strong>{pendingDownload.subject.files.length} files</strong> from <strong>{pendingDownload.subject.name}</strong>.
-            </p>
-            <p className="permission-dialog-info">
-              📱 On mobile devices, your browser may ask for permission to download multiple files. Please allow it to continue.
-            </p>
-            <div className="permission-dialog-actions">
-              <button 
-                className="permission-dialog-button cancel"
-                onClick={handlePermissionCancel}
-              >
-                Cancel
-              </button>
-              <button 
-                className="permission-dialog-button confirm"
-                onClick={handlePermissionConfirm}
-              >
-                Start Download
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
       
       {/* Full-screen progress overlay */}
       {Object.values(downloadProgress).some(p => p.isDownloading) && (
