@@ -71,6 +71,12 @@ const formatTime = (seconds: number): string => {
   }
 };
 
+// Helper function to detect mobile devices
+const isMobileDevice = (): boolean => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+    (!!navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /MacIntel/.test(navigator.platform));
+};
+
 // Helper function to get file URL
 const getFileUrl = (filePath: string): string => {
   if (isR2Configured()) {
@@ -649,7 +655,7 @@ export const PDFStore = () => {
     }
   };
 
-  // Function to download all files in a subject
+  // Function to download all files in a subject (mobile-optimized)
   const handleDownloadAllSubject = (subject: Subject, semesterName: string) => {
     const subjectId = subject.name;
     
@@ -662,18 +668,94 @@ export const PDFStore = () => {
       [subjectId]: { downloading: true, progress: 0 }
     }));
     
-    // Add all files to queue
-    subject.files.forEach((file, index) => {
-      addToQueue(subject, file, index, semesterName);
-    });
+    // Check if mobile device
+    const isMobile = isMobileDevice();
     
-    // Add notification
-    addNotification({
-      type: 'downloading',
-      title: `Queued ${subject.name}`,
-      message: `${subject.files.length} files added to download queue`,
-      progress: 0
-    });
+    if (isMobile) {
+      // Mobile strategy: Create all download links immediately within user gesture
+      // This preserves the user interaction context required by mobile browsers
+      
+      // Add notification
+      const notifId = addNotification({
+        type: 'downloading',
+        title: `Downloading ${subject.name}`,
+        message: `Preparing ${subject.files.length} files...`,
+        progress: 0
+      });
+      
+      // Create all download links immediately (within user gesture)
+      const downloadLinks: HTMLAnchorElement[] = [];
+      
+      subject.files.forEach((file, index) => {
+        const link = document.createElement('a');
+        link.href = getFileUrl(file.path);
+        link.download = getShortFilename(subject, file, index);
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        downloadLinks.push(link);
+      });
+      
+      // Trigger downloads sequentially with delays
+      let completedCount = 0;
+      downloadLinks.forEach((link, index) => {
+        setTimeout(() => {
+          link.click();
+          completedCount++;
+          
+          // Update progress
+          const progress = Math.round((completedCount / subject.files.length) * 100);
+          setSubjectDownloadProgress(prev => ({
+            ...prev,
+            [subjectId]: { downloading: completedCount < subject.files.length, progress }
+          }));
+          
+          updateNotification(notifId, {
+            progress,
+            message: `Downloading file ${completedCount} of ${subject.files.length}...`
+          });
+          
+          // Clean up link after download
+          setTimeout(() => {
+            document.body.removeChild(link);
+          }, 1000);
+          
+          // If last file, show completion
+          if (completedCount === subject.files.length) {
+            setTimeout(() => {
+              updateNotification(notifId, {
+                type: 'success',
+                title: 'Download Complete',
+                message: `All ${subject.files.length} files from ${subject.name} have been queued for download.`,
+                progress: 100
+              });
+              
+              // Reset state after a delay
+              setTimeout(() => {
+                setSubjectDownloadProgress(prev => {
+                  const newState = { ...prev };
+                  delete newState[subjectId];
+                  return newState;
+                });
+              }, 2000);
+            }, 500);
+          }
+        }, index * 800); // 800ms delay between downloads for mobile
+      });
+      
+    } else {
+      // Desktop strategy: Use queue system with fetch API for progress tracking
+      subject.files.forEach((file, index) => {
+        addToQueue(subject, file, index, semesterName);
+      });
+      
+      // Add notification
+      addNotification({
+        type: 'downloading',
+        title: `Queued ${subject.name}`,
+        message: `${subject.files.length} files added to download queue`,
+        progress: 0
+      });
+    }
   };
 
   // Toggle subject expansion
@@ -916,7 +998,14 @@ export const PDFStore = () => {
                                 fileProgress?.queuePosition ? 'queued' : ''
                               }`}
                               target="_blank"
-                              onClick={() => downloadFile(subject, file, fileIndex, semesters[activeSemester].name)}
+                              onClick={(e) => {
+                                // On mobile, use native download; on desktop, use custom download with progress
+                                if (!isMobileDevice()) {
+                                  e.preventDefault();
+                                  downloadFile(subject, file, fileIndex, semesters[activeSemester].name);
+                                }
+                                // On mobile, let the native download happen
+                              }}
                             >
                               <span>
                                 {isFileDownloading 
