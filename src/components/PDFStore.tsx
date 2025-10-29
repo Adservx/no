@@ -481,14 +481,6 @@ export const PDFStore = () => {
       } 
     }));
     
-    // Add notification
-    const notifId = addNotification({
-      type: 'downloading',
-      title: `Downloading ${file.name}`,
-      message: `Starting download...`,
-      progress: 0
-    });
-    
     // Get file URL
     const filePath = getFileUrl(file.path);
     
@@ -549,18 +541,6 @@ export const PDFStore = () => {
               estimatedTimeRemaining: estimatedTimeRemaining
             } 
           }));
-          
-          // Update notification with real progress
-          const downloadedMB = (receivedLength / (1024 * 1024)).toFixed(2);
-          const totalMB = (totalSize / (1024 * 1024)).toFixed(2);
-          const timeRemainingText = estimatedTimeRemaining > 0 ? ` - ${estimatedTimeRemaining}s remaining` : '';
-          
-          updateNotification(notifId, {
-            message: totalSize > 0 
-              ? `${downloadedMB} MB / ${totalMB} MB (${progress}%)${timeRemainingText}`
-              : `${downloadedMB} MB downloaded`,
-            progress: progress
-          });
         }
       }
       
@@ -623,24 +603,13 @@ export const PDFStore = () => {
         } 
       }));
       
-      const fileSizeMB = (actualSize / (1024 * 1024)).toFixed(2);
-      updateNotification(notifId, {
-        type: 'success',
-        title: 'Download Complete',
-        message: `${file.name} (${fileSizeMB} MB) has been downloaded.`,
-        progress: 100
-      });
+      // Download complete - no notification needed
       
       // Clean up download tracking
       setFileDownloads(prev => ({ ...prev, [fileId]: false }));
       
     } catch (error) {
       console.error('Error downloading file:', error);
-      updateNotification(notifId, {
-        type: 'error',
-        title: 'Download Failed',
-        message: `Failed to download ${file.name}. Please try again.`
-      });
       setFileDownloads(prev => ({ ...prev, [fileId]: false }));
       
       // Reset progress state
@@ -671,14 +640,6 @@ export const PDFStore = () => {
     // Add all files to queue
     subject.files.forEach((file, index) => {
       addToQueue(subject, file, index, semesterName);
-    });
-    
-    // Add notification
-    addNotification({
-      type: 'downloading',
-      title: `Queued ${subject.name}`,
-      message: `${subject.files.length} files added to download queue`,
-      progress: 0
     });
   };
 
