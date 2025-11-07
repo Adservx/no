@@ -269,6 +269,11 @@ export const CustomOrderPDFContactSheet: React.FC<CustomOrderPDFContactSheetProp
     }
     
     if (!notification || type === 'success' || type === 'error') {
+      // Remove existing notification if transitioning to success/error
+      if (notification && (type === 'success' || type === 'error')) {
+        notification.remove();
+      }
+      
       // Create new notification
       notification = document.createElement('div');
       notification.className = `notification ${type} custom-pdf-contact-sheet`;

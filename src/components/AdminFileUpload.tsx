@@ -70,10 +70,27 @@ export const AdminFileUpload = ({ onClose, onUploadSuccess }: AdminFileUploadPro
     if (selectedFiles && selectedFiles.length > 0) {
       const fileArray = Array.from(selectedFiles);
       
-      // Check if all files are PDFs
-      const nonPdfFiles = fileArray.filter(file => file.type !== 'application/pdf');
-      if (nonPdfFiles.length > 0) {
-        setError('Please select only PDF files');
+      // Allowed file types
+      const allowedTypes = [
+        'application/pdf',
+        'image/jpeg',
+        'image/jpg',
+        'image/png',
+        'image/webp',
+        'image/gif',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+        'application/msword', // .doc
+        'application/vnd.ms-excel', // .xls
+        'application/vnd.ms-powerpoint', // .ppt
+        'text/plain', // .txt
+      ];
+      
+      // Check if all files are allowed types
+      const invalidFiles = fileArray.filter(file => !allowedTypes.includes(file.type));
+      if (invalidFiles.length > 0) {
+        setError(`Invalid file type(s): ${invalidFiles.map(f => f.name).join(', ')}. Allowed: PDF, Images (JPG, PNG, WebP, GIF), Documents (DOCX, XLSX, PPTX, DOC, XLS, PPT), Text files`);
         return;
       }
       
@@ -108,9 +125,9 @@ export const AdminFileUpload = ({ onClose, onUploadSuccess }: AdminFileUploadPro
         const file = files[i];
         setCurrentFileIndex(i + 1);
         
-        // Use original filename without .pdf extension
-        const fileName = file.name.replace('.pdf', '');
-        const r2Path = `${semesterFolder}/${subject}/${fileName}.pdf`;
+        // Use original filename with its extension
+        const fileName = file.name;
+        const r2Path = `${semesterFolder}/${subject}/${fileName}`;
 
         try {
           // Upload to R2
@@ -277,17 +294,17 @@ export const AdminFileUpload = ({ onClose, onUploadSuccess }: AdminFileUploadPro
           </div>
 
           <div className="form-group">
-            <label htmlFor="files">PDF Files *</label>
+            <label htmlFor="files">Files *</label>
             <input
               type="file"
               id="files"
-              accept=".pdf"
+              accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,.docx,.xlsx,.pptx,.doc,.xls,.ppt,.txt"
               multiple
               onChange={handleFileChange}
               required
               disabled={uploading}
             />
-            <small>You can select multiple PDF files at once</small>
+            <small>You can select multiple files at once (PDF, Images, Documents, Text files)</small>
             {files.length > 0 && (
               <div className="files-list">
                 <p className="files-count">📄 {files.length} file{files.length > 1 ? 's' : ''} selected</p>
@@ -343,10 +360,10 @@ export const AdminFileUpload = ({ onClose, onUploadSuccess }: AdminFileUploadPro
         <div className="upload-info">
           <h4>📋 Upload Guidelines</h4>
           <ul>
-            <li>Only PDF files are allowed</li>
-            <li>Files will be stored in: <code>semester/subject/filename.pdf</code></li>
-            <li>You can upload multiple PDF files at once</li>
-            <li>File names will be taken from the original PDF filenames</li>
+            <li>Allowed formats: PDF, Images (JPG, PNG, WebP, GIF), Documents (DOCX, XLSX, PPTX, DOC, XLS, PPT), Text files</li>
+            <li>Files will be stored in: <code>semester/subject/filename.ext</code></li>
+            <li>You can upload multiple files at once</li>
+            <li>File names will be taken from the original filenames</li>
             <li>Subject names should match existing subjects for consistency</li>
           </ul>
         </div>

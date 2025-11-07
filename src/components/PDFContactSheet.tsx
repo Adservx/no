@@ -147,6 +147,11 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
     }
     
     if (!notification || type === 'success' || type === 'error') {
+      // Remove existing notification if transitioning to success/error
+      if (notification && (type === 'success' || type === 'error')) {
+        notification.remove();
+      }
+      
       // Create new notification
       notification = document.createElement('div');
       notification.className = `notification ${type} pdf-contact-sheet`;
@@ -413,21 +418,36 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
 
         // Create and save PDF for current sheet with proper page size
         let pdfFormat;
+        let pdfPageWidth, pdfPageHeight;
+        
         switch(config.pageSize) {
-          case 'A3': pdfFormat = 'a3'; break;
-          case 'Letter': pdfFormat = 'letter'; break;
+          case 'A3': 
+            pdfFormat = 'a3';
+            pdfPageWidth = 842;  // A3 width in points
+            pdfPageHeight = 1191; // A3 height in points
+            break;
+          case 'Letter': 
+            pdfFormat = 'letter';
+            pdfPageWidth = 612;  // Letter width in points
+            pdfPageHeight = 792; // Letter height in points
+            break;
           case 'A4':
-          default: pdfFormat = 'a4'; break;
+          default: 
+            pdfFormat = 'a4';
+            pdfPageWidth = 595;  // A4 width in points
+            pdfPageHeight = 842; // A4 height in points
+            break;
         }
         
         const pdf = new jsPDF({
-          orientation: pageHeight > pageWidth ? 'portrait' : 'landscape',
-          unit: 'px',
+          orientation: 'portrait',
+          unit: 'pt',
           format: pdfFormat
         });
 
         const imageData = canvas.toDataURL('image/jpeg', 1.0);
-        pdf.addImage(imageData, 'JPEG', 0, 0, canvas.width, canvas.height);
+        // Scale the canvas image to fit the PDF page dimensions
+        pdf.addImage(imageData, 'JPEG', 0, 0, pdfPageWidth, pdfPageHeight);
 
         // Save with sheet number in filename
         const filename = `contact-sheet-${sheetIndex + 1}-${pdfFile.name}`;
