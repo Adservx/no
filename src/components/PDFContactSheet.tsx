@@ -365,7 +365,7 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
 
           const { row, col } = position;
           const progress = (((sheetIndex * pagesPerSheet) + (currentPage - startPage)) / numPages) * 100;
-          updateProgress(progress);
+          updateProgress(Math.round(progress));
 
           try {
             const page = await loadedPdf.getPage(currentPage);

@@ -488,6 +488,7 @@ export const CustomOrderPDFContactSheet: React.FC<CustomOrderPDFContactSheetProp
           
           const progress = (((sheetIndex * config.columns * config.rows) + i) / numPages) * 100;
           setLoadingProgress(Math.round(progress));
+          showDownloadNotification('downloading', `Processing page ${pageNumber} of ${numPages}...`, Math.round(progress));
 
           try {
             const page = await loadedPdf.getPage(pageNumber);
@@ -566,13 +567,14 @@ export const CustomOrderPDFContactSheet: React.FC<CustomOrderPDFContactSheetProp
         // Save with sheet number in filename
         const filename = `custom-order-sheet-${sheetIndex + 1}-${pdfFile.name}`;
         pdf.save(filename);
-
-        // When the PDF is complete:
-        showDownloadNotification('success', 'Custom contact sheet has been downloaded successfully!');
       }
 
       // Cleanup
       URL.revokeObjectURL(pdfUrl);
+      
+      // When all PDFs are complete:
+      setLoadingProgress(100);
+      showDownloadNotification('success', 'Custom contact sheet has been downloaded successfully!');
     } catch (err) {
       console.error('Generation error:', err);
       setError(err instanceof Error ? err.message : 'Error generating contact sheet');

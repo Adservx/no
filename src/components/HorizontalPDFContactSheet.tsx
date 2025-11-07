@@ -514,19 +514,14 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
         // Save with sheet number in filename
         const filename = `horizontal-contact-sheet-${sheetIndex + 1}.pdf`;
         pdf.save(filename);
+        
+        // Update progress
+        const progress = ((sheetIndex + 1) / totalSheets) * 100;
+        setLoadingProgress(Math.round(progress));
+        updateNotificationProgress(Math.round(progress));
       }
 
-      // Update progress periodically
-      const progressInterval = setInterval(() => {
-        setLoadingProgress((prev) => {
-          const newProgress = Math.min(prev + 5, 95);
-          updateNotificationProgress(newProgress);
-          return newProgress;
-        });
-      }, 100);
-
       // When PDF is ready to download
-      clearInterval(progressInterval);
       updateNotificationProgress(100);
       
       // Remove processing notification
@@ -541,11 +536,12 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
       console.error('Error generating contact sheet:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setError(errorMessage);
-      setIsExtracting(false);
-      setIsGenerating(false);
       
       // Show error notification
       showDownloadNotification('error', `Failed to generate PDF: ${errorMessage}`);
+    } finally {
+      setIsExtracting(false);
+      setIsGenerating(false);
     }
   };
 
