@@ -3,6 +3,8 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  height: 100%;
+  flex: 1;
 }
 
 .upload-section {
@@ -144,39 +146,89 @@
 
 /* Mind-blowing button animation classes */
 @keyframes pulse {
-  0% { box-shadow: 0 0 8px rgba(56, 189, 248, 0.5), 0 0 15px rgba(56, 189, 248, 0.3); }
-  50% { box-shadow: 0 0 20px rgba(56, 189, 248, 0.7), 0 0 30px rgba(56, 189, 248, 0.5); }
-  100% { box-shadow: 0 0 8px rgba(56, 189, 248, 0.5), 0 0 15px rgba(56, 189, 248, 0.3); }
+  0% {
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.5), 0 0 15px rgba(56, 189, 248, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.7), 0 0 30px rgba(56, 189, 248, 0.5);
+  }
+
+  100% {
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.5), 0 0 15px rgba(56, 189, 248, 0.3);
+  }
 }
 
 @keyframes float {
-  0% { transform: translateY(0) translateZ(0) rotateX(0); }
-  50% { transform: translateY(-10px) translateZ(20px) rotateX(5deg); }
-  100% { transform: translateY(0) translateZ(0) rotateX(0); }
+  0% {
+    transform: translateY(0) translateZ(0) rotateX(0);
+  }
+
+  50% {
+    transform: translateY(-10px) translateZ(20px) rotateX(5deg);
+  }
+
+  100% {
+    transform: translateY(0) translateZ(0) rotateX(0);
+  }
 }
 
 @keyframes particleDrift {
-  0% { transform: translate(0, 0) scale(1); opacity: 0; }
-  20% { opacity: 1; }
-  100% { transform: translate(var(--x, 100px), var(--y, -100px)) scale(0); opacity: 0; }
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0;
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(var(--x, 100px), var(--y, -100px)) scale(0);
+    opacity: 0;
+  }
 }
 
 @keyframes buttonGlow {
-  0% { filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.7)); }
-  50% { filter: drop-shadow(0 0 15px rgba(96, 165, 250, 0.9)); }
-  100% { filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.7)); }
+  0% {
+    filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.7));
+  }
+
+  50% {
+    filter: drop-shadow(0 0 15px rgba(96, 165, 250, 0.9));
+  }
+
+  100% {
+    filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.7));
+  }
 }
 
 @keyframes textGlow {
-  0% { text-shadow: 0 0 5px rgba(255, 255, 255, 0.5), 0 0 10px rgba(56, 189, 248, 0.3); }
-  50% { text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(56, 189, 248, 0.6), 0 0 30px rgba(56, 189, 248, 0.4); }
-  100% { text-shadow: 0 0 5px rgba(255, 255, 255, 0.5), 0 0 10px rgba(56, 189, 248, 0.3); }
+  0% {
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5), 0 0 10px rgba(56, 189, 248, 0.3);
+  }
+
+  50% {
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(56, 189, 248, 0.6), 0 0 30px rgba(56, 189, 248, 0.4);
+  }
+
+  100% {
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5), 0 0 10px rgba(56, 189, 248, 0.3);
+  }
 }
 
 @keyframes rainbow {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 .particle {
@@ -284,9 +336,11 @@
     left: -50%;
     opacity: 0;
   }
+
   50% {
     opacity: 1;
   }
+
   100% {
     left: 150%;
     opacity: 0;
@@ -324,8 +378,13 @@
 }
 
 @keyframes shimmer {
-  0% { left: -100%; }
-  100% { left: 100%; }
+  0% {
+    left: -100%;
+  }
+
+  100% {
+    left: 100%;
+  }
 }
 
 .loading-spinner {
@@ -464,8 +523,13 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .confirmation-content {
@@ -480,8 +544,15 @@
 }
 
 @keyframes slideIn {
-  from { transform: translateY(-20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .confirmation-content h4 {
@@ -509,7 +580,8 @@
   justify-content: center;
 }
 
-.confirm-button, .cancel-button {
+.confirm-button,
+.cancel-button {
   padding: 10px 20px;
   border-radius: var(--border-radius);
   cursor: pointer;
@@ -564,17 +636,17 @@
     padding: 20px;
     background-color: var(--card-bg);
   }
-  
+
   .dropzone {
     padding: 24px 16px;
     background-color: rgba(13, 43, 69, 0.5);
     border: 1px dashed rgba(0, 188, 212, 0.5);
   }
-  
+
   .generate-button {
     max-width: 100%;
   }
-  
+
   .standard-sheet-info,
   .two-n-t-info {
     background-color: var(--card-bg);
@@ -586,39 +658,40 @@
     padding: 16px;
     background-color: var(--card-bg);
   }
-  
+
   .dropzone {
     padding: 20px 12px;
     background-color: rgba(13, 43, 69, 0.5);
     border: 1px dashed rgba(0, 188, 212, 0.5);
   }
-  
+
   .dropzone-icon {
     font-size: 1.5rem;
   }
-  
+
   .dropzone p {
     font-size: 0.9rem;
   }
-  
+
   .pdf-select-button {
     width: 100%;
   }
-  
+
   .confirmation-content {
     padding: 20px 16px;
     background-color: var(--card-bg);
   }
-  
+
   .confirmation-buttons {
     flex-direction: column;
     gap: 8px;
   }
-  
-  .confirm-button, .cancel-button {
+
+  .confirm-button,
+  .cancel-button {
     width: 100%;
   }
-  
+
   .standard-sheet-info,
   .two-n-t-info {
     background-color: var(--card-bg);
@@ -704,13 +777,14 @@
 }
 
 @media (max-width: 768px) {
+
   .standard-sheet-features,
   .two-n-t-features {
     flex-direction: column;
     align-items: center;
     gap: 16px;
   }
-  
+
   .feature {
     width: 100%;
     max-width: 300px;
@@ -719,9 +793,19 @@
 
 /* Sparkle animations */
 @keyframes sparkle {
-  0% { transform: scale(0) rotate(0deg); opacity: 0; }
-  50% { opacity: 1; }
-  100% { transform: scale(1) rotate(180deg); opacity: 0; }
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 0;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1) rotate(180deg);
+    opacity: 0;
+  }
 }
 
 .sparkle {
@@ -732,7 +816,8 @@
   z-index: 10;
 }
 
-.sparkle::before, .sparkle::after {
+.sparkle::before,
+.sparkle::after {
   content: "";
   position: absolute;
   top: 0;
@@ -748,15 +833,11 @@
 }
 
 .sparkle::after {
-  background: linear-gradient(
-    45deg, 
-    transparent 10%, 
-    rgba(255, 255, 255, 0.8) 50%, 
-    transparent 90%
-  ), linear-gradient(
-    -45deg, 
-    transparent 10%, 
-    rgba(255, 255, 255, 0.8) 50%, 
-    transparent 90%
-  );
+  background: linear-gradient(45deg,
+      transparent 10%,
+      rgba(255, 255, 255, 0.8) 50%,
+      transparent 90%), linear-gradient(-45deg,
+      transparent 10%,
+      rgba(255, 255, 255, 0.8) 50%,
+      transparent 90%);
 }

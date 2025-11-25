@@ -130,13 +130,13 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
       notificationContainer.className = 'notification-container';
       document.body.appendChild(notificationContainer);
     }
-    
+
     // Check if there's an existing download notification to update
     let notification = document.querySelector('.notification.pdf-contact-sheet');
-    
+
     // Generate a unique ID for this notification for service worker
     const notificationId = 'pdf-contact-sheet-' + new Date().getTime();
-    
+
     // Send notification to service worker if in PWA mode
     if (type === 'downloading' && progress !== undefined) {
       updateServiceWorkerProgress(progress, 'Generating PDF', message, notificationId);
@@ -145,21 +145,21 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
     } else if (type === 'error') {
       notifyServiceWorkerDownload('Error', message, notificationId);
     }
-    
+
     if (!notification || type === 'success' || type === 'error') {
       // Remove existing notification if transitioning to success/error
       if (notification && (type === 'success' || type === 'error')) {
         notification.remove();
       }
-      
+
       // Create new notification
       notification = document.createElement('div');
       notification.className = `notification ${type} pdf-contact-sheet`;
-      
+
       // Add notification content based on type
       const icon = type === 'downloading' ? '⬇️' : type === 'success' ? '✅' : '❌';
       const title = type === 'downloading' ? 'Generating PDF' : type === 'success' ? 'Download Complete' : 'Error';
-      
+
       notification.innerHTML = `
         <div class="notification-icon">${icon}</div>
         <div class="notification-content">
@@ -173,10 +173,10 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
         </div>
         <button class="notification-close">✕</button>
       `;
-      
+
       // Add to container
       notificationContainer.appendChild(notification);
-      
+
       // Add close event
       const closeButton = notification.querySelector('.notification-close');
       closeButton?.addEventListener('click', () => {
@@ -187,7 +187,7 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
           }, 300);
         }
       });
-      
+
       // Auto remove after some time for success/error
       if (type === 'success' || type === 'error') {
         setTimeout(() => {
@@ -203,16 +203,16 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
       // Update existing notification
       const progressBar = notification.querySelector('.notification-progress-bar') as HTMLElement;
       const messageEl = notification.querySelector('.notification-content p') as HTMLElement;
-      
+
       if (progressBar && progress !== undefined) {
         progressBar.style.width = `${progress}%`;
       }
-      
+
       if (messageEl) {
         messageEl.textContent = message;
       }
     }
-    
+
     return notification;
   };
 
@@ -234,8 +234,8 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
       // Calculate dimensions with DPI based on page size
       const dpiScale = config.resolution / 72;
       let pageWidth, pageHeight;
-      
-      switch(config.pageSize) {
+
+      switch (config.pageSize) {
         case 'A3':
           pageWidth = 842 * dpiScale; // A3 width in portrait (297mm)
           pageHeight = 1191 * dpiScale; // A3 height in portrait (420mm)
@@ -250,24 +250,18 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
           pageHeight = 842 * dpiScale; // A4 height in portrait (297mm)
           break;
       }
-      
+
+      // Set canvas size to exactly match PDF page dimensions for full page occupation
+      canvas.width = pageWidth;
+      canvas.height = pageHeight;
+
       // Calculate the available space for thumbnails
       const horizontalSpacing = config.spacing * (config.columns + 1) * dpiScale;
       const verticalSpacing = config.spacing * (config.rows + 1) * dpiScale;
-      
-      // Calculate thumbnail width based on available space
+
+      // Calculate thumbnail dimensions to fill the available space
       const thumbWidth = (pageWidth - horizontalSpacing) / config.columns;
-      
-      // Use a fixed aspect ratio (e.g., 1:1.414 which is A4 ratio)
-      const aspectRatio = 1.414; // Standard A4 ratio
-      const thumbHeight = thumbWidth * aspectRatio;
-      
-      // Adjust canvas height if needed to accommodate the thumbnails with fixed ratio
-      const calculatedPageHeight = (thumbHeight * config.rows) + verticalSpacing;
-      
-      // Set canvas size
-      canvas.width = pageWidth;
-      canvas.height = calculatedPageHeight > pageHeight ? calculatedPageHeight : pageHeight;
+      const thumbHeight = (pageHeight - verticalSpacing) / config.rows;
 
       // Calculate total sheets needed
       const pagesPerSheet = config.rows * config.columns;
@@ -288,76 +282,10 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
 
       // Generate each sheet
       for (let sheetIndex = 0; sheetIndex < totalSheets; sheetIndex++) {
-        // Clear canvas for new sheet with bluebird feather theme
-        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        gradient.addColorStop(0, '#4ade80');  // Light Green-400
-        gradient.addColorStop(0.3, '#7dd3fc'); // Sky Blue-300
-        gradient.addColorStop(0.7, '#38bdf8'); // Sky Blue-400
-        gradient.addColorStop(1, '#22c55e');  // Green-500
-        ctx.fillStyle = gradient;
+        // Clear canvas for new sheet with pure white background
+        ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // Add feather pattern
-        const featherSize = 80 * dpiScale;
-        const featherCount = Math.ceil(canvas.width / featherSize) * Math.ceil(canvas.height / featherSize);
-        
-        // Draw feather pattern
-        for (let i = 0; i < featherCount; i++) {
-          const row = Math.floor(i / Math.ceil(canvas.width / featherSize));
-          const col = i % Math.ceil(canvas.width / featherSize);
-          const x = col * featherSize;
-          const y = row * featherSize;
-          
-          // Skip some feathers randomly for a more natural look
-          if (Math.random() > 0.7) continue;
-          
-          // Draw feather
-          ctx.save();
-          ctx.translate(x + featherSize/2, y + featherSize/2);
-          ctx.rotate(Math.random() * Math.PI * 2); // Random rotation
-          
-          // Draw feather shaft
-          ctx.beginPath();
-          ctx.moveTo(0, -featherSize/3);
-          ctx.lineTo(0, featherSize/3);
-          ctx.strokeStyle = 'rgba(56, 189, 248, 0.1)'; // Sky blue
-          ctx.lineWidth = 2;
-          ctx.stroke();
-          
-          // Draw feather barbs
-          const barbCount = 10;
-          const barbLength = featherSize/4;
-          
-          for (let j = 0; j < barbCount; j++) {
-            const barbY = -featherSize/3 + (j * featherSize/barbCount) * 0.66;
-            
-            // Right side barbs
-            ctx.beginPath();
-            ctx.moveTo(0, barbY);
-            ctx.bezierCurveTo(
-              barbLength/3, barbY + featherSize/60,
-              barbLength/2, barbY + featherSize/30,
-              barbLength, barbY
-            );
-            ctx.strokeStyle = 'rgba(125, 211, 252, 0.07)'; // Light sky blue
-            ctx.lineWidth = 1;
-            ctx.stroke();
-            
-            // Left side barbs
-            ctx.beginPath();
-            ctx.moveTo(0, barbY);
-            ctx.bezierCurveTo(
-              -barbLength/3, barbY + featherSize/60,
-              -barbLength/2, barbY + featherSize/30,
-              -barbLength, barbY
-            );
-            ctx.strokeStyle = 'rgba(74, 222, 128, 0.07)'; // Light green
-            ctx.lineWidth = 1;
-            ctx.stroke();
-          }
-          
-          ctx.restore();
-        }
+
 
         const startPage = sheetIndex * pagesPerSheet + 1;
         const endPage = Math.min((sheetIndex + 1) * pagesPerSheet, numPages);
@@ -375,10 +303,12 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
           try {
             const page = await loadedPdf.getPage(currentPage);
             const viewport = page.getViewport({ scale: 1.0 });
+
+            // Calculate scale to make PDF fill the entire thumbnail space
             const scale = Math.min(
               thumbWidth / viewport.width,
               thumbHeight / viewport.height
-            ) * 1.5;
+            );
 
             const scaledViewport = page.getViewport({ scale });
             const tempCanvas = document.createElement('canvas');
@@ -398,18 +328,8 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
             const x = config.spacing * dpiScale + col * (thumbWidth + config.spacing * dpiScale);
             const y = config.spacing * dpiScale + row * (thumbHeight + config.spacing * dpiScale);
 
-            // Center the PDF within its allocated space if it doesn't fill the entire area
-            const pdfWidth = Math.min(thumbWidth, scaledViewport.width);
-            const pdfHeight = Math.min(thumbHeight, scaledViewport.height);
-            const xOffset = (thumbWidth - pdfWidth) / 2;
-            const yOffset = (thumbHeight - pdfHeight) / 2;
-            
-            // Draw white background for the PDF thumbnail
-            ctx.fillStyle = 'white';
-            ctx.fillRect(x + xOffset - 5, y + yOffset - 5, pdfWidth + 10, pdfHeight + 10);
-            
-            // Draw the PDF on top of the white background
-            ctx.drawImage(tempCanvas, x + xOffset, y + yOffset, pdfWidth, pdfHeight);
+            // Draw the PDF to fill the entire thumbnail space
+            ctx.drawImage(tempCanvas, x, y, thumbWidth, thumbHeight);
             currentPage++;
           } catch (err) {
             console.error(`Error rendering page ${currentPage}:`, err);
@@ -419,26 +339,26 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
         // Create and save PDF for current sheet with proper page size
         let pdfFormat;
         let pdfPageWidth, pdfPageHeight;
-        
-        switch(config.pageSize) {
-          case 'A3': 
+
+        switch (config.pageSize) {
+          case 'A3':
             pdfFormat = 'a3';
             pdfPageWidth = 842;  // A3 width in points
             pdfPageHeight = 1191; // A3 height in points
             break;
-          case 'Letter': 
+          case 'Letter':
             pdfFormat = 'letter';
             pdfPageWidth = 612;  // Letter width in points
             pdfPageHeight = 792; // Letter height in points
             break;
           case 'A4':
-          default: 
+          default:
             pdfFormat = 'a4';
             pdfPageWidth = 595;  // A4 width in points
             pdfPageHeight = 842; // A4 height in points
             break;
         }
-        
+
         const pdf = new jsPDF({
           orientation: 'portrait',
           unit: 'pt',
@@ -446,7 +366,7 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
         });
 
         const imageData = canvas.toDataURL('image/jpeg', 1.0);
-        // Scale the canvas image to fit the PDF page dimensions
+        // Canvas dimensions now exactly match PDF page dimensions, so place it directly
         pdf.addImage(imageData, 'JPEG', 0, 0, pdfPageWidth, pdfPageHeight);
 
         // Save with sheet number in filename
@@ -480,7 +400,7 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
           <div className="dropzone-icon">📄</div>
           <p>Drag & drop a PDF file here</p>
         </div>
-        
+
         <button className="pdf-select-button" onClick={openFileDialog}>
           Select PDF File
         </button>
@@ -492,9 +412,9 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
           style={{ display: 'none' }}
         />
       </div>
-      
+
       {error && <div className="error-message">{error}</div>}
-      
+
       {pdfFile && (
         <>
           <Document
@@ -506,11 +426,11 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
           >
             {null /* We don't need to render pages here */}
           </Document>
-          
+
           <div className="pdf-preview">
             <p className="file-name">{pdfFile.name}</p>
-            <button 
-              onClick={handleGenerateClick} 
+            <button
+              onClick={handleGenerateClick}
               disabled={isGenerating || !numPages || pendingGeneration}
               className={`generate-button ${isGenerating ? 'generating' : ''}`}
             >
@@ -523,7 +443,7 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
                 'Generate Contact Sheet'
               )}
             </button>
-            
+
             {isGenerating && (
               <div className="progress-bar">
                 <div className="progress" style={{ width: `${loadingProgress}%` }}></div>
@@ -533,7 +453,7 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
           </div>
         </>
       )}
-      
+
       {showConfirmDialog && (
         <div className="confirmation-dialog">
           <div className="confirmation-content">
@@ -546,7 +466,7 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
           </div>
         </div>
       )}
-      
+
       <canvas ref={canvasRef} style={{ display: 'none' }} />
     </div>
   );

@@ -63,24 +63,24 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
     try {
       setIsExtracting(true);
       setExtractionProgress(0);
-      
+
       fileUrl = URL.createObjectURL(file);
       const loadingTask = pdfjs.getDocument(fileUrl);
-      
+
       const pdf = await loadingTask.promise;
       const numPages = pdf.numPages;
       const newPages: PDFPageItem[] = [];
-      
+
       for (let i = 1; i <= numPages; i++) {
         newPages.push({
           originalFile: file,
           pageNumber: i,
           name: `${file.name} (Page ${i} of ${numPages})`
         });
-        
+
         setExtractionProgress(Math.round((i / numPages) * 100));
       }
-      
+
       setPdfPages(prevPages => [...prevPages, ...newPages]);
     } catch (err) {
       console.error('Error extracting pages:', err);
@@ -97,7 +97,7 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
   const processUploadedFiles = async (files: File[]) => {
     setError(null);
     setPdfFiles(prevFiles => [...prevFiles, ...files]);
-    
+
     // Process each file to extract pages
     for (const file of files) {
       await extractPagesFromPDF(file);
@@ -170,13 +170,13 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
       notificationContainer.className = 'notification-container';
       document.body.appendChild(notificationContainer);
     }
-    
+
     // Check if there's an existing download notification to update
     let notification = document.querySelector('.notification.horizontal-pdf-contact-sheet');
-    
+
     // Generate a unique ID for this notification for service worker
     const notificationId = 'horizontal-pdf-contact-sheet-' + new Date().getTime();
-    
+
     // Send notification to service worker if in PWA mode
     if (type === 'downloading' && progress !== undefined) {
       updateServiceWorkerProgress(progress, 'Generating 2nT PDF', message, notificationId);
@@ -185,21 +185,21 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
     } else if (type === 'error') {
       notifyServiceWorkerDownload('Error', message, notificationId);
     }
-    
+
     if (!notification || type === 'success' || type === 'error') {
       // Remove existing notification if transitioning to success/error
       if (notification && (type === 'success' || type === 'error')) {
         notification.remove();
       }
-      
+
       // Create new notification
       notification = document.createElement('div');
       notification.className = `notification ${type} horizontal-pdf-contact-sheet`;
-      
+
       // Add notification content based on type
       const icon = type === 'downloading' ? '⬇️' : type === 'success' ? '✅' : '❌';
       const title = type === 'downloading' ? 'Generating 2nT PDF' : type === 'success' ? 'Download Complete' : 'Error';
-      
+
       notification.innerHTML = `
         <div class="notification-icon">${icon}</div>
         <div class="notification-content">
@@ -213,10 +213,10 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
         </div>
         <button class="notification-close">✕</button>
       `;
-      
+
       // Add to container
       notificationContainer.appendChild(notification);
-      
+
       // Add close event
       const closeButton = notification.querySelector('.notification-close');
       closeButton?.addEventListener('click', () => {
@@ -227,7 +227,7 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
           }, 300);
         }
       });
-      
+
       // Auto remove after some time for success/error
       if (type === 'success' || type === 'error') {
         setTimeout(() => {
@@ -243,16 +243,16 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
       // Update existing notification
       const progressBar = notification.querySelector('.notification-progress-bar') as HTMLElement;
       const messageEl = notification.querySelector('.notification-content p') as HTMLElement;
-      
+
       if (progressBar && progress !== undefined) {
         progressBar.style.width = `${progress}%`;
       }
-      
+
       if (messageEl) {
         messageEl.textContent = message;
       }
     }
-    
+
     return notification;
   };
 
@@ -264,7 +264,7 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
       notificationContainer.className = 'notification-container';
       document.body.appendChild(notificationContainer);
     }
-    
+
     const processingNotification = document.createElement('div');
     processingNotification.className = 'notification downloading';
     processingNotification.innerHTML = `
@@ -277,12 +277,12 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
         </div>
       </div>
     `;
-    
+
     notificationContainer.appendChild(processingNotification);
     const progressBar = processingNotification.querySelector('.notification-progress-bar') as HTMLElement;
 
     if (!canvasRef.current) return;
-    
+
     setIsGenerating(true);
     setLoadingProgress(0);
     setError(null);
@@ -291,22 +291,15 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
     const dpiScale = config.resolution / 72;
     const pageWidth = 842 * dpiScale; // A4 width in landscape (297mm)
     const pageHeight = 595 * dpiScale; // A4 height in landscape (210mm)
-    
+
     // Set canvas size
     canvasRef.current.width = pageWidth;
     canvasRef.current.height = pageHeight;
 
-    // Calculate dimensions for 2 PDFs per page with fixed aspect ratio
+    // Calculate dimensions for 2 PDFs per page to fully occupy the space
     const spacing = config.spacing * dpiScale;
     const thumbWidth = (pageWidth - (spacing * 3)) / 2; // 2 columns with spacing
-    
-    // Use a fixed aspect ratio (e.g., 1:1.414 which is A4 ratio)
-    const aspectRatio = 1.414; // Standard A4 ratio
-    const thumbHeight = thumbWidth / aspectRatio; // Divide by aspect ratio since we're in landscape
-    
-    // Check if the calculated height fits in the page
-    const requiredHeight = (thumbHeight + spacing * 2);
-    const finalThumbHeight = requiredHeight > pageHeight ? (pageHeight - spacing * 2) : thumbHeight;
+    const thumbHeight = pageHeight - (spacing * 2); // Full height minus spacing
 
     // Calculate total sheets needed (2 PDFs per sheet)
     const totalSheets = Math.ceil(pdfPages.length / 2);
@@ -325,123 +318,16 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
       if (!ctx) throw new Error('Could not get canvas context');
 
       for (let sheetIndex = 0; sheetIndex < totalSheets; sheetIndex++) {
-        // Clear canvas for new sheet with peacock feather theme
-        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        gradient.addColorStop(0, '#4ade80');  // Light Green-400
-        gradient.addColorStop(0.3, '#7dd3fc'); // Sky Blue-300
-        gradient.addColorStop(0.7, '#38bdf8'); // Sky Blue-400
-        gradient.addColorStop(1, '#22c55e');  // Green-500
-        ctx.fillStyle = gradient;
+        // Clear canvas for new sheet with pure white background
+        ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // Add peacock feather pattern
-        const featherCount = 6;  // Fewer, larger feathers for peacock style
-        
-        for (let i = 0; i < featherCount; i++) {
-          // Position feathers around the edges
-          let x, y;
-          
-          if (i < 3) {
-            // Left side
-            x = canvas.width * 0.1;
-            y = canvas.height * (0.25 + i * 0.25);
-          } else {
-            // Right side
-            x = canvas.width * 0.9;
-            y = canvas.height * (0.25 + (i-3) * 0.25);
-          }
-          
-          // Draw peacock feather
-          ctx.save();
-          ctx.translate(x, y);
-          ctx.rotate((i % 2 === 0 ? -0.2 : 0.2) + (i < 3 ? -0.3 : 0.3));
-          
-          // Draw feather stem
-          const stemLength = 120 * dpiScale;
-          ctx.beginPath();
-          ctx.moveTo(0, -stemLength/2);
-          ctx.lineTo(0, stemLength/2);
-          ctx.strokeStyle = 'rgba(56, 189, 248, 0.15)'; // Sky blue
-          ctx.lineWidth = 2;
-          ctx.stroke();
-          
-          // Draw peacock eye
-          const eyeRadius = stemLength * 0.4;
-          const eyeY = -stemLength * 0.1;
-          
-          // Draw eye rings
-          const rings = 4;
-          for (let r = rings; r > 0; r--) {
-            const ringRadius = eyeRadius * (r/rings);
-            ctx.beginPath();
-            ctx.arc(0, eyeY, ringRadius, 0, Math.PI * 2);
-            
-            // Different colors for the rings
-            let alpha;
-            switch(r) {
-              case 4: ctx.strokeStyle = 'rgba(74, 222, 128, 0.2)'; break; // Outer - light green
-              case 3: ctx.strokeStyle = 'rgba(125, 211, 252, 0.2)'; break; // Light sky blue
-              case 2: ctx.strokeStyle = 'rgba(56, 189, 248, 0.2)'; break; // Sky blue
-              case 1: ctx.strokeStyle = 'rgba(34, 197, 94, 0.2)'; break; // Green
-            }
-            
-            ctx.lineWidth = 3;
-            ctx.stroke();
-          }
-          
-          // Draw eye center
-          ctx.beginPath();
-          ctx.arc(0, eyeY, eyeRadius * 0.2, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-          ctx.fill();
-          
-          // Draw feather barbs
-          const barbCount = 20;
-          const maxBarbLength = stemLength * 0.6;
-          
-          for (let j = 0; j < barbCount; j++) {
-            const barbY = -stemLength/2 + (j * stemLength/barbCount);
-            
-            // Skip barbs near the eye
-            if (Math.abs(barbY - eyeY) < eyeRadius * 0.8) continue;
-            
-            // Calculate barb length - shorter near ends, longer in middle
-            const barbPosition = j / barbCount;
-            const barbLength = maxBarbLength * Math.sin(barbPosition * Math.PI);
-            
-            // Right side barbs
-            ctx.beginPath();
-            ctx.moveTo(0, barbY);
-            ctx.bezierCurveTo(
-              barbLength/3, barbY + stemLength/30,
-              barbLength/2, barbY + stemLength/20,
-              barbLength, barbY
-            );
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-            
-            // Left side barbs
-            ctx.beginPath();
-            ctx.moveTo(0, barbY);
-            ctx.bezierCurveTo(
-              -barbLength/3, barbY + stemLength/30,
-              -barbLength/2, barbY + stemLength/20,
-              -barbLength, barbY
-            );
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-          }
-          
-          ctx.restore();
-        }
+
 
         // Process 2 PDFs for this sheet
         for (let i = 0; i < 2; i++) {
           const pageIndex = sheetIndex * 2 + i;
           if (pageIndex >= pdfPages.length) break; // No more pages
-          
+
           const pageItem = pdfPages[pageIndex];
           const progress = ((pageIndex + 1) / pdfPages.length) * 100;
           setLoadingProgress(Math.round(progress));
@@ -451,15 +337,15 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
             const pdfUrl = URL.createObjectURL(pageItem.originalFile);
             const loadingTask = pdfjs.getDocument(pdfUrl);
             const loadedPdf = await loadingTask.promise;
-            
+
             // Get the specific page
             const page = await loadedPdf.getPage(pageItem.pageNumber);
             const viewport = page.getViewport({ scale: 1.0 });
-            
-            // Calculate scale to fit
+
+            // Calculate scale to fill the entire thumbnail space
             const scale = Math.min(
               thumbWidth / viewport.width,
-              finalThumbHeight / viewport.height
+              thumbHeight / viewport.height
             );
 
             const scaledViewport = page.getViewport({ scale });
@@ -481,23 +367,8 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
             const x = spacing + i * (thumbWidth + spacing);
             const y = spacing;
 
-            // Center the PDF within its allocated space if it doesn't fill the entire area
-            const pdfWidth = Math.min(thumbWidth, scaledViewport.width);
-            const pdfHeight = Math.min(finalThumbHeight, scaledViewport.height);
-            const xOffset = (thumbWidth - pdfWidth) / 2;
-            const yOffset = (finalThumbHeight - pdfHeight) / 2;
-            
-            // Draw white background for the PDF thumbnail
-            ctx.fillStyle = 'white';
-            ctx.fillRect(x + xOffset - 5, y + yOffset - 5, pdfWidth + 10, pdfHeight + 10);
-            
-            // Draw the PDF on top of the white background
-            ctx.drawImage(tempCanvas, x + xOffset, y + yOffset, pdfWidth, pdfHeight);
-            
-            // Add filename below the PDF
-            ctx.font = '12px Arial';
-            ctx.fillStyle = 'black';
-            ctx.fillText(pageItem.name, x + xOffset, y + yOffset + pdfHeight + 15);
+            // Draw the PDF to fill the entire thumbnail space
+            ctx.drawImage(tempCanvas, x, y, thumbWidth, thumbHeight);
 
             // Cleanup
             URL.revokeObjectURL(pdfUrl);
@@ -519,7 +390,7 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
         // Save with sheet number in filename
         const filename = `horizontal-contact-sheet-${sheetIndex + 1}.pdf`;
         pdf.save(filename);
-        
+
         // Update progress
         const progress = ((sheetIndex + 1) / totalSheets) * 100;
         setLoadingProgress(Math.round(progress));
@@ -528,12 +399,12 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
 
       // When PDF is ready to download
       updateNotificationProgress(100);
-      
+
       // Remove processing notification
       processingNotification.classList.add('closing');
       setTimeout(() => {
         processingNotification.remove();
-        
+
         // Show download complete notification
         showDownloadNotification('success', 'Two n T sheet has been downloaded successfully.');
       }, 300);
@@ -541,7 +412,7 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
       console.error('Error generating contact sheet:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setError(errorMessage);
-      
+
       // Show error notification
       showDownloadNotification('error', `Failed to generate PDF: ${errorMessage}`);
     } finally {
@@ -559,7 +430,7 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
           <div className="dropzone-icon">📄</div>
           <p>Drag & drop PDF files here</p>
         </div>
-        
+
         <button className="pdf-select-button" onClick={openFileDialog}>
           Select PDF Files
         </button>
@@ -572,9 +443,9 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
           multiple
         />
       </div>
-      
+
       {error && <div className="error-message">{error}</div>}
-      
+
       {isExtracting && (
         <div className="extraction-status">
           <p>Extracting pages from PDF...</p>
@@ -584,7 +455,7 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
           </div>
         </div>
       )}
-      
+
       {pdfFiles.length > 0 && (
         <div className="pdf-file-list">
           <h3>Uploaded Files ({pdfFiles.length})</h3>
@@ -603,7 +474,7 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
           </ul>
         </div>
       )}
-      
+
       {pdfPages.length > 0 && (
         <>
           <div className="pdf-pages-list">
@@ -619,7 +490,7 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
               ))}
             </ul>
           </div>
-          
+
           <div className="pdf-preview">
             <button
               className={`generate-button ${isGenerating ? 'generating' : ''}`}
@@ -635,7 +506,7 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
                 'Generate Two n T'
               )}
             </button>
-            
+
             {isGenerating && (
               <div className="progress-bar">
                 <div className="progress" style={{ width: `${loadingProgress}%` }}></div>
@@ -645,7 +516,7 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
           </div>
         </>
       )}
-      
+
       {showConfirmDialog && (
         <div className="confirmation-dialog">
           <div className="confirmation-content">
@@ -658,7 +529,7 @@ export const HorizontalPDFContactSheet: React.FC<HorizontalPDFContactSheetProps>
           </div>
         </div>
       )}
-      
+
       <canvas ref={canvasRef} style={{ display: 'none' }} />
     </div>
   );
