@@ -1,5 +1,5 @@
 import { S3Client, GetObjectCommand, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-
+import { supabase } from './supabase';
 // Cloudflare R2 configuration
 const R2_ACCOUNT_ID = import.meta.env.VITE_R2_ACCOUNT_ID;
 const R2_ACCESS_KEY_ID = import.meta.env.VITE_R2_ACCESS_KEY_ID;
@@ -19,10 +19,17 @@ const s3Client = new S3Client({
 
 // Generate public URL for a file in R2
 export const getR2FileUrl = (key: string): string => {
-  if (!R2_PUBLIC_URL) {
-    throw new Error('R2 public URL not configured. Please enable R2.dev subdomain in Cloudflare dashboard.');
+  // If a custom public URL is configured, use it; otherwise fall back to the default Cloudflare R2 public endpoint.
+  if (R2_PUBLIC_URL) {
+    return `${R2_PUBLIC_URL}/${key}`;
   }
-  return `${R2_PUBLIC_URL}/${key}`;
+  // Construct a public URL using the account ID and bucket name.
+  // This follows the pattern: https://<account-id>.r2.cloudflarestorage.com/<bucket>/<key>
+  if (R2_ACCOUNT_ID && R2_BUCKET_NAME) {
+    return `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${R2_BUCKET_NAME}/${key}`;
+  }
+  // If we cannot construct a URL, throw an informative error.
+  throw new Error('R2 public URL not configured and cannot be derived from environment variables.');
 };
 
 // Get file from R2 (for private files, but assuming public for now)
@@ -64,13 +71,26 @@ export const uploadToR2 = async (
   onProgress?: (progress: number) => void
 ): Promise<{ success: boolean; error?: string; url?: string }> => {
   try {
+    // If R2 is not configured, fallback to Supabase storage (public bucket 'avatars')
     if (!isR2Configured()) {
-      return { success: false, error: 'R2 is not configured' };
+      const { data, error } = await supabase.storage.from('avatars').upload(key, file, {
+        upsert: true,
+        contentType: file.type,
+      });
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      // Get public URL from Supabase storage
+      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(key);
+      if (!urlData?.publicUrl) {
+        return { success: false, error: 'Failed to get public URL' };
+      }
+      return { success: true, url: urlData.publicUrl };
     }
 
     // Read file as ArrayBuffer
     const arrayBuffer = await file.arrayBuffer();
-    
+
     // Simulate progress for user feedback
     if (onProgress) {
       onProgress(30);
@@ -97,9 +117,9 @@ export const uploadToR2 = async (
     return { success: true, url };
   } catch (error) {
     console.error('Error uploading file to R2:', error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Upload failed' 
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Upload failed'
     };
   }
 };
@@ -110,7 +130,12 @@ export const deleteFromR2 = async (
 ): Promise<{ success: boolean; error?: string }> => {
   try {
     if (!isR2Configured()) {
-      return { success: false, error: 'R2 is not configured' };
+      // Fallback to Supabase storage
+      const { error } = await supabase.storage.from('avatars').remove([key]);
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      return { success: true };
     }
 
     const command = new DeleteObjectCommand({
@@ -122,9 +147,9 @@ export const deleteFromR2 = async (
     return { success: true };
   } catch (error) {
     console.error('Error deleting file from R2:', error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Delete failed' 
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Delete failed'
     };
   }
 };
