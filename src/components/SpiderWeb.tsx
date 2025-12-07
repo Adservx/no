@@ -5,6 +5,42 @@ interface SpiderWebProps {
   size?: number;
 }
 
+// Reusable Realistic Spider Component
+// x, y: position
+// scale: size multiplier
+// rotation: rotation in degrees
+const RealisticSpider = ({ x, y, scale = 1, rotation = 0 }: { x: number, y: number, scale?: number, rotation?: number }) => (
+  <g transform={`translate(${x}, ${y}) rotate(${rotation}) scale(${scale})`}>
+
+    {/* Legs - Left Side (Upper) */}
+    <path d="M-2,-2 Q-6,-6 -11,-5" strokeWidth="0.8" fill="none" strokeLinecap="round" />
+    <path d="M-2,0 Q-8,-1 -13,0" strokeWidth="0.8" fill="none" strokeLinecap="round" />
+    {/* Legs - Left Side (Lower) */}
+    <path d="M-2,2 Q-8,4 -11,7" strokeWidth="0.8" fill="none" strokeLinecap="round" />
+    <path d="M-2,4 Q-5,8 -7,11" strokeWidth="0.8" fill="none" strokeLinecap="round" />
+
+    {/* Legs - Right Side (Upper) */}
+    <path d="M2,-2 Q6,-6 11,-5" strokeWidth="0.8" fill="none" strokeLinecap="round" />
+    <path d="M2,0 Q8,-1 13,0" strokeWidth="0.8" fill="none" strokeLinecap="round" />
+    {/* Legs - Right Side (Lower) */}
+    <path d="M2,2 Q8,4 11,7" strokeWidth="0.8" fill="none" strokeLinecap="round" />
+    <path d="M2,4 Q5,8 7,11" strokeWidth="0.8" fill="none" strokeLinecap="round" />
+
+    {/* Thread (optional, for hanging spiders) */}
+    {/* By default no thread here, parent adds it if needed */}
+
+    {/* Body Parts */}
+    {/* Abdomen (larger back part) - slightly oval */}
+    <ellipse cx="0" cy="4" rx="3.5" ry="4.5" fill="currentColor" />
+    {/* Cephalothorax (smaller head part) */}
+    <circle cx="0" cy="-1.5" r="2.5" fill="currentColor" />
+
+    {/* Chelicerae (Jaws/Mouthparts) */}
+    <path d="M-1,-3.5 L-1.5,-5" strokeWidth="0.5" />
+    <path d="M1,-3.5 L1.5,-5" strokeWidth="0.5" />
+  </g>
+);
+
 export const SpiderWebLogo: React.FC<SpiderWebProps> = ({ className = '', size = 20 }) => {
   return (
     <svg
@@ -14,27 +50,28 @@ export const SpiderWebLogo: React.FC<SpiderWebProps> = ({ className = '', size =
       viewBox="0 0 100 100"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <g stroke="currentColor" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        {/* Radial support lines */}
-        <path d="M50,50 L50,5" opacity="0.8" />
-        <path d="M50,50 L81.8,18.2" opacity="0.8" />
-        <path d="M50,50 L95,50" opacity="0.8" />
-        <path d="M50,50 L81.8,81.8" opacity="0.8" />
-        <path d="M50,50 L50,95" opacity="0.8" />
-        <path d="M50,50 L18.2,81.8" opacity="0.8" />
-        <path d="M50,50 L5,50" opacity="0.8" />
-        <path d="M50,50 L18.2,18.2" opacity="0.8" />
+      <g stroke="currentColor" fill="none" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+        {/* Irregular Radial support lines for organic feel */}
+        <path d="M50,50 L52,5" opacity="0.6" />
+        <path d="M50,50 L85,15" opacity="0.6" />
+        <path d="M50,50 L95,55" opacity="0.6" />
+        <path d="M50,50 L80,85" opacity="0.6" />
+        <path d="M50,50 L45,95" opacity="0.6" />
+        <path d="M50,50 L15,80" opacity="0.6" />
+        <path d="M50,50 L5,45" opacity="0.6" />
+        <path d="M50,50 L20,15" opacity="0.6" />
 
-        {/* Web "spirals" with realistic sag */}
-        {/* We use Q curves where the control point pulls towards the center slightly */}
-        <path d="M50,15 Q60,20 74.7,25.3 L74.7,25.3 Q80,40 85,50 L85,50 Q80,60 74.7,74.7 L74.7,74.7 Q60,80 50,85 L50,85 Q40,80 25.3,74.7 L25.3,74.7 Q20,60 15,50 L15,50 Q20,40 25.3,25.3 L25.3,25.3 Q40,20 50,15" opacity="0.9" />
+        {/* Organic Spiral Webbing with sagging */}
+        {/* Using disjointed paths to mimic real erratic webs often seen */}
+        <path d="M50,25 Q60,30 70,35 T80,55 T75,75 T50,85 T25,75 T20,55 T30,35 T50,25" opacity="0.8" />
+        <path d="M50,15 Q65,20 80,25 T95,55" opacity="0.7" />
+        <path d="M5,55 Q20,20 50,15" opacity="0.7" />
+        <path d="M20,85 Q10,60 5,55" opacity="0.7" />
+        <path d="M80,85 Q65,95 45,95" opacity="0.7" />
+        <path d="M20,15 Q35,5 52,5" opacity="0.7" />
 
-        <path d="M50,25 Q58,28 67.7,32.3 L67.7,32.3 Q72,40 75,50 L75,50 Q72,60 67.7,67.7 L67.7,67.7 Q60,72 50,75 L50,75 Q40,72 32.3,67.7 L32.3,67.7 Q28,60 25,50 L25,50 Q28,40 32.3,32.3 L32.3,32.3 Q40,28 50,25" opacity="0.9" />
-
-        <path d="M50,35 Q55,37 60.6,39.4 L60.6,39.4 Q63,45 65,50 L65,50 Q63,55 60.6,60.6 L60.6,60.6 Q55,63 50,65 L50,65 Q45,63 39.4,60.6 L39.4,60.6 Q37,55 35,50 L35,50 Q37,45 39.4,39.4 L39.4,39.4 Q45,37 50,35" opacity="0.9" />
-
-        {/* Small center spiral/mess */}
-        <path d="M50,42 Q52,43 53.5,46.5 L53.5,46.5 Q54,48 53.5,53.5 L53.5,53.5 Q48,54 46.5,53.5 L46.5,53.5 Q46,48 50,42" opacity="0.8" />
+        {/* Realistic Spider in the center slightly offset */}
+        <RealisticSpider x={45} y={45} scale={1.2} rotation={-15} />
       </g>
     </svg>
   );
@@ -49,44 +86,38 @@ export const SpiderWebCorner: React.FC<SpiderWebProps> = ({ className = '', size
       viewBox="0 0 100 100"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <g stroke="currentColor" fill="none" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-        {/* Radial support lines from corner */}
-        <path d="M0,0 L90,15" opacity="0.6" />
-        <path d="M0,0 L85,45" opacity="0.6" />
-        <path d="M0,0 L45,85" opacity="0.6" />
-        <path d="M0,0 L15,90" opacity="0.6" />
+      <g stroke="currentColor" fill="none" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+        {/* Anchor Threads - slightly heavier */}
+        <path d="M0,0 L90,10" strokeWidth="1.5" opacity="0.7" />
+        <path d="M0,0 L85,50" strokeWidth="1.5" opacity="0.7" />
+        <path d="M0,0 L50,85" strokeWidth="1.5" opacity="0.7" />
+        <path d="M0,0 L10,90" strokeWidth="1.5" opacity="0.7" />
 
-        {/* Cross threads with sagging */}
-        {/* Outermost */}
-        <path d="M90,15 Q70,40 85,45" />
-        <path d="M85,45 Q55,55 45,85" />
-        <path d="M45,85 Q40,70 15,90" />
+        {/* Cross Threads - thinner and sagging */}
+        {/* Outer Layer */}
+        <path d="M90,10 Q70,30 85,50" opacity="0.8" />
+        <path d="M85,50 Q60,60 50,85" opacity="0.8" />
+        <path d="M50,85 Q40,80 10,90" opacity="0.8" />
 
-        {/* Middle */}
-        <path d="M70,12 Q55,30 65,35" />
-        <path d="M65,35 Q40,40 35,65" />
-        <path d="M35,65 Q30,55 12,70" />
+        {/* Mid Layer */}
+        <path d="M70,8 Q55,25 65,38" opacity="0.8" />
+        <path d="M65,38 Q45,45 38,65" opacity="0.8" />
+        <path d="M38,65 Q35,60 8,70" opacity="0.8" />
 
-        {/* Innermost */}
-        <path d="M50,8 Q40,20 48,25" />
-        <path d="M48,25 Q30,30 25,48" />
-        <path d="M25,48 Q20,40 8,50" />
+        {/* Inner Layer */}
+        <path d="M50,6 Q40,15 45,26" opacity="0.8" />
+        <path d="M45,26 Q30,30 26,45" opacity="0.8" />
+        <path d="M26,45 Q20,40 6,50" opacity="0.8" />
 
-        {/* Tiny inner details */}
-        <path d="M30,5 Q25,12 30,15" />
-        <path d="M30,15 Q20,20 15,30" />
-        <path d="M15,30 Q12,25 5,30" />
+        {/* Tiny messy center details */}
+        <path d="M30,5 Q20,10 25,20 T15,25 T5,30" opacity="0.6" />
 
-        {/* Small spider */}
-        <g transform="translate(60, 40) rotate(45)">
-          <line x1="0" y1="0" x2="0" y2="-10" strokeWidth="0.5" /> {/* Thread */}
-          <circle cx="0" cy="0" r="3" fill="currentColor" stroke="none" />
-          <path d="M0,0 L-4,-4 M0,0 L4,-4 M0,0 L-5,0 M0,0 L5,0" strokeWidth="1" />
-          <path d="M0,0 L-4,4 M0,0 L4,4" strokeWidth="1" />
-        </g>
+        {/* Spider descending on a thread */}
+        <line x1="60" y1="0" x2="60" y2="35" strokeWidth="0.5" opacity="0.6" />
+        <RealisticSpider x={60} y={40} scale={1.3} rotation={10} />
       </g>
     </svg>
   );
 };
 
-export default { SpiderWebLogo, SpiderWebCorner }; 
+export default { SpiderWebLogo, SpiderWebCorner };
