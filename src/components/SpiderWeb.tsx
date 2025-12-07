@@ -7,31 +7,34 @@ interface SpiderWebProps {
 
 export const SpiderWebLogo: React.FC<SpiderWebProps> = ({ className = '', size = 20 }) => {
   return (
-    <svg 
+    <svg
       className={`spider-web-logo ${className}`}
-      width={size} 
-      height={size} 
-      viewBox="0 0 100 100" 
+      width={size}
+      height={size}
+      viewBox="0 0 100 100"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <g stroke="currentColor" fill="none" strokeWidth="2">
-        {/* Circular web structure - more circles for fullness */}
-        <circle cx="50" cy="50" r="45" />
-        <circle cx="50" cy="50" r="38" />
-        <circle cx="50" cy="50" r="31" />
-        <circle cx="50" cy="50" r="24" />
-        <circle cx="50" cy="50" r="17" />
-        <circle cx="50" cy="50" r="10" />
-        
-        {/* Radial lines - more lines for fullness */}
-        <line x1="50" y1="5" x2="50" y2="95" />
-        <line x1="5" y1="50" x2="95" y2="50" />
-        <line x1="14.64" y1="14.64" x2="85.36" y2="85.36" />
-        <line x1="14.64" y1="85.36" x2="85.36" y2="14.64" />
-        <line x1="27.32" y1="8.79" x2="72.68" y2="91.21" />
-        <line x1="8.79" y1="27.32" x2="91.21" y2="72.68" />
-        <line x1="8.79" y1="72.68" x2="91.21" y2="27.32" />
-        <line x1="27.32" y1="91.21" x2="72.68" y2="8.79" />
+      <g stroke="currentColor" fill="none" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        {/* Radial support lines */}
+        <path d="M50,50 L50,5" opacity="0.8" />
+        <path d="M50,50 L81.8,18.2" opacity="0.8" />
+        <path d="M50,50 L95,50" opacity="0.8" />
+        <path d="M50,50 L81.8,81.8" opacity="0.8" />
+        <path d="M50,50 L50,95" opacity="0.8" />
+        <path d="M50,50 L18.2,81.8" opacity="0.8" />
+        <path d="M50,50 L5,50" opacity="0.8" />
+        <path d="M50,50 L18.2,18.2" opacity="0.8" />
+
+        {/* Web "spirals" with realistic sag */}
+        {/* We use Q curves where the control point pulls towards the center slightly */}
+        <path d="M50,15 Q60,20 74.7,25.3 L74.7,25.3 Q80,40 85,50 L85,50 Q80,60 74.7,74.7 L74.7,74.7 Q60,80 50,85 L50,85 Q40,80 25.3,74.7 L25.3,74.7 Q20,60 15,50 L15,50 Q20,40 25.3,25.3 L25.3,25.3 Q40,20 50,15" opacity="0.9" />
+
+        <path d="M50,25 Q58,28 67.7,32.3 L67.7,32.3 Q72,40 75,50 L75,50 Q72,60 67.7,67.7 L67.7,67.7 Q60,72 50,75 L50,75 Q40,72 32.3,67.7 L32.3,67.7 Q28,60 25,50 L25,50 Q28,40 32.3,32.3 L32.3,32.3 Q40,28 50,25" opacity="0.9" />
+
+        <path d="M50,35 Q55,37 60.6,39.4 L60.6,39.4 Q63,45 65,50 L65,50 Q63,55 60.6,60.6 L60.6,60.6 Q55,63 50,65 L50,65 Q45,63 39.4,60.6 L39.4,60.6 Q37,55 35,50 L35,50 Q37,45 39.4,39.4 L39.4,39.4 Q45,37 50,35" opacity="0.9" />
+
+        {/* Small center spiral/mess */}
+        <path d="M50,42 Q52,43 53.5,46.5 L53.5,46.5 Q54,48 53.5,53.5 L53.5,53.5 Q48,54 46.5,53.5 L46.5,53.5 Q46,48 50,42" opacity="0.8" />
       </g>
     </svg>
   );
@@ -39,42 +42,48 @@ export const SpiderWebLogo: React.FC<SpiderWebProps> = ({ className = '', size =
 
 export const SpiderWebCorner: React.FC<SpiderWebProps> = ({ className = '', size = 80 }) => {
   return (
-    <svg 
+    <svg
       className={`spider-web-corner ${className}`}
-      width={size} 
-      height={size} 
-      viewBox="0 0 100 100" 
+      width={size}
+      height={size}
+      viewBox="0 0 100 100"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <g stroke="currentColor" fill="none" strokeWidth="1.5" opacity="0.9">
-        {/* Half-web structure - more paths for fullness */}
-        <path d="M0,0 Q50,0 100,100" />
-        <path d="M0,15 Q45,20 90,90" />
-        <path d="M0,30 Q40,35 80,80" />
-        <path d="M0,45 Q35,45 70,70" />
-        <path d="M0,60 Q30,55 60,60" />
-        <path d="M15,0 Q25,35 35,85" />
-        <path d="M30,0 Q35,30 45,75" />
-        <path d="M45,0 Q50,25 55,65" />
-        <path d="M60,0 Q60,20 65,55" />
-        
-        {/* Connecting threads */}
-        <path d="M0,0 L100,100" />
-        <path d="M0,30 L80,80" />
-        <path d="M0,60 L60,60" />
-        <path d="M30,0 L45,75" />
-        <path d="M60,0 L65,55" />
-        
+      <g stroke="currentColor" fill="none" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
+        {/* Radial support lines from corner */}
+        <path d="M0,0 L90,15" opacity="0.6" />
+        <path d="M0,0 L85,45" opacity="0.6" />
+        <path d="M0,0 L45,85" opacity="0.6" />
+        <path d="M0,0 L15,90" opacity="0.6" />
+
+        {/* Cross threads with sagging */}
+        {/* Outermost */}
+        <path d="M90,15 Q70,40 85,45" />
+        <path d="M85,45 Q55,55 45,85" />
+        <path d="M45,85 Q40,70 15,90" />
+
+        {/* Middle */}
+        <path d="M70,12 Q55,30 65,35" />
+        <path d="M65,35 Q40,40 35,65" />
+        <path d="M35,65 Q30,55 12,70" />
+
+        {/* Innermost */}
+        <path d="M50,8 Q40,20 48,25" />
+        <path d="M48,25 Q30,30 25,48" />
+        <path d="M25,48 Q20,40 8,50" />
+
+        {/* Tiny inner details */}
+        <path d="M30,5 Q25,12 30,15" />
+        <path d="M30,15 Q20,20 15,30" />
+        <path d="M15,30 Q12,25 5,30" />
+
         {/* Small spider */}
-        <circle cx="15" cy="15" r="3" fill="currentColor" stroke="none" />
-        <path d="M15,15 L10,10" strokeWidth="0.8" />
-        <path d="M15,15 L10,20" strokeWidth="0.8" />
-        <path d="M15,15 L20,10" strokeWidth="0.8" />
-        <path d="M15,15 L20,20" strokeWidth="0.8" />
-        <path d="M15,15 L8,15" strokeWidth="0.8" />
-        <path d="M15,15 L22,15" strokeWidth="0.8" />
-        <path d="M15,15 L15,8" strokeWidth="0.8" />
-        <path d="M15,15 L15,22" strokeWidth="0.8" />
+        <g transform="translate(60, 40) rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="-10" strokeWidth="0.5" /> {/* Thread */}
+          <circle cx="0" cy="0" r="3" fill="currentColor" stroke="none" />
+          <path d="M0,0 L-4,-4 M0,0 L4,-4 M0,0 L-5,0 M0,0 L5,0" strokeWidth="1" />
+          <path d="M0,0 L-4,4 M0,0 L4,4" strokeWidth="1" />
+        </g>
       </g>
     </svg>
   );
