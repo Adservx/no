@@ -43,9 +43,11 @@ export const AdminFileManager = ({ onClose, onFileDeleted }: AdminFileManagerPro
     setLoading(true);
     setError(null);
     const { data, error: fetchError } = await pdfHelpers.getAllFiles();
-    
+
     if (fetchError) {
-      setError('Failed to load files: ' + fetchError.message);
+      // Handle both string errors and Error objects
+      const errorMessage = typeof fetchError === 'string' ? fetchError : fetchError.message || 'Unknown error';
+      setError('Failed to load files: ' + errorMessage);
     } else {
       setFiles(data || []);
     }
@@ -64,14 +66,14 @@ export const AdminFileManager = ({ onClose, onFileDeleted }: AdminFileManagerPro
     try {
       // Delete from R2 via API (handles auth and clears cache)
       const { error: deleteError } = await pdfHelpers.deleteFile(file.file_path);
-      
+
       if (deleteError) {
         setError(`Failed to delete: ${deleteError}`);
       } else {
         setSuccess(`Successfully deleted "${file.file_name}"`);
         // Remove from local state
         setFiles(files.filter(f => f.id !== file.id));
-        
+
         // Notify parent to refresh
         if (onFileDeleted) {
           onFileDeleted();
@@ -105,7 +107,7 @@ export const AdminFileManager = ({ onClose, onFileDeleted }: AdminFileManagerPro
 
   const filteredFiles = files.filter(file => {
     const matchesSemester = filterSemester === 'all' || file.semester === filterSemester;
-    const matchesSearch = searchQuery === '' || 
+    const matchesSearch = searchQuery === '' ||
       file.file_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       file.subject.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSemester && matchesSearch;
@@ -115,7 +117,7 @@ export const AdminFileManager = ({ onClose, onFileDeleted }: AdminFileManagerPro
     <div className="admin-manager-overlay" onClick={onClose}>
       <div className="admin-manager-modal" onClick={(e) => e.stopPropagation()}>
         <button className="close-button" onClick={onClose}>×</button>
-        
+
         <div className="admin-manager-header">
           <h2>🗂️ Manage PDF Files</h2>
           <p>View and delete uploaded files</p>
