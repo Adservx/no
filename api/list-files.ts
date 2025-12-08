@@ -56,11 +56,22 @@ function normalizeSemester(rawSemester: string): string {
 
 function parseFilePath(key: string): { semester: string; subject: string; fileName: string } | null {
   const parts = key.split('/');
+  // Need at least semester/subject/filename (3 parts)
   if (parts.length >= 3) {
+    const rawSemester = parts[0];
+    const normalized = normalizeSemester(rawSemester);
     return {
-      semester: normalizeSemester(parts[0]),
+      semester: normalized,
       subject: parts[1],
       fileName: parts[parts.length - 1],
+    };
+  }
+  // Handle 2-part paths (semester/filename) - put in "General" subject
+  if (parts.length === 2) {
+    return {
+      semester: normalizeSemester(parts[0]),
+      subject: 'General',
+      fileName: parts[1],
     };
   }
   return null;
