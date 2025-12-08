@@ -28,7 +28,7 @@ interface FileInfo {
 // Normalize semester names to consistent format
 function normalizeSemester(rawSemester: string): string {
   const lower = rawSemester.toLowerCase().trim();
-  
+
   // Map various formats to standard "First Semester", "Second Semester", etc.
   const semesterMap: Record<string, string> = {
     '1st semester': 'First Semester',
@@ -81,13 +81,28 @@ export default async function handler(req: any, res: any) {
   // Handle CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  
+
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Validate required environment variables
+  const missingVars = [];
+  if (!R2_ACCOUNT_ID) missingVars.push('R2_ACCOUNT_ID');
+  if (!R2_ACCESS_KEY_ID) missingVars.push('R2_ACCESS_KEY_ID');
+  if (!R2_SECRET_ACCESS_KEY) missingVars.push('R2_SECRET_ACCESS_KEY');
+  if (!R2_BUCKET_NAME) missingVars.push('R2_BUCKET_NAME');
+
+  if (missingVars.length > 0) {
+    console.error('Missing environment variables:', missingVars.join(', '));
+    return res.status(500).json({
+      data: null,
+      error: `Missing required environment variables: ${missingVars.join(', ')}. Please add these in Vercel Dashboard > Settings > Environment Variables.`
+    });
   }
 
   try {
@@ -108,7 +123,7 @@ export default async function handler(req: any, res: any) {
       if (response.Contents) {
         for (const obj of response.Contents) {
           if (!obj.Key || obj.Size === undefined) continue;
-          
+
           // Skip excluded prefixes
           if (excludedPrefixes.some(prefix => obj.Key!.startsWith(prefix))) continue;
 
@@ -132,7 +147,7 @@ export default async function handler(req: any, res: any) {
 
     // Sort by semester (in order), subject, filename
     const semesterOrder = ['First Semester', 'Second Semester', 'Third Semester', 'Fourth Semester', 'Fifth Semester', 'Sixth Semester'];
-    
+
     files.sort((a, b) => {
       const aOrder = semesterOrder.indexOf(a.semester);
       const bOrder = semesterOrder.indexOf(b.semester);
@@ -144,9 +159,9 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json({ data: files, error: null });
   } catch (error) {
     console.error('Error listing R2 files:', error);
-    return res.status(500).json({ 
-      data: null, 
-      error: error instanceof Error ? error.message : 'Failed to list files' 
+    return res.status(500).json({
+      data: null,
+      error: error instanceof Error ? error.message : 'Failed to list files'
     });
   }
 }

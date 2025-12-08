@@ -16,11 +16,17 @@
   "routes": [
     {
       "src": "/api/list-files",
-      "dest": "/api/list-files.ts"
+      "dest": "/api/list-files.ts",
+      "headers": {
+        "x-vercel-protection-bypass": "true"
+      }
     },
     {
       "src": "/api/delete-file",
-      "dest": "/api/delete-file.ts"
+      "dest": "/api/delete-file.ts",
+      "headers": {
+        "x-vercel-protection-bypass": "true"
+      }
     },
     {
       "src": "^/assets/(.*)",
