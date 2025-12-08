@@ -691,6 +691,48 @@ export default function ManikantLanding() {
         <SpiderWebCorner className="spider-web-bottom-right" size={80} />
       </section>
 
+      {/* Posts Section */}
+      <section className="manikant-posts-section">
+        <SpiderWebCorner className="spider-web-top-left" size={120} />
+        <SpiderWebCorner className="spider-web-top-right" size={120} />
+        <div className="posts-section-header">
+          <span className="section-icon">📝</span>
+          <h2>Community Posts</h2>
+          <p>Explore shared memories, study materials, and experiences from fellow sub-electrical engineers</p>
+          <div className="posts-section-divider">
+            <span></span>
+            <SpiderWebLogo />
+            <span></span>
+          </div>
+        </div>
+
+        {/* Posts Filter/Stats Bar */}
+        <div className="posts-stats-bar">
+          <div className="posts-stat">
+            <span className="stat-icon">📚</span>
+            <span className="stat-count">{posts.filter(p => p.type === 'material').length}</span>
+            <span className="stat-label">Materials</span>
+          </div>
+          <div className="posts-stat">
+            <span className="stat-icon">📷</span>
+            <span className="stat-count">{posts.filter(p => p.type === 'photo').length}</span>
+            <span className="stat-label">Photos</span>
+          </div>
+          <div className="posts-stat">
+            <span className="stat-icon">🎥</span>
+            <span className="stat-count">{posts.filter(p => p.type === 'video').length}</span>
+            <span className="stat-label">Videos</span>
+          </div>
+          <div className="posts-stat total">
+            <span className="stat-icon">✨</span>
+            <span className="stat-count">{posts.length}</span>
+            <span className="stat-label">Total</span>
+          </div>
+        </div>
+        <SpiderWebCorner className="spider-web-bottom-left" size={80} />
+        <SpiderWebCorner className="spider-web-bottom-right" size={80} />
+      </section>
+
       <div className="manikant-content">
         <div className="manikant-feed">
           {loading ? (

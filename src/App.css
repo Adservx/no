@@ -850,3 +850,59 @@ body::before {
 .app-container {
     flex-direction: column !important;
 }
+
+/* ============================================
+   BACK TO HOME BUTTON - SIMPLE TRANSPARENT
+   ============================================ */
+.back-home-floating-btn {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    text-decoration: none;
+    font-family: var(--font-family-heading);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.back-home-floating-btn .btn-icon {
+    font-size: 1.1rem;
+}
+
+.back-home-floating-btn .btn-text {
+    opacity: 0.9;
+}
+
+.back-home-floating-btn .btn-glow {
+    display: none;
+}
+
+.back-home-floating-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--primary-color);
+}
+
+.back-home-floating-btn:active {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+@media screen and (max-width: 768px) {
+    .back-home-floating-btn {
+        top: 10px;
+        left: 10px;
+        padding: 6px 10px;
+        font-size: 0.85rem;
+    }
+}

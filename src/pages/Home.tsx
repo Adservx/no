@@ -179,6 +179,12 @@ function Home() {
     return (
         <ErrorBoundary>
             <div className={`app-container ${isStandalone ? 'standalone-mode' : ''}`}>
+                {/* Fantastic Back to Home Button - Top Left Corner */}
+                <Link to="/" className="back-home-floating-btn">
+                    <span className="btn-icon">🏠</span>
+                    <span className="btn-text">Home</span>
+                    <span className="btn-glow"></span>
+                </Link>
                 {/* Secret Login Button */}
                 <SecretLoginButton
                     user={user}
@@ -221,21 +227,6 @@ function Home() {
                     <div className="sidebar-content">
                         <div className="logo">
                             <h1>Prajol's Web <SpiderWebLogo /></h1>
-                            <Link to="/" className="back-home-btn" style={{
-                                display: 'block',
-                                marginTop: '10px',
-                                color: 'var(--accent-color)',
-                                textDecoration: 'none',
-                                fontSize: '0.9rem',
-                                fontWeight: 'bold',
-                                textAlign: 'center',
-                                padding: '5px',
-                                border: '1px solid var(--accent-color)',
-                                borderRadius: '5px',
-                                transition: 'all 0.3s ease'
-                            }}>
-                                ← Back to Home
-                            </Link>
                         </div>
                         <div className="tab-selector">
                             <button
