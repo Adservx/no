@@ -81,61 +81,88 @@ export const authHelpers = {
   },
 };
 
-// PDF Files helper functions
+// PDF Files helper functions - fetches directly from R2 via API
 export const pdfHelpers = {
-  // Get all PDF files grouped by semester and subject
-  getAllFiles: async () => {
-    const { data, error } = await supabase
-      .from('pdf_files')
-      .select('*')
-      .order('semester', { ascending: true })
-      .order('subject', { ascending: true })
-      .order('file_name', { ascending: true });
+  // Cache for files to avoid repeated API calls
+  _cache: null as any[] | null,
+  _cacheTime: 0,
+  _cacheDuration: 5 * 60 * 1000, // 5 minutes
 
-    return { data, error };
+  // Get all PDF files from R2
+  getAllFiles: async () => {
+    // Check cache
+    if (pdfHelpers._cache && Date.now() - pdfHelpers._cacheTime < pdfHelpers._cacheDuration) {
+      return { data: pdfHelpers._cache, error: null };
+    }
+
+    try {
+      const response = await fetch('/api/list-files');
+      const result = await response.json();
+      
+      if (result.data) {
+        pdfHelpers._cache = result.data;
+        pdfHelpers._cacheTime = Date.now();
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Error fetching files:', error);
+      return { data: null, error: error instanceof Error ? error.message : 'Failed to fetch files' };
+    }
   },
 
-  // Get files by semester
+  // Get files by semester (filters from all files)
   getFilesBySemester: async (semester: string) => {
-    const { data, error } = await supabase
-      .from('pdf_files')
-      .select('*')
-      .eq('semester', semester)
-      .order('subject', { ascending: true })
-      .order('file_name', { ascending: true });
-
-    return { data, error };
+    const { data, error } = await pdfHelpers.getAllFiles();
+    if (error || !data) return { data: null, error };
+    
+    const filtered = data.filter((f: any) => f.semester === semester);
+    return { data: filtered, error: null };
   },
 
   // Get files by semester and subject
   getFilesBySubject: async (semester: string, subject: string) => {
-    const { data, error } = await supabase
-      .from('pdf_files')
-      .select('*')
-      .eq('semester', semester)
-      .eq('subject', subject)
-      .order('file_name', { ascending: true });
-
-    return { data, error };
+    const { data, error } = await pdfHelpers.getAllFiles();
+    if (error || !data) return { data: null, error };
+    
+    const filtered = data.filter((f: any) => f.semester === semester && f.subject === subject);
+    return { data: filtered, error: null };
   },
 
-  // Delete file by ID
-  deleteFile: async (fileId: string) => {
-    const { error } = await supabase
-      .from('pdf_files')
-      .delete()
-      .eq('id', fileId);
+  // Clear cache (call after upload/delete)
+  clearCache: () => {
+    pdfHelpers._cache = null;
+    pdfHelpers._cacheTime = 0;
+  },
 
-    return { error };
+  // Delete file - calls R2 delete API
+  deleteFile: async (fileId: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        return { error: 'Not authenticated' };
+      }
+
+      const response = await fetch('/api/delete-file', {
+        method: 'DELETE',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ filePath: fileId }),
+      });
+      const result = await response.json();
+      if (!result.error) {
+        pdfHelpers.clearCache();
+      }
+      return result;
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : 'Delete failed' };
+    }
   },
 
   // Delete file by path
   deleteFileByPath: async (filePath: string) => {
-    const { error } = await supabase
-      .from('pdf_files')
-      .delete()
-      .eq('file_path', filePath);
-
-    return { error };
+    return pdfHelpers.deleteFile(filePath);
   },
 };

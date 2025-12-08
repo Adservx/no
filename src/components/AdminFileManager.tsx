@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { pdfHelpers } from '../utils/supabase';
-import { deleteFromR2, convertPathToR2Key } from '../utils/r2Storage';
 import '../styles/AdminFileManager.css';
 
 interface AdminFileManagerProps {
@@ -63,21 +62,11 @@ export const AdminFileManager = ({ onClose, onFileDeleted }: AdminFileManagerPro
     setSuccess(null);
 
     try {
-      // Delete from R2
-      const r2Key = convertPathToR2Key(file.file_path);
-      const r2Result = await deleteFromR2(r2Key);
+      // Delete from R2 via API (handles auth and clears cache)
+      const { error: deleteError } = await pdfHelpers.deleteFile(file.file_path);
       
-      if (!r2Result.success) {
-        setError(`Failed to delete from R2: ${r2Result.error}`);
-        setDeleting(null);
-        return;
-      }
-
-      // Delete from database
-      const { error: dbError } = await pdfHelpers.deleteFile(file.id);
-      
-      if (dbError) {
-        setError(`Failed to delete from database: ${dbError.message}`);
+      if (deleteError) {
+        setError(`Failed to delete: ${deleteError}`);
       } else {
         setSuccess(`Successfully deleted "${file.file_name}"`);
         // Remove from local state

@@ -115,7 +115,6 @@ export const AdminFileUpload = ({ onClose, onUploadSuccess }: AdminFileUploadPro
     setCurrentFileIndex(0);
 
     try {
-      const { data: userData } = await supabase.auth.getUser();
       const semesterFolder = semester.toLowerCase().replace(' ', '-');
       let successCount = 0;
       let failedFiles: string[] = [];
@@ -139,25 +138,11 @@ export const AdminFileUpload = ({ onClose, onUploadSuccess }: AdminFileUploadPro
           });
 
           if (result.success) {
-            // Save file metadata to database
-            const { error: dbError } = await supabase
-              .from('pdf_files')
-              .insert({
-                semester: semester,
-                subject: subject,
-                file_name: fileName,
-                file_path: r2Path,
-                file_size: file.size,
-                uploaded_by: userData.user?.id
-              });
-
-            if (dbError) {
-              console.error('Error saving to database:', dbError);
-              failedFiles.push(file.name);
-            } else {
-              successCount++;
-              setUploadedCount(successCount);
-            }
+            // File uploaded to R2 successfully - no DB needed
+            successCount++;
+            setUploadedCount(successCount);
+            // Clear cache so next fetch gets fresh data from R2
+            pdfHelpers.clearCache();
           } else {
             failedFiles.push(file.name);
           }
