@@ -25,11 +25,40 @@ interface FileInfo {
   file_url: string;
 }
 
+// Normalize semester names to consistent format
+function normalizeSemester(rawSemester: string): string {
+  const lower = rawSemester.toLowerCase().trim();
+  
+  // Map various formats to standard "First Semester", "Second Semester", etc.
+  const semesterMap: Record<string, string> = {
+    '1st semester': 'First Semester',
+    'first semester': 'First Semester',
+    'first-semester': 'First Semester',
+    '2nd semester': 'Second Semester',
+    'second semester': 'Second Semester',
+    'second-semester': 'Second Semester',
+    '3rd semester': 'Third Semester',
+    'third semester': 'Third Semester',
+    'third-semester': 'Third Semester',
+    '4th semester': 'Fourth Semester',
+    'fourth semester': 'Fourth Semester',
+    'fourth-semester': 'Fourth Semester',
+    '5th semester': 'Fifth Semester',
+    'fifth semester': 'Fifth Semester',
+    'fifth-semester': 'Fifth Semester',
+    '6th semester': 'Sixth Semester',
+    'sixth semester': 'Sixth Semester',
+    'sixth-semester': 'Sixth Semester',
+  };
+
+  return semesterMap[lower] || rawSemester;
+}
+
 function parseFilePath(key: string): { semester: string; subject: string; fileName: string } | null {
   const parts = key.split('/');
   if (parts.length >= 3) {
     return {
-      semester: parts[0],
+      semester: normalizeSemester(parts[0]),
       subject: parts[1],
       fileName: parts[parts.length - 1],
     };
@@ -90,9 +119,13 @@ export default async function handler(req: any, res: any) {
       continuationToken = response.NextContinuationToken;
     } while (continuationToken);
 
-    // Sort by semester, subject, filename
+    // Sort by semester (in order), subject, filename
+    const semesterOrder = ['First Semester', 'Second Semester', 'Third Semester', 'Fourth Semester', 'Fifth Semester', 'Sixth Semester'];
+    
     files.sort((a, b) => {
-      if (a.semester !== b.semester) return a.semester.localeCompare(b.semester);
+      const aOrder = semesterOrder.indexOf(a.semester);
+      const bOrder = semesterOrder.indexOf(b.semester);
+      if (aOrder !== bOrder) return aOrder - bOrder;
       if (a.subject !== b.subject) return a.subject.localeCompare(b.subject);
       return a.file_name.localeCompare(b.file_name);
     });
