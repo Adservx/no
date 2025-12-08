@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/**/*.ts",
+      "src": "api/*.ts",
       "use": "@vercel/node"
     },
     {
@@ -15,8 +15,12 @@
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
+      "src": "/api/list-files",
+      "dest": "/api/list-files.ts"
+    },
+    {
+      "src": "/api/delete-file",
+      "dest": "/api/delete-file.ts"
     },
     { 
       "src": "^/assets/(.*)",
