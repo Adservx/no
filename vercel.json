@@ -22,13 +22,19 @@
       "src": "/api/delete-file",
       "dest": "/api/delete-file.ts"
     },
-    { 
+    {
       "src": "^/assets/(.*)",
-      "headers": { "cache-control": "public, max-age=31536000, immutable" },
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable"
+      },
       "dest": "/assets/$1"
     },
-    { 
-      "handle": "filesystem" 
+    {
+      "src": "/manifest.webmanifest",
+      "dest": "/manifest.webmanifest"
+    },
+    {
+      "handle": "filesystem"
     },
     {
       "src": "/(.*)",
@@ -36,4 +42,4 @@
     }
   ],
   "installCommand": "npm install --production=false"
-} 
+}

@@ -1,0 +1,17 @@
+{
+    "name": "Prajol's Web",
+    "short_name": "Prajol's Web",
+    "description": "Study materials and resources for students",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#1a1a1a",
+    "theme_color": "#1a1a1a",
+    "icons": [
+        {
+            "src": "/favicon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}
