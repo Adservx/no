@@ -11,4 +11,8 @@
 /src/utils/notificationUtils.js
 
 # Ignore node_modules
-node_modules 
+node_modules
+
+# Ignore local PDF files (served from R2)
+/public/pdf-files
+/pdf file src 
