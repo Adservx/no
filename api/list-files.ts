@@ -1,20 +1,5 @@
 import { S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3';
 
-const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
-const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
-const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
-const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME;
-const R2_PUBLIC_URL = process.env.VITE_R2_PUBLIC_URL;
-
-const s3Client = new S3Client({
-  region: 'auto',
-  endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: R2_ACCESS_KEY_ID!,
-    secretAccessKey: R2_SECRET_ACCESS_KEY!,
-  },
-});
-
 interface FileInfo {
   id: string;
   semester: string;
@@ -90,8 +75,15 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Read environment variables
+  const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
+  const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
+  const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
+  const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME;
+  const R2_PUBLIC_URL = process.env.VITE_R2_PUBLIC_URL;
+
   // Validate required environment variables
-  const missingVars = [];
+  const missingVars: string[] = [];
   if (!R2_ACCOUNT_ID) missingVars.push('R2_ACCOUNT_ID');
   if (!R2_ACCESS_KEY_ID) missingVars.push('R2_ACCESS_KEY_ID');
   if (!R2_SECRET_ACCESS_KEY) missingVars.push('R2_SECRET_ACCESS_KEY');
@@ -104,6 +96,16 @@ export default async function handler(req: any, res: any) {
       error: `Missing required environment variables: ${missingVars.join(', ')}. Please add these in Vercel Dashboard > Settings > Environment Variables.`
     });
   }
+
+  // Create S3 client after validation
+  const s3Client = new S3Client({
+    region: 'auto',
+    endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: R2_ACCESS_KEY_ID!,
+      secretAccessKey: R2_SECRET_ACCESS_KEY!,
+    },
+  });
 
   try {
     const files: FileInfo[] = [];
