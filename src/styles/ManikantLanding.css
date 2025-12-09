@@ -44,12 +44,15 @@
 ======================================== */
 .manikant-container {
     min-height: 100vh;
+    width: 100%;
+    max-width: 100vw;
     background-color: var(--background-color);
     color: var(--text-color);
     font-family: var(--font-family-base);
     position: relative;
     overflow-x: hidden;
     line-height: 1.5;
+    box-sizing: border-box;
 }
 
 /* Background gradient overlay like App.css body::before */
@@ -267,14 +270,23 @@
     font-weight: bold;
     font-size: 1.2rem;
     cursor: pointer;
-    transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
     border: 2px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 0 15px rgba(140, 82, 255, 0.4);
+    /* Optimize for touch */
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    transform: translateZ(0);
 }
 
-.manikant-avatar:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 20px rgba(140, 82, 255, 0.6);
+@media (hover: hover) {
+    .manikant-avatar {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .manikant-avatar:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 20px rgba(140, 82, 255, 0.6);
+    }
 }
 
 .manikant-profile-dropdown {
@@ -283,13 +295,14 @@
     right: 0;
     min-width: 220px;
     background: var(--card-bg);
-    backdrop-filter: blur(20px);
     border-radius: var(--border-radius);
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow-lg);
     overflow: hidden;
-    animation: fadeIn 0.2s ease-out;
     z-index: 200;
+    /* Use GPU-accelerated properties */
+    transform: translateZ(0);
+    will-change: opacity;
 }
 
 @keyframes fadeIn {
@@ -333,18 +346,36 @@
     font-size: 1rem;
     text-align: left;
     cursor: pointer;
-    transition: background var(--transition-speed) ease, color var(--transition-speed) ease;
     display: block;
+    /* Optimize for touch */
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
-.manikant-dropdown-item:hover {
-    background: rgba(140, 82, 255, 0.15);
-    color: var(--primary-color);
+/* Only apply hover effects on devices that support hover */
+@media (hover: hover) {
+    .manikant-dropdown-item {
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+    
+    .manikant-dropdown-item:hover {
+        background: rgba(140, 82, 255, 0.15);
+        color: var(--primary-color);
+    }
+
+    .manikant-dropdown-item.logout:hover {
+        background: rgba(255, 82, 82, 0.15);
+        color: var(--accent-color);
+    }
 }
 
-.manikant-dropdown-item.logout:hover {
-    background: rgba(255, 82, 82, 0.15);
-    color: var(--accent-color);
+/* Active state for touch devices */
+.manikant-dropdown-item:active {
+    background: rgba(140, 82, 255, 0.2);
+}
+
+.manikant-dropdown-item.logout:active {
+    background: rgba(255, 82, 82, 0.2);
 }
 
 /* ========================================
@@ -427,10 +458,12 @@
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 30px;
     padding: 40px;
-    max-width: 1200px;
-    margin: 0 auto;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
     position: relative;
     z-index: 1;
+    box-sizing: border-box;
 }
 
 .manikant-feature-card {
@@ -490,8 +523,9 @@
     position: relative;
     z-index: 1;
     padding: 60px 40px 40px;
-    margin: 0 auto;
-    max-width: 1400px;
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
     background: linear-gradient(
         180deg,
         rgba(10, 25, 47, 0.3) 0%,
@@ -500,6 +534,7 @@
     );
     border-top: 1px solid rgba(140, 82, 255, 0.2);
     border-bottom: 1px solid rgba(140, 82, 255, 0.2);
+    box-sizing: border-box;
 }
 
 .posts-section-header {
@@ -712,10 +747,12 @@
     grid-template-columns: 1fr 380px;
     gap: 40px;
     padding: 60px 40px;
-    max-width: 1400px;
+    width: 100%;
+    max-width: 100%;
     margin: 0 auto;
     position: relative;
     z-index: 1;
+    box-sizing: border-box;
 }
 
 /* ========================================
@@ -1727,6 +1764,22 @@ select.manikant-input {
 /* ========================================
    RESPONSIVE DESIGN
 ======================================== */
+
+/* Large desktop - full width */
+@media (min-width: 1400px) {
+    .manikant-content {
+        padding: 60px 60px;
+    }
+    
+    .manikant-features {
+        padding: 40px 60px;
+    }
+    
+    .manikant-posts-section {
+        padding: 60px 60px 40px;
+    }
+}
+
 @media (max-width: 1024px) {
     .manikant-content {
         grid-template-columns: 1fr;
@@ -1837,6 +1890,15 @@ select.manikant-input {
     .manikant-profile-dropdown {
         backdrop-filter: none;
         background: var(--card-bg);
+        animation: none;
+    }
+    
+    .manikant-avatar {
+        transition: none !important;
+    }
+    
+    .manikant-dropdown-item {
+        transition: none !important;
     }
     
     .posts-stats-bar {
