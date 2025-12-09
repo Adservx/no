@@ -1,11 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
-import { uploadToR2 } from '../utils/r2Storage';
-import UserProfileModal from '../components/manikant/UserProfileModal';
-import { SpiderWebLogo, SpiderWebCorner } from '../components/SpiderWeb';
 import '../styles/ManikantLanding.css';
 import '../styles/SpiderWeb.css';
+
+// Lazy load heavy components
+const UserProfileModal = lazy(() => import('../components/manikant/UserProfileModal'));
+const SpiderWebLogo = lazy(() => import('../components/SpiderWeb').then(m => ({ default: m.SpiderWebLogo })));
+const SpiderWebCorner = lazy(() => import('../components/SpiderWeb').then(m => ({ default: m.SpiderWebCorner })));
+
+// Lazy load R2 upload only when needed
+const loadR2Upload = () => import('../utils/r2Storage').then(m => m.uploadToR2);
+
+// Memoized placeholder for SpiderWeb components during load
+const SpiderWebPlaceholder = memo(() => <span style={{ width: 20, height: 20, display: 'inline-block' }} />);
+const CornerPlaceholder = memo(() => <div style={{ position: 'absolute', width: 80, height: 80 }} />);
 
 interface Comment {
   id: string;
@@ -71,6 +80,19 @@ export default function ManikantLanding() {
   const [loadingComment, setLoadingComment] = useState<string | null>(null);
 
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  
+  // Memoized post stats to avoid recalculating on every render
+  const postStats = useMemo(() => ({
+    materials: posts.filter(p => p.type === 'material').length,
+    photos: posts.filter(p => p.type === 'photo').length,
+    videos: posts.filter(p => p.type === 'video').length,
+    total: posts.length
+  }), [posts]);
+
+  // Memoized notification handler
+  const showNotification = useCallback((message: string, type: 'success' | 'error') => {
+    setNotification({ message, type });
+  }, []);
 
   useEffect(() => {
     checkUser();
@@ -94,10 +116,6 @@ export default function ManikantLanding() {
       return () => clearTimeout(timer);
     }
   }, [notification]);
-
-  const showNotification = (message: string, type: 'success' | 'error') => {
-    setNotification({ message, type });
-  };
 
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -347,7 +365,7 @@ export default function ManikantLanding() {
     setShowProfileMenu(false);
   };
 
-  const handleCreatePost = async (e: React.FormEvent) => {
+  const handleCreatePost = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
       showNotification('You must be logged in to create a post', 'error');
@@ -361,12 +379,11 @@ export default function ManikantLanding() {
       if (file) {
         const fileExt = file.name.split('.').pop();
         const fileName = `${Math.random()}.${fileExt}`;
-        // Use a folder prefix for organization in R2
         const filePath = `manikant_files/${user.id}/${fileName}`;
 
-        console.log('Uploading file to R2:', filePath);
+        // Lazy load R2 upload only when needed
+        const uploadToR2 = await loadR2Upload();
         const { success, url, error: uploadError } = await uploadToR2(file, filePath);
-        console.log('R2 upload result:', { success, url, error: uploadError });
 
         if (!success || !url) {
           throw new Error(uploadError || 'File upload to R2 failed');
@@ -375,9 +392,7 @@ export default function ManikantLanding() {
         mediaUrl = url;
       }
 
-      console.log('Inserting post to database:', { user_id: user.id, title: newTitle, type: newType, media_url: mediaUrl });
-
-      const { data, error } = await supabase.from('manikant_posts').insert({
+      const { error } = await supabase.from('manikant_posts').insert({
         user_id: user.id,
         title: newTitle,
         content: newContent,
@@ -385,12 +400,7 @@ export default function ManikantLanding() {
         media_url: mediaUrl
       }).select();
 
-      console.log('Database insert result:', { data, error });
-
-      if (error) {
-        console.error('Database insert error:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       setNewTitle('');
       setNewContent('');
@@ -398,12 +408,11 @@ export default function ManikantLanding() {
       fetchPosts();
       showNotification('Post created successfully!', 'success');
     } catch (error: any) {
-      console.error('Error creating post:', error);
       showNotification('Error creating post: ' + error.message, 'error');
     } finally {
       setUploading(false);
     }
-  };
+  }, [user, file, newTitle, newContent, newType, showNotification]);
 
   const handleEditPost = (post: Post) => {
     setEditingPost(post);
@@ -413,7 +422,7 @@ export default function ManikantLanding() {
     setEditFile(null);
   };
 
-  const handleUpdatePost = async (e: React.FormEvent) => {
+  const handleUpdatePost = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !editingPost) return;
 
@@ -421,12 +430,13 @@ export default function ManikantLanding() {
     try {
       let mediaUrl = editingPost.media_url || '';
 
-      // If a new file is selected, upload it
       if (editFile) {
         const fileExt = editFile.name.split('.').pop();
         const fileName = `${Math.random()}.${fileExt}`;
         const filePath = `manikant_files/${user.id}/${fileName}`;
 
+        // Lazy load R2 upload only when needed
+        const uploadToR2 = await loadR2Upload();
         const { success, url, error: uploadError } = await uploadToR2(editFile, filePath);
 
         if (!success || !url) {
@@ -444,7 +454,7 @@ export default function ManikantLanding() {
           media_url: mediaUrl
         })
         .eq('id', editingPost.id)
-        .eq('user_id', user.id); // Ensure user can only update their own posts
+        .eq('user_id', user.id);
 
       if (error) throw error;
 
@@ -459,7 +469,7 @@ export default function ManikantLanding() {
     } finally {
       setUploading(false);
     }
-  };
+  }, [user, editingPost, editFile, editTitle, editContent, editType, showNotification]);
 
   const handleDeletePost = async (postId: string) => {
     if (!user) return;
@@ -489,15 +499,17 @@ export default function ManikantLanding() {
         </div>
       )}
       {showProfileModal && user && (
-        <UserProfileModal
-          user={user}
-          onClose={() => setShowProfileModal(false)}
-          onUpdate={() => {
-            fetchProfile(user.id);
-            fetchPosts();
-          }}
-          showNotification={showNotification}
-        />
+        <Suspense fallback={<div className="manikant-loading"><div className="spinner"></div></div>}>
+          <UserProfileModal
+            user={user}
+            onClose={() => setShowProfileModal(false)}
+            onUpdate={() => {
+              fetchProfile(user.id);
+              fetchPosts();
+            }}
+            showNotification={showNotification}
+          />
+        </Suspense>
       )}
 
       {/* Edit Post Modal */}
@@ -569,8 +581,10 @@ export default function ManikantLanding() {
       )}
 
       <nav className="manikant-nav">
-        <SpiderWebCorner className="spider-web-top-left" size={80} />
-        <Link to="/" className="manikant-logo">Manikant.com.np <SpiderWebLogo /></Link>
+        <Suspense fallback={<CornerPlaceholder />}>
+          <SpiderWebCorner className="spider-web-top-left" size={80} />
+        </Suspense>
+        <Link to="/" className="manikant-logo">Manikant.com.np <Suspense fallback={<SpiderWebPlaceholder />}><SpiderWebLogo /></Suspense></Link>
         <div className="manikant-links">
           <Link to="/prajols-web">Prajol's Web</Link>
           {user ? (
@@ -660,48 +674,58 @@ export default function ManikantLanding() {
       <div className="manikant-bg-shape shape-2"></div>
 
       <header className="manikant-hero">
-        <SpiderWebCorner className="spider-web-top-left" size={100} />
-        <SpiderWebCorner className="spider-web-top-right" size={100} />
-        <h1>Sub-Electrical Engineers Hub <SpiderWebLogo /></h1>
+        <Suspense fallback={null}>
+          <SpiderWebCorner className="spider-web-top-left" size={100} />
+          <SpiderWebCorner className="spider-web-top-right" size={100} />
+        </Suspense>
+        <h1>Sub-Electrical Engineers Hub <Suspense fallback={<SpiderWebPlaceholder />}><SpiderWebLogo /></Suspense></h1>
         <p>A place to share project memories, photos, videos, and study materials.</p>
         <div className="manikant-scroll-indicator">
           <span></span>
           <span></span>
           <span></span>
         </div>
-        <SpiderWebCorner className="spider-web-bottom-left" size={100} />
-        <SpiderWebCorner className="spider-web-bottom-right" size={100} />
+        <Suspense fallback={null}>
+          <SpiderWebCorner className="spider-web-bottom-left" size={100} />
+          <SpiderWebCorner className="spider-web-bottom-right" size={100} />
+        </Suspense>
       </header>
 
       <section className="manikant-features">
-        <SpiderWebCorner className="spider-web-top-left" size={80} />
+        <Suspense fallback={null}>
+          <SpiderWebCorner className="spider-web-top-left" size={80} />
+        </Suspense>
         <div className="manikant-feature-card">
-          <SpiderWebCorner className="spider-web-top-right" size={60} />
+          <Suspense fallback={null}><SpiderWebCorner className="spider-web-top-right" size={60} /></Suspense>
           <span className="manikant-feature-icon">📚</span>
           <h3>Study Materials</h3>
           <p>Access a vast collection of notes, past papers, and reference books.</p>
         </div>
 
         <div className="manikant-feature-card">
-          <SpiderWebCorner className="spider-web-top-right" size={60} />
+          <Suspense fallback={null}><SpiderWebCorner className="spider-web-top-right" size={60} /></Suspense>
           <span className="manikant-feature-icon">🤝</span>
           <h3>Community</h3>
           <p>Connect with fellow sub-engineers, share experiences and grow together.</p>
         </div>
-        <SpiderWebCorner className="spider-web-bottom-right" size={80} />
+        <Suspense fallback={null}>
+          <SpiderWebCorner className="spider-web-bottom-right" size={80} />
+        </Suspense>
       </section>
 
       {/* Posts Section */}
       <section className="manikant-posts-section">
-        <SpiderWebCorner className="spider-web-top-left" size={120} />
-        <SpiderWebCorner className="spider-web-top-right" size={120} />
+        <Suspense fallback={null}>
+          <SpiderWebCorner className="spider-web-top-left" size={120} />
+          <SpiderWebCorner className="spider-web-top-right" size={120} />
+        </Suspense>
         <div className="posts-section-header">
           <span className="section-icon">📝</span>
           <h2>Community Posts</h2>
           <p>Explore shared memories, study materials, and experiences from fellow sub-electrical engineers</p>
           <div className="posts-section-divider">
             <span></span>
-            <SpiderWebLogo />
+            <Suspense fallback={<SpiderWebPlaceholder />}><SpiderWebLogo /></Suspense>
             <span></span>
           </div>
         </div>
@@ -710,27 +734,29 @@ export default function ManikantLanding() {
         <div className="posts-stats-bar">
           <div className="posts-stat">
             <span className="stat-icon">📚</span>
-            <span className="stat-count">{posts.filter(p => p.type === 'material').length}</span>
+            <span className="stat-count">{postStats.materials}</span>
             <span className="stat-label">Materials</span>
           </div>
           <div className="posts-stat">
             <span className="stat-icon">📷</span>
-            <span className="stat-count">{posts.filter(p => p.type === 'photo').length}</span>
+            <span className="stat-count">{postStats.photos}</span>
             <span className="stat-label">Photos</span>
           </div>
           <div className="posts-stat">
             <span className="stat-icon">🎥</span>
-            <span className="stat-count">{posts.filter(p => p.type === 'video').length}</span>
+            <span className="stat-count">{postStats.videos}</span>
             <span className="stat-label">Videos</span>
           </div>
           <div className="posts-stat total">
             <span className="stat-icon">✨</span>
-            <span className="stat-count">{posts.length}</span>
+            <span className="stat-count">{postStats.total}</span>
             <span className="stat-label">Total</span>
           </div>
         </div>
-        <SpiderWebCorner className="spider-web-bottom-left" size={80} />
-        <SpiderWebCorner className="spider-web-bottom-right" size={80} />
+        <Suspense fallback={null}>
+          <SpiderWebCorner className="spider-web-bottom-left" size={80} />
+          <SpiderWebCorner className="spider-web-bottom-right" size={80} />
+        </Suspense>
       </section>
 
       <div className="manikant-content">
@@ -757,6 +783,8 @@ export default function ManikantLanding() {
                         src={post.profiles.avatar_url}
                         alt="Author"
                         className="post-avatar"
+                        loading="lazy"
+                        decoding="async"
                       />
                     ) : (
                       <div className="post-avatar post-avatar-placeholder">
@@ -799,9 +827,9 @@ export default function ManikantLanding() {
                 {post.media_url && (
                   <div className="post-media-container">
                     {post.type === 'video' ? (
-                      <video src={post.media_url} controls className="post-media" />
+                      <video src={post.media_url} controls className="post-media" preload="metadata" />
                     ) : post.type === 'photo' ? (
-                      <img src={post.media_url} alt={post.title} className="post-media" />
+                      <img src={post.media_url} alt={post.title} className="post-media" loading="lazy" decoding="async" />
                     ) : (
                       <div className="post-material">
                         {post.media_url.toLowerCase().endsWith('.pdf') ? (

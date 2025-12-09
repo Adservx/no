@@ -1791,3 +1791,134 @@ select.manikant-input {
         font-size: 1.8rem;
     }
 }
+
+
+/* ========================================
+   MOBILE PERFORMANCE OPTIMIZATIONS
+======================================== */
+
+/* Reduce motion on mobile for better performance */
+@media (max-width: 768px) {
+    /* Disable heavy animations on mobile */
+    .manikant-bg-shape {
+        animation: none !important;
+        opacity: 0.08;
+    }
+    
+    .manikant-scroll-indicator {
+        animation: none !important;
+    }
+    
+    .posts-section-header .section-icon {
+        animation: none !important;
+    }
+    
+    /* Hide decorative spider webs on mobile for performance */
+    .spider-web-corner {
+        display: none !important;
+    }
+    
+    /* Keep only essential spider web logos */
+    .spider-web-logo {
+        width: 16px !important;
+        height: 16px !important;
+    }
+    
+    /* Reduce blur effects which are expensive on mobile */
+    .manikant-bg-shape {
+        filter: blur(60px);
+    }
+    
+    .manikant-notification {
+        backdrop-filter: none;
+        background: rgba(0, 0, 0, 0.9) !important;
+    }
+    
+    .manikant-profile-dropdown {
+        backdrop-filter: none;
+        background: var(--card-bg);
+    }
+    
+    .posts-stats-bar {
+        backdrop-filter: none;
+        background: rgba(0, 0, 0, 0.4);
+    }
+    
+    .post-type-badge {
+        backdrop-filter: none;
+        background: rgba(0, 0, 0, 0.8);
+    }
+    
+    /* Simplify transitions */
+    .manikant-post.instagram-style,
+    .manikant-feature-card,
+    .posts-stat,
+    .engagement-btn {
+        transition: none !important;
+    }
+    
+    .manikant-post.instagram-style:hover,
+    .manikant-feature-card:hover,
+    .posts-stat:hover {
+        transform: none !important;
+    }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    .manikant-bg-shape,
+    .manikant-scroll-indicator,
+    .posts-section-header .section-icon,
+    .engagement-btn.liked {
+        animation: none !important;
+    }
+    
+    * {
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* GPU acceleration for smooth scrolling */
+.manikant-container {
+    -webkit-overflow-scrolling: touch;
+}
+
+.manikant-feed {
+    contain: content;
+}
+
+.manikant-post.instagram-style {
+    contain: layout style;
+    content-visibility: auto;
+    contain-intrinsic-size: 0 400px;
+}
+
+/* Optimize images */
+.post-media,
+.post-avatar,
+.comment-avatar img {
+    will-change: auto;
+}
+
+/* Lazy load images below fold */
+.post-media[loading="lazy"] {
+    background: var(--card-bg);
+}
+
+/* Optimize video elements */
+.post-media-container video {
+    background: #000;
+}
+
+/* Reduce paint areas */
+.manikant-nav {
+    contain: layout style;
+}
+
+.manikant-hero {
+    contain: layout style;
+}
+
+.manikant-features {
+    contain: layout style;
+}
