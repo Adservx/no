@@ -94,10 +94,41 @@ export default function ManikantLanding() {
     setNotification({ message, type });
   }, []);
 
+  // Initialize data on mount - run auth and posts in parallel
   useEffect(() => {
-    checkUser();
-    fetchPosts();
+    const initializeData = async () => {
+      // Run auth check and posts fetch in PARALLEL for faster loading
+      const [authResult, postsResult] = await Promise.all([
+        supabase.auth.getUser(),
+        supabase
+          .from('manikant_posts')
+          .select('*, profiles(avatar_url, bio)')
+          .order('created_at', { ascending: false })
+          .limit(20) // Limit initial load for faster response
+      ]);
 
+      const currentUser = authResult.data?.user;
+      setUser(currentUser);
+
+      if (postsResult.data) {
+        setPosts(postsResult.data);
+        // Fetch likes/comments in background (non-blocking)
+        if (postsResult.data.length > 0) {
+          fetchLikesAndComments(postsResult.data.map(p => p.id), currentUser?.id);
+        }
+      }
+
+      // Fetch profile in background if user exists
+      if (currentUser) {
+        fetchProfile(currentUser.id);
+      }
+
+      setLoading(false);
+    };
+
+    initializeData();
+
+    // Auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -117,19 +148,11 @@ export default function ManikantLanding() {
     }
   }, [notification]);
 
-  const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    setUser(user);
-    if (user) {
-      fetchProfile(user.id);
-    }
-  };
-
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = useCallback(async (userId: string) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('bio, avatar_url') // Only select needed fields
         .eq('id', userId)
         .single();
 
@@ -137,69 +160,68 @@ export default function ManikantLanding() {
         setProfile(data);
       }
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      // Silent fail for profile - not critical
     }
-  };
+  }, []);
 
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('manikant_posts')
         .select('*, profiles(avatar_url, bio)')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(20);
 
       if (error) throw error;
       setPosts(data || []);
 
-      // Fetch likes and comments for all posts
       if (data && data.length > 0) {
-        await fetchLikesAndComments(data.map(p => p.id));
+        fetchLikesAndComments(data.map(p => p.id), user?.id);
       }
     } catch (error) {
-      console.error('Error fetching posts:', error);
+      // Silent fail
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
 
-  const fetchLikesAndComments = async (postIds: string[]) => {
+  // Optimized: Run all queries in PARALLEL
+  const fetchLikesAndComments = useCallback(async (postIds: string[], userId?: string) => {
+    if (postIds.length === 0) return;
+
     try {
-      // Fetch likes count for each post
-      const { data: likesData } = await supabase
-        .from('manikant_likes')
-        .select('post_id')
-        .in('post_id', postIds);
+      // Run ALL queries in parallel - much faster!
+      const likesPromise = supabase.from('manikant_likes').select('post_id').in('post_id', postIds);
+      const commentsPromise = supabase.from('manikant_comments').select('post_id').in('post_id', postIds);
+      const userLikesPromise = userId 
+        ? supabase.from('manikant_likes').select('post_id').eq('user_id', userId).in('post_id', postIds)
+        : Promise.resolve({ data: null });
 
-      // Count likes per post
+      const [likesResult, commentsResult, userLikesResult] = await Promise.all([
+        likesPromise,
+        commentsPromise,
+        userLikesPromise
+      ]);
+
+      // Process likes count
       const likesCount: Record<string, number> = {};
-      likesData?.forEach(like => {
+      likesResult.data?.forEach((like: any) => {
         likesCount[like.post_id] = (likesCount[like.post_id] || 0) + 1;
       });
       setPostLikes(likesCount);
 
-      // Check which posts the current user has liked
-      if (user) {
-        const { data: userLikesData } = await supabase
-          .from('manikant_likes')
-          .select('post_id')
-          .eq('user_id', user.id)
-          .in('post_id', postIds);
-
+      // Process user likes
+      if (userLikesResult?.data) {
         const userLikesMap: Record<string, boolean> = {};
-        userLikesData?.forEach(like => {
+        userLikesResult.data.forEach((like: any) => {
           userLikesMap[like.post_id] = true;
         });
         setUserLikes(userLikesMap);
       }
 
-      // Fetch comments count (we'll fetch full comments when expanded)
-      const { data: commentsData } = await supabase
-        .from('manikant_comments')
-        .select('post_id')
-        .in('post_id', postIds);
-
+      // Process comments count
       const commentsCount: Record<string, number> = {};
-      commentsData?.forEach(comment => {
+      commentsResult.data?.forEach((comment: any) => {
         commentsCount[comment.post_id] = (commentsCount[comment.post_id] || 0) + 1;
       });
 
@@ -211,9 +233,9 @@ export default function ManikantLanding() {
       setPostComments(prev => ({ ...commentsPlaceholder, ...prev }));
 
     } catch (error) {
-      console.error('Error fetching likes/comments:', error);
+      // Silent fail - likes/comments are not critical for initial render
     }
-  };
+  }, []);
 
   const handleLike = async (postId: string) => {
     if (!user) {

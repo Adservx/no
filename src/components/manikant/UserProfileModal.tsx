@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../utils/supabase';
-import { uploadToR2 } from '../../utils/r2Storage';
 import '../../styles/ManikantLanding.css';
+
+// Lazy load R2 upload only when needed
+const loadR2Upload = () => import('../../utils/r2Storage').then(m => m.uploadToR2);
 
 interface UserProfileModalProps {
     user: any;
@@ -56,6 +58,9 @@ export default function UserProfileModal({ user, onClose, onUpdate, showNotifica
                 const fileExt = avatarFile.name.split('.').pop();
                 const fileName = `avatar_${Math.random()}.${fileExt}`;
                 const filePath = `avatars/${user.id}/${fileName}`;
+                
+                // Lazy load R2 upload only when actually uploading
+                const uploadToR2 = await loadR2Upload();
                 const { success, url, error } = await uploadToR2(avatarFile, filePath);
 
                 if (!success || !url) throw new Error(error || 'Failed to upload avatar');
