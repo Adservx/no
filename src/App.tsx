@@ -1,15 +1,28 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Home from './pages/Home';
-import ManikantLanding from './pages/ManikantLanding';
 import './App.css';
+
+// Lazy load pages for code splitting - improves initial load time
+const Home = lazy(() => import('./pages/Home'));
+const ManikantLanding = lazy(() => import('./pages/ManikantLanding'));
+
+// Loading fallback component
+const PageLoader = () => (
+  <div className="page-loader">
+    <div className="loader-spinner"></div>
+    <p>Loading...</p>
+  </div>
+);
 
 function App() {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<ManikantLanding />} />
-        <Route path="/prajols-web" element={<Home />} />
-      </Routes>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/" element={<ManikantLanding />} />
+          <Route path="/prajols-web" element={<Home />} />
+        </Routes>
+      </Suspense>
     </Router>
   );
 }

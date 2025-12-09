@@ -906,3 +906,114 @@ body::before {
         font-size: 0.85rem;
     }
 }
+
+
+/* ============================================
+   PAGE LOADER - For lazy loaded components
+   ============================================ */
+.page-loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    gap: 16px;
+}
+
+.page-loader p {
+    font-family: var(--font-family-base);
+    font-size: 1rem;
+    color: var(--text-muted);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.loader-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid rgba(140, 82, 255, 0.2);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+/* ============================================
+   CONTENT VISIBILITY - Improve rendering perf
+   ============================================ */
+.pdf-store-section,
+.standard-sheet-section,
+.two-n-t-section,
+.custom-order-section {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 500px;
+}
+
+/* ============================================
+   IMAGE OPTIMIZATION
+   ============================================ */
+img {
+    content-visibility: auto;
+}
+
+/* Lazy load images below the fold */
+img[loading="lazy"] {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+img[loading="lazy"].loaded,
+img[loading="lazy"]:not([src=""]) {
+    opacity: 1;
+}
+
+/* ============================================
+   REDUCE MOTION FOR ACCESSIBILITY & PERF
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .loader-spinner {
+        animation: none;
+        border-color: var(--primary-color);
+    }
+}
+
+/* ============================================
+   GPU ACCELERATION FOR SMOOTH ANIMATIONS
+   ============================================ */
+.sidebar,
+.main-content,
+.tab-button,
+.back-home-floating-btn {
+    will-change: transform;
+    transform: translateZ(0);
+}
+
+/* ============================================
+   FONT DISPLAY OPTIMIZATION
+   ============================================ */
+@font-face {
+    font-display: swap;
+}

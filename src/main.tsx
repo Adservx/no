@@ -1,32 +1,43 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { pdfjs } from 'react-pdf';
 import App from './App'
+
+// Import critical CSS first
 import './App.css'
 import './styles/SpiderWeb.css'
-import 'react-pdf/dist/Page/TextLayer.css';
-import 'react-pdf/dist/Page/AnnotationLayer.css';
 
-// Ensure PDF.js worker is properly loaded
-const pdfjsVersion = pdfjs.version;
-console.log('PDF.js version:', pdfjsVersion);
-
-// Configure worker with multiple fallback options
-try {
-  // For PDF.js 5.x, the worker is in the build directory with .mjs extension
-  pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/build/pdf.worker.min.mjs',
-    import.meta.url,
-  ).toString();
-} catch (error) {
-  console.error('Failed to set worker from local path, trying CDN:', error);
+// Defer PDF.js setup - only load when needed
+const setupPdfWorker = async () => {
+  const { pdfjs } = await import('react-pdf');
+  
+  // Import PDF styles
+  await import('react-pdf/dist/Page/TextLayer.css');
+  await import('react-pdf/dist/Page/AnnotationLayer.css');
+  
+  const pdfjsVersion = pdfjs.version;
+  
+  // Configure worker with multiple fallback options
   try {
-    // Fallback to CDN with correct version
-    pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsVersion}/build/pdf.worker.min.mjs`;
-  } catch (cdnError) {
-    console.error('Failed to set worker from CDN:', cdnError);
-    // Last resort fallback to the copied file in public directory
-    pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+    pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+      'pdfjs-dist/build/pdf.worker.min.mjs',
+      import.meta.url,
+    ).toString();
+  } catch {
+    try {
+      pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsVersion}/build/pdf.worker.min.mjs`;
+    } catch {
+      pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+    }
+  }
+};
+
+// Setup PDF worker after initial render (non-blocking)
+if (typeof window !== 'undefined') {
+  // Use requestIdleCallback for non-critical initialization
+  if ('requestIdleCallback' in window) {
+    (window as any).requestIdleCallback(() => setupPdfWorker());
+  } else {
+    setTimeout(setupPdfWorker, 100);
   }
 }
 
@@ -52,13 +63,15 @@ if (/Android/i.test(navigator.userAgent)) {
 const rootElement = document.getElementById('root');
 if (rootElement) {
   try {
+    // Clear the initial loader
+    rootElement.innerHTML = '';
+    
     ReactDOM.createRoot(rootElement).render(
       <React.StrictMode>
         <App />
       </React.StrictMode>,
     );
   } catch (error) {
-    console.error('Failed to render app:', error);
     // Fallback rendering in case of error
     rootElement.innerHTML = `
       <div style="padding: 20px; text-align: center; color: white;">
@@ -70,6 +83,4 @@ if (rootElement) {
       </div>
     `;
   }
-} else {
-  console.error('Root element not found');
 }

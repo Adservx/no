@@ -1,20 +1,36 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense, memo } from 'react';
 import { Link } from 'react-router-dom';
-import { PDFContactSheet } from '../components/PDFContactSheet';
-import { HorizontalPDFContactSheet } from '../components/HorizontalPDFContactSheet';
-import { CustomOrderPDFContactSheet } from '../components/CustomOrderPDFContactSheet';
-import { PDFStore } from '../components/PDFStore';
-import { ConfigPanel } from '../components/ConfigPanel';
-import { TwoNTConfigPanel } from '../components/TwoNTConfigPanel';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { SpiderWebLogo, SpiderWebCorner } from '../components/SpiderWeb';
 import { SecretLogin, SecretLoginButton } from '../components/SecretLogin';
-import { AdminFileUpload } from '../components/AdminFileUpload';
-import { AdminFileManager } from '../components/AdminFileManager';
 import { authHelpers } from '../utils/supabase';
 import '../styles/SpiderWeb.css';
 import '../styles/SecretLogin.css';
 import '../App.css';
+
+// Lazy load heavy components - they'll only load when needed
+const PDFContactSheet = lazy(() => import('../components/PDFContactSheet').then(m => ({ default: m.PDFContactSheet })));
+const HorizontalPDFContactSheet = lazy(() => import('../components/HorizontalPDFContactSheet').then(m => ({ default: m.HorizontalPDFContactSheet })));
+const CustomOrderPDFContactSheet = lazy(() => import('../components/CustomOrderPDFContactSheet').then(m => ({ default: m.CustomOrderPDFContactSheet })));
+const PDFStore = lazy(() => import('../components/PDFStore').then(m => ({ default: m.PDFStore })));
+const ConfigPanel = lazy(() => import('../components/ConfigPanel').then(m => ({ default: m.ConfigPanel })));
+const TwoNTConfigPanel = lazy(() => import('../components/TwoNTConfigPanel').then(m => ({ default: m.TwoNTConfigPanel })));
+const AdminFileUpload = lazy(() => import('../components/AdminFileUpload').then(m => ({ default: m.AdminFileUpload })));
+const AdminFileManager = lazy(() => import('../components/AdminFileManager').then(m => ({ default: m.AdminFileManager })));
+
+// Loading fallback for lazy components
+const ComponentLoader = memo(() => (
+    <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        padding: '40px',
+        color: 'var(--text-muted)'
+    }}>
+        <div className="loader-spinner" style={{ width: '32px', height: '32px', marginRight: '12px' }}></div>
+        Loading...
+    </div>
+));
 
 export interface Config {
     columns: number;
@@ -199,18 +215,22 @@ function Home() {
 
                 {/* Admin File Upload Modal */}
                 {showAdminUpload && (
-                    <AdminFileUpload
-                        onClose={() => setShowAdminUpload(false)}
-                        onUploadSuccess={handleUploadSuccess}
-                    />
+                    <Suspense fallback={<ComponentLoader />}>
+                        <AdminFileUpload
+                            onClose={() => setShowAdminUpload(false)}
+                            onUploadSuccess={handleUploadSuccess}
+                        />
+                    </Suspense>
                 )}
 
                 {/* Admin File Manager Modal */}
                 {showAdminManage && (
-                    <AdminFileManager
-                        onClose={() => setShowAdminManage(false)}
-                        onFileDeleted={handleFileDeleted}
-                    />
+                    <Suspense fallback={<ComponentLoader />}>
+                        <AdminFileManager
+                            onClose={() => setShowAdminManage(false)}
+                            onFileDeleted={handleFileDeleted}
+                        />
+                    </Suspense>
                 )}
                 <div className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
                     <SpiderWebCorner className="spider-web-top-left" size={100} />
@@ -268,13 +288,15 @@ function Home() {
                                                 'PDF Store Settings'}
                                 </h3>
 
-                                {activeTab === 'standard' ? (
-                                    <ConfigPanel config={standardConfig} onConfigChange={setStandardConfig} />
-                                ) : activeTab === 'horizontal' ? (
-                                    <TwoNTConfigPanel config={twoNTConfig} onConfigChange={setTwoNTConfig} />
-                                ) : activeTab === 'custom' ? (
-                                    <ConfigPanel config={standardConfig} onConfigChange={setStandardConfig} />
-                                ) : null}
+                                <Suspense fallback={<ComponentLoader />}>
+                                    {activeTab === 'standard' ? (
+                                        <ConfigPanel config={standardConfig} onConfigChange={setStandardConfig} />
+                                    ) : activeTab === 'horizontal' ? (
+                                        <TwoNTConfigPanel config={twoNTConfig} onConfigChange={setTwoNTConfig} />
+                                    ) : activeTab === 'custom' ? (
+                                        <ConfigPanel config={standardConfig} onConfigChange={setStandardConfig} />
+                                    ) : null}
+                                </Suspense>
 
                                 {/* Show notification permission button in PWA mode */}
                                 {isStandalone && activeTab === 'pdfstore' && !hasNotificationPermission && (
@@ -310,31 +332,33 @@ function Home() {
 
                     <div className="content-body">
                         <SpiderWebCorner className="spider-web-top-right" size={100} />
-                        {activeTab === 'standard' ? (
-                            <div className="standard-sheet-section">
-                                <SpiderWebCorner className="spider-web-top-left" size={100} />
-                                <PDFContactSheet config={standardConfig} />
-                                <SpiderWebCorner className="spider-web-bottom-right" size={100} />
-                            </div>
-                        ) : activeTab === 'horizontal' ? (
-                            <div className="two-n-t-section">
-                                <SpiderWebCorner className="spider-web-top-left" size={100} />
-                                <HorizontalPDFContactSheet config={twoNTConfig} />
-                                <SpiderWebCorner className="spider-web-bottom-right" size={100} />
-                            </div>
-                        ) : activeTab === 'custom' ? (
-                            <div className="custom-order-section">
-                                <SpiderWebCorner className="spider-web-top-left" size={100} />
-                                <CustomOrderPDFContactSheet config={standardConfig} />
-                                <SpiderWebCorner className="spider-web-bottom-right" size={100} />
-                            </div>
-                        ) : (
-                            <div className="pdf-store-section">
-                                <SpiderWebCorner className="spider-web-top-left" size={100} />
-                                <PDFStore key={refreshPDFStore} />
-                                <SpiderWebCorner className="spider-web-bottom-right" size={100} />
-                            </div>
-                        )}
+                        <Suspense fallback={<ComponentLoader />}>
+                            {activeTab === 'standard' ? (
+                                <div className="standard-sheet-section">
+                                    <SpiderWebCorner className="spider-web-top-left" size={100} />
+                                    <PDFContactSheet config={standardConfig} />
+                                    <SpiderWebCorner className="spider-web-bottom-right" size={100} />
+                                </div>
+                            ) : activeTab === 'horizontal' ? (
+                                <div className="two-n-t-section">
+                                    <SpiderWebCorner className="spider-web-top-left" size={100} />
+                                    <HorizontalPDFContactSheet config={twoNTConfig} />
+                                    <SpiderWebCorner className="spider-web-bottom-right" size={100} />
+                                </div>
+                            ) : activeTab === 'custom' ? (
+                                <div className="custom-order-section">
+                                    <SpiderWebCorner className="spider-web-top-left" size={100} />
+                                    <CustomOrderPDFContactSheet config={standardConfig} />
+                                    <SpiderWebCorner className="spider-web-bottom-right" size={100} />
+                                </div>
+                            ) : (
+                                <div className="pdf-store-section">
+                                    <SpiderWebCorner className="spider-web-top-left" size={100} />
+                                    <PDFStore key={refreshPDFStore} />
+                                    <SpiderWebCorner className="spider-web-bottom-right" size={100} />
+                                </div>
+                            )}
+                        </Suspense>
                         <SpiderWebCorner className="spider-web-bottom-left" size={100} />
                     </div>
                     <SpiderWebCorner className="spider-web-bottom-right" size={100} />

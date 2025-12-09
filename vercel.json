@@ -18,7 +18,8 @@
       "src": "/api/list-files",
       "dest": "/api/list-files.ts",
       "headers": {
-        "x-vercel-protection-bypass": "true"
+        "x-vercel-protection-bypass": "true",
+        "cache-control": "public, s-maxage=300, stale-while-revalidate=600"
       }
     },
     {
@@ -43,6 +44,22 @@
       }
     },
     {
+      "src": "^/assets/(.*)\\.js$",
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable",
+        "content-type": "application/javascript; charset=utf-8"
+      },
+      "dest": "/assets/$1.js"
+    },
+    {
+      "src": "^/assets/(.*)\\.css$",
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable",
+        "content-type": "text/css; charset=utf-8"
+      },
+      "dest": "/assets/$1.css"
+    },
+    {
       "src": "^/assets/(.*)",
       "headers": {
         "cache-control": "public, max-age=31536000, immutable"
@@ -50,14 +67,41 @@
       "dest": "/assets/$1"
     },
     {
+      "src": "^/pdf-files/(.*)",
+      "headers": {
+        "cache-control": "public, max-age=604800, stale-while-revalidate=86400"
+      },
+      "dest": "/pdf-files/$1"
+    },
+    {
+      "src": "/favicon.svg",
+      "headers": {
+        "cache-control": "public, max-age=86400"
+      },
+      "dest": "/favicon.svg"
+    },
+    {
       "src": "/manifest.webmanifest",
+      "headers": {
+        "cache-control": "public, max-age=86400"
+      },
       "dest": "/manifest.webmanifest"
+    },
+    {
+      "src": "/pdf.worker.min.js",
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable"
+      },
+      "dest": "/pdf.worker.min.js"
     },
     {
       "handle": "filesystem"
     },
     {
       "src": "/(.*)",
+      "headers": {
+        "cache-control": "public, max-age=0, must-revalidate"
+      },
       "dest": "/index.html"
     }
   ],
