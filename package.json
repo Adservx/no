@@ -18,7 +18,9 @@
     "preview": "vite preview",
     "start": "serve -s dist",
     "vercel-build": "npm run build",
-    "upload-pdfs": "tsx scripts/uploadToR2.ts"
+    "upload-pdfs": "tsx scripts/uploadToR2.ts",
+    "sync-metadata": "tsx scripts/syncR2ToDb.ts",
+    "migrate-metadata": "tsx scripts/migrateToFileMetadata.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.917.0",

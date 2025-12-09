@@ -29,6 +29,20 @@
       }
     },
     {
+      "src": "/api/upload-file",
+      "dest": "/api/upload-file.ts",
+      "headers": {
+        "x-vercel-protection-bypass": "true"
+      }
+    },
+    {
+      "src": "/api/sync-files",
+      "dest": "/api/sync-files.ts",
+      "headers": {
+        "x-vercel-protection-bypass": "true"
+      }
+    },
+    {
       "src": "^/assets/(.*)",
       "headers": {
         "cache-control": "public, max-age=31536000, immutable"

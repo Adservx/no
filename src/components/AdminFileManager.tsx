@@ -21,6 +21,7 @@ export const AdminFileManager = ({ onClose, onFileDeleted }: AdminFileManagerPro
   const [files, setFiles] = useState<PDFFileRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [filterSemester, setFilterSemester] = useState<string>('all');
@@ -113,6 +114,38 @@ export const AdminFileManager = ({ onClose, onFileDeleted }: AdminFileManagerPro
     return matchesSemester && matchesSearch;
   });
 
+  const handleSync = async () => {
+    if (!confirm('This will sync all existing R2 files to the Supabase metadata table. Continue?')) {
+      return;
+    }
+
+    setSyncing(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const result = await pdfHelpers.syncFilesToSupabase();
+
+      if (result.error) {
+        setError(`Sync failed: ${result.error}`);
+      } else {
+        setSuccess(`Synced ${result.synced || 0} new files. ${result.skipped || 0} files already in database.`);
+        // Reload files
+        await loadFiles();
+
+        if (onFileDeleted) {
+          onFileDeleted(); // Refresh parent too
+        }
+
+        setTimeout(() => setSuccess(null), 5000);
+      }
+    } catch (err) {
+      setError('Sync failed: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   return (
     <div className="admin-manager-overlay" onClick={onClose}>
       <div className="admin-manager-modal" onClick={(e) => e.stopPropagation()}>
@@ -147,6 +180,17 @@ export const AdminFileManager = ({ onClose, onFileDeleted }: AdminFileManagerPro
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+          </div>
+
+          <div className="filter-group">
+            <button
+              className="sync-button"
+              onClick={handleSync}
+              disabled={syncing || loading}
+              title="Sync files from R2 storage to Supabase metadata"
+            >
+              {syncing ? '🔄 Syncing...' : '🔄 Sync R2 to DB'}
+            </button>
           </div>
         </div>
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { uploadToR2 } from '../utils/r2Storage';
 import { supabase, pdfHelpers } from '../utils/supabase';
+import { uploadFileWithMetadata } from '../utils/r2Storage';
 import '../styles/AdminFileUpload.css';
 
 interface AdminFileUploadProps {
@@ -43,7 +43,7 @@ export const AdminFileUpload = ({ onClose, onUploadSuccess }: AdminFileUploadPro
 
       setLoadingSubjects(true);
       const { data, error } = await pdfHelpers.getFilesBySemester(semester);
-      
+
       if (!error && data) {
         // Extract unique subjects
         const subjects = [...new Set(data.map((file: any) => file.subject as string))];
@@ -69,7 +69,7 @@ export const AdminFileUpload = ({ onClose, onUploadSuccess }: AdminFileUploadPro
     const selectedFiles = e.target.files;
     if (selectedFiles && selectedFiles.length > 0) {
       const fileArray = Array.from(selectedFiles);
-      
+
       // Allowed file types
       const allowedTypes = [
         'application/pdf',
@@ -86,17 +86,32 @@ export const AdminFileUpload = ({ onClose, onUploadSuccess }: AdminFileUploadPro
         'application/vnd.ms-powerpoint', // .ppt
         'text/plain', // .txt
       ];
-      
+
       // Check if all files are allowed types
       const invalidFiles = fileArray.filter(file => !allowedTypes.includes(file.type));
       if (invalidFiles.length > 0) {
         setError(`Invalid file type(s): ${invalidFiles.map(f => f.name).join(', ')}. Allowed: PDF, Images (JPG, PNG, WebP, GIF), Documents (DOCX, XLSX, PPTX, DOC, XLS, PPT), Text files`);
         return;
       }
-      
+
       setFiles(fileArray);
       setError(null);
     }
+  };
+
+  // Convert file to base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const result = reader.result as string;
+        // Remove the data:...;base64, prefix
+        const base64 = result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = error => reject(error);
+    });
   };
 
   const handleUpload = async (e: React.FormEvent) => {
@@ -115,6 +130,14 @@ export const AdminFileUpload = ({ onClose, onUploadSuccess }: AdminFileUploadPro
     setCurrentFileIndex(0);
 
     try {
+      // Get auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        setError('You must be logged in to upload files');
+        setUploading(false);
+        return;
+      }
+
       const semesterFolder = semester.toLowerCase().replace(' ', '-');
       let successCount = 0;
       let failedFiles: string[] = [];
@@ -123,29 +146,76 @@ export const AdminFileUpload = ({ onClose, onUploadSuccess }: AdminFileUploadPro
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         setCurrentFileIndex(i + 1);
-        
+
         // Use original filename with its extension
         const fileName = file.name;
         const r2Path = `${semesterFolder}/${subject}/${fileName}`;
 
         try {
-          // Upload to R2
-          const result = await uploadToR2(file, r2Path, (progressPercent) => {
-            // Calculate total progress across all files
-            const fileProgress = progressPercent / files.length;
-            const previousFilesProgress = (i / files.length) * 100;
-            setTotalProgress(Math.round(previousFilesProgress + fileProgress));
-          });
+          // Update progress for reading file
+          const previousFilesProgress = (i / files.length) * 100;
+          setTotalProgress(Math.round(previousFilesProgress + 10));
 
-          if (result.success) {
-            // File uploaded to R2 successfully - no DB needed
+          let uploadSuccess = false;
+
+          // Try API first (works in production with Vercel)
+          try {
+            const fileData = await fileToBase64(file);
+            setTotalProgress(Math.round(previousFilesProgress + 30));
+
+            const response = await fetch('/api/upload-file', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`,
+              },
+              body: JSON.stringify({
+                fileName: fileName,
+                filePath: r2Path,
+                fileData: fileData,
+                fileSize: file.size,
+                contentType: file.type,
+                semester: semester,
+                subject: subject,
+              }),
+            });
+
+            if (response.ok) {
+              const result = await response.json();
+              if (result.success) {
+                uploadSuccess = true;
+              }
+            }
+          } catch {
+            // API not available, will use direct upload
+          }
+
+          // Fallback: Direct upload to R2 + Supabase metadata
+          if (!uploadSuccess) {
+            const result = await uploadFileWithMetadata(
+              file,
+              semester,
+              subject,
+              (progress) => {
+                const fileProgress = previousFilesProgress + (progress / files.length);
+                setTotalProgress(Math.round(fileProgress));
+              }
+            );
+            uploadSuccess = result.success;
+            if (!uploadSuccess) {
+              console.error('Direct upload failed:', result.error);
+            }
+          }
+
+          if (uploadSuccess) {
             successCount++;
             setUploadedCount(successCount);
-            // Clear cache so next fetch gets fresh data from R2
             pdfHelpers.clearCache();
           } else {
             failedFiles.push(file.name);
           }
+
+          setTotalProgress(Math.round(((i + 1) / files.length) * 100));
         } catch (err) {
           console.error('Error uploading file:', err);
           failedFiles.push(file.name);
@@ -191,7 +261,7 @@ export const AdminFileUpload = ({ onClose, onUploadSuccess }: AdminFileUploadPro
     <div className="admin-upload-overlay" onClick={onClose}>
       <div className="admin-upload-modal" onClick={(e) => e.stopPropagation()}>
         <button className="close-button" onClick={onClose}>×</button>
-        
+
         <div className="admin-upload-header">
           <h2>📤 Admin File Upload</h2>
           <p>Upload PDF files to R2 storage</p>

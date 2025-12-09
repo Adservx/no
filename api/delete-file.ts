@@ -40,7 +40,7 @@ export default async function handler(req: any, res: any) {
   try {
     const token = authHeader.replace('Bearer ', '');
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-    
+
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) {
       return res.status(401).json({ error: 'Invalid token' });
@@ -69,6 +69,25 @@ export default async function handler(req: any, res: any) {
     });
 
     await s3Client.send(command);
+    console.log(`Deleted file from R2: ${filePath}`);
+
+    // Delete metadata from Supabase
+    const { error: deleteMetadataError } = await supabase
+      .from('file_metadata')
+      .delete()
+      .eq('file_path', filePath);
+
+    if (deleteMetadataError) {
+      console.error('Error deleting metadata:', deleteMetadataError);
+      // File was deleted from R2, metadata deletion failed
+      return res.status(200).json({
+        success: true,
+        warning: 'File deleted from R2 but metadata deletion failed: ' + deleteMetadataError.message,
+        error: null
+      });
+    }
+
+    console.log(`Deleted metadata from Supabase for: ${filePath}`);
 
     return res.status(200).json({ success: true, error: null });
   } catch (error) {

@@ -153,3 +153,68 @@ export const deleteFromR2 = async (
     };
   }
 };
+
+
+// Upload file to R2 and save metadata to Supabase
+export const uploadFileWithMetadata = async (
+  file: File,
+  semester: string,
+  subject: string,
+  onProgress?: (progress: number) => void
+): Promise<{ success: boolean; error?: string; url?: string; data?: any }> => {
+  try {
+    // Generate file path
+    const semesterFolder = semester.toLowerCase().replace(/\s+/g, '-');
+    const key = `${semesterFolder}/${subject}/${file.name}`;
+
+    onProgress?.(10);
+
+    // Upload to R2
+    const uploadResult = await uploadToR2(file, key, (p) => {
+      onProgress?.(10 + (p * 0.6)); // 10-70%
+    });
+
+    if (!uploadResult.success) {
+      return { success: false, error: uploadResult.error };
+    }
+
+    onProgress?.(75);
+
+    // Save metadata to Supabase
+    const fileUrl = uploadResult.url || getR2FileUrl(key);
+    
+    const { data, error: dbError } = await supabase
+      .from('file_metadata')
+      .insert({
+        file_name: file.name,
+        file_path: key,
+        file_size: file.size,
+        file_url: fileUrl,
+        semester: semester,
+        subject: subject,
+        content_type: file.type || 'application/octet-stream',
+      })
+      .select()
+      .single();
+
+    onProgress?.(100);
+
+    if (dbError) {
+      console.error('Error saving metadata:', dbError);
+      // File uploaded but metadata failed - still return success with warning
+      return { 
+        success: true, 
+        url: fileUrl,
+        error: `File uploaded but metadata save failed: ${dbError.message}`
+      };
+    }
+
+    return { success: true, url: fileUrl, data };
+  } catch (error) {
+    console.error('Error in uploadFileWithMetadata:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Upload failed'
+    };
+  }
+};
