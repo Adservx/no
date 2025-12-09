@@ -103,9 +103,12 @@ function parseFilePath(key: string): { semester: string; subject: string; fileNa
 async function syncToDatabase(files: R2File[]) {
   console.log(`\n📊 Found ${files.length} files in R2 bucket\n`);
 
+  // R2 public URL for generating file URLs
+  const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL || process.env.VITE_R2_PUBLIC_URL || `https://pub-${R2_ACCOUNT_ID}.r2.dev`;
+
   // Get existing files from database
   const { data: existingFiles, error: fetchError } = await supabase
-    .from('pdf_files')
+    .from('file_metadata')
     .select('file_path');
 
   if (fetchError) {
@@ -139,14 +142,17 @@ async function syncToDatabase(files: R2File[]) {
       continue;
     }
 
+    const fileUrl = `${R2_PUBLIC_URL}/${file.key}`;
     const { error: insertError } = await supabase
-      .from('pdf_files')
+      .from('file_metadata')
       .insert({
         semester: parsed.semester,
         subject: parsed.subject,
         file_name: parsed.fileName,
         file_path: file.key,
+        file_url: fileUrl,
         file_size: file.size,
+        content_type: 'application/pdf',
       });
 
     if (insertError) {
@@ -168,7 +174,7 @@ async function cleanupOrphans(r2Files: R2File[]) {
   const r2Paths = new Set(r2Files.map(f => f.key));
 
   const { data: dbFiles, error } = await supabase
-    .from('pdf_files')
+    .from('file_metadata')
     .select('id, file_path');
 
   if (error) {
@@ -187,7 +193,7 @@ async function cleanupOrphans(r2Files: R2File[]) {
   
   for (const orphan of orphans) {
     const { error: deleteError } = await supabase
-      .from('pdf_files')
+      .from('file_metadata')
       .delete()
       .eq('id', orphan.id);
 
