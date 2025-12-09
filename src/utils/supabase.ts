@@ -90,61 +90,73 @@ export const pdfHelpers = {
   _cache: null as any[] | null,
   _cacheTime: 0,
   _cacheDuration: 5 * 60 * 1000, // 5 minutes
+  _pendingRequest: null as Promise<any> | null, // Prevent duplicate requests
+
+  // Semester order for sorting
+  _semesterOrder: ['First Semester', 'Second Semester', 'Third Semester', 'Fourth Semester', 'Fifth Semester', 'Sixth Semester'],
+
+  // Sort files by semester order
+  _sortFiles: (files: any[]) => {
+    return files.sort((a: any, b: any) => {
+      const aOrder = pdfHelpers._semesterOrder.indexOf(a.semester);
+      const bOrder = pdfHelpers._semesterOrder.indexOf(b.semester);
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      if (a.subject !== b.subject) return a.subject.localeCompare(b.subject);
+      return a.file_name.localeCompare(b.file_name);
+    });
+  },
 
   // Get all PDF files - queries Supabase directly, falls back to API
   getAllFiles: async () => {
-    // Check cache
+    // Check cache first (fastest path)
     if (pdfHelpers._cache && Date.now() - pdfHelpers._cacheTime < pdfHelpers._cacheDuration) {
-      return { data: pdfHelpers._cache, error: null };
+      return { data: pdfHelpers._cache, error: null, source: 'cache' };
     }
 
-    try {
-      // Try direct Supabase query first (works in dev and prod)
-      const { data: files, error: dbError } = await supabase
-        .from('file_metadata')
-        .select('*')
-        .order('semester', { ascending: true })
-        .order('subject', { ascending: true })
-        .order('file_name', { ascending: true });
-
-      if (!dbError && files && files.length > 0) {
-        // Sort by semester order
-        const semesterOrder = ['First Semester', 'Second Semester', 'Third Semester', 'Fourth Semester', 'Fifth Semester', 'Sixth Semester'];
-        files.sort((a: any, b: any) => {
-          const aOrder = semesterOrder.indexOf(a.semester);
-          const bOrder = semesterOrder.indexOf(b.semester);
-          if (aOrder !== bOrder) return aOrder - bOrder;
-          if (a.subject !== b.subject) return a.subject.localeCompare(b.subject);
-          return a.file_name.localeCompare(b.file_name);
-        });
-
-        pdfHelpers._cache = files;
-        pdfHelpers._cacheTime = Date.now();
-        return { data: files, error: null, source: 'supabase' };
-      }
-
-      // Fallback to API if direct query fails or returns empty
-      const response = await fetch('/api/list-files');
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
-      
-      const text = await response.text();
-      if (!text) {
-        throw new Error('Empty response from API');
-      }
-      
-      const result = JSON.parse(text);
-      if (result.data) {
-        pdfHelpers._cache = result.data;
-        pdfHelpers._cacheTime = Date.now();
-      }
-
-      return result;
-    } catch (error) {
-      console.error('Error fetching files:', error);
-      return { data: null, error: error instanceof Error ? error.message : 'Failed to fetch files' };
+    // Prevent duplicate concurrent requests
+    if (pdfHelpers._pendingRequest) {
+      return pdfHelpers._pendingRequest;
     }
+
+    pdfHelpers._pendingRequest = (async () => {
+      try {
+        // Direct Supabase query - select only needed fields for faster response
+        const { data: files, error: dbError } = await supabase
+          .from('file_metadata')
+          .select('id, file_name, file_path, file_size, file_url, semester, subject, description, tags, created_at')
+          .order('semester', { ascending: true })
+          .order('subject', { ascending: true })
+          .order('file_name', { ascending: true });
+
+        if (!dbError && files && files.length > 0) {
+          const sortedFiles = pdfHelpers._sortFiles(files);
+          pdfHelpers._cache = sortedFiles;
+          pdfHelpers._cacheTime = Date.now();
+          return { data: sortedFiles, error: null, source: 'supabase' };
+        }
+
+        // Fallback to API only if Supabase fails or returns empty
+        const response = await fetch('/api/list-files');
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        if (result.data) {
+          pdfHelpers._cache = result.data;
+          pdfHelpers._cacheTime = Date.now();
+        }
+
+        return result;
+      } catch (error) {
+        console.error('Error fetching files:', error);
+        return { data: null, error: error instanceof Error ? error.message : 'Failed to fetch files' };
+      } finally {
+        pdfHelpers._pendingRequest = null;
+      }
+    })();
+
+    return pdfHelpers._pendingRequest;
   },
 
   // Get files by semester (filters from all files)

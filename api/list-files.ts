@@ -136,6 +136,9 @@ export default async function handler(req: any, res: any) {
   // Handle CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  
+  // Add caching headers - cache for 5 minutes on CDN, 1 minute in browser
+  res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600, max-age=60');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -166,10 +169,10 @@ export default async function handler(req: any, res: any) {
     try {
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-      // Fetch all file metadata from Supabase
+      // Fetch only needed fields for faster response
       const { data: files, error } = await supabase
         .from('file_metadata')
-        .select('*')
+        .select('id, file_name, file_path, file_size, file_url, semester, subject, description, tags, created_at')
         .order('semester', { ascending: true })
         .order('subject', { ascending: true })
         .order('file_name', { ascending: true });

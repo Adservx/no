@@ -321,14 +321,19 @@ export const PDFStore = () => {
   const [subjectDownloadProgress, setSubjectDownloadProgress] = useState<Record<string, { downloading: boolean; progress: number }>>({});
   const [downloadQueue, setDownloadQueue] = useState<QueueItem[]>([]);
   const [isProcessingQueue, setIsProcessingQueue] = useState(false);
+  const [isLoadingFiles, setIsLoadingFiles] = useState(true);
   const downloadLinksRef = useRef<HTMLDivElement>(null);
   const queueRef = useRef<QueueItem[]>([]);
 
   // Load files from database on mount
   useEffect(() => {
     const loadFiles = async () => {
-      const loadedSemesters = await loadFilesFromDatabase();
-      setSemesters(loadedSemesters);
+      try {
+        const loadedSemesters = await loadFilesFromDatabase();
+        setSemesters(loadedSemesters);
+      } finally {
+        setIsLoadingFiles(false);
+      }
     };
     loadFiles();
   }, []);
@@ -697,6 +702,19 @@ export const PDFStore = () => {
       <div className="store-header">
         <h2>Electrical Engineering PDF Store</h2>
         <p>Download resources for your semester</p>
+        {isLoadingFiles && (
+          <div className="loading-indicator" style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            gap: '8px',
+            marginTop: '10px',
+            color: 'var(--text-muted, #888)'
+          }}>
+            <div className="loader-spinner" style={{ width: '16px', height: '16px' }}></div>
+            <span>Loading files...</span>
+          </div>
+        )}
       </div>
       
       {/* Hidden div to hold download iframes */}
