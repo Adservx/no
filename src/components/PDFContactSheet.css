@@ -645,11 +645,66 @@
 
   .generate-button {
     max-width: 100%;
+    min-height: 48px;
   }
 
   .standard-sheet-info,
   .two-n-t-info {
     background-color: var(--card-bg);
+  }
+  
+  .pdf-select-button {
+    min-height: 44px;
+    padding: 12px 20px;
+  }
+  
+  .confirm-button,
+  .cancel-button {
+    min-height: 44px;
+  }
+  
+  .remove-button,
+  .clear-button {
+    min-height: 40px;
+    padding: 8px 12px;
+  }
+}
+
+/* Tablet breakpoint */
+@media (max-width: 600px) {
+  .upload-section {
+    padding: 18px;
+  }
+  
+  .dropzone {
+    padding: 22px 14px;
+  }
+  
+  .dropzone-icon {
+    font-size: 1.75rem;
+  }
+  
+  .dropzone p {
+    font-size: 1rem;
+  }
+  
+  .standard-sheet-features,
+  .two-n-t-features {
+    gap: 14px;
+  }
+  
+  .feature {
+    width: 100%;
+    max-width: 280px;
+    padding: 14px;
+  }
+  
+  .feature-icon {
+    font-size: 1.75rem;
+  }
+  
+  .feature-text {
+    font-size: 0.9rem;
   }
 }
 
@@ -840,4 +895,134 @@
       transparent 10%,
       rgba(255, 255, 255, 0.8) 50%,
       transparent 90%);
+}
+
+/* Extra small devices */
+@media (max-width: 360px) {
+  .upload-section {
+    padding: 12px;
+  }
+  
+  .dropzone {
+    padding: 16px 10px;
+  }
+  
+  .dropzone-icon {
+    font-size: 1.25rem;
+  }
+  
+  .dropzone p {
+    font-size: 0.85rem;
+  }
+  
+  .pdf-select-button {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+  }
+  
+  .generate-button {
+    padding: 14px 24px;
+    font-size: 0.9rem;
+  }
+  
+  .feature {
+    padding: 12px;
+  }
+  
+  .feature-icon {
+    font-size: 1.5rem;
+  }
+  
+  .feature-text {
+    font-size: 0.85rem;
+  }
+  
+  .confirmation-content {
+    padding: 16px 12px;
+  }
+  
+  .confirmation-content h4 {
+    font-size: 1.1rem;
+  }
+  
+  .confirmation-content p {
+    font-size: 0.9rem;
+  }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+  .pdf-select-button,
+  .generate-button,
+  .confirm-button,
+  .cancel-button,
+  .remove-button,
+  .clear-button {
+    min-height: 44px;
+  }
+  
+  .dropzone {
+    min-height: 120px;
+  }
+  
+  .feature:hover {
+    transform: none;
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+}
+
+/* Landscape mode on mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+  .upload-section {
+    padding: 12px;
+  }
+  
+  .dropzone {
+    padding: 16px 12px;
+  }
+  
+  .standard-sheet-info,
+  .two-n-t-info {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .standard-sheet-features,
+  .two-n-t-features {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .feature {
+    width: auto;
+    min-width: 120px;
+    padding: 10px;
+  }
+}
+
+/* Safe area insets for notched devices */
+@supports (padding: max(0px)) {
+  .confirmation-dialog {
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .generate-button,
+  .pdf-select-button,
+  .feature,
+  .dropzone {
+    transition: none;
+  }
+  
+  .loading-spinner {
+    animation: none;
+    border-color: var(--primary-color);
+  }
+  
+  @keyframes shimmer {
+    0%, 100% { left: 0; }
+  }
 }

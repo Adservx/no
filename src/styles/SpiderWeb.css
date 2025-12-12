@@ -1,9 +1,9 @@
-/* Spider Web CSS */
+/* Spider Web CSS - Dark Orange Theme */
 .spider-web-logo {
   display: inline-block;
   margin-left: 5px;
   vertical-align: middle;
-  color: #FF0000;
+  color: #F90;
 }
 
 /* Spider Web Corner Elements */
@@ -12,9 +12,9 @@
   width: 80px;
   height: 80px;
   pointer-events: none;
-  opacity: 0.9;
+  opacity: 0.06;
   z-index: 1;
-  color: #FF0000;
+  color: #F90;
 }
 
 .spider-web-top-left {

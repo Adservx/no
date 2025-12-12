@@ -13,6 +13,7 @@ interface UserProfileModalProps {
 }
 
 export default function UserProfileModal({ user, onClose, onUpdate, showNotification }: UserProfileModalProps) {
+    const [fullName, setFullName] = useState('');
     const [bio, setBio] = useState('');
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [loading, setLoading] = useState(false);
@@ -25,13 +26,14 @@ export default function UserProfileModal({ user, onClose, onUpdate, showNotifica
 
     const fetchProfile = async () => {
         try {
-            const { data, error } = await supabase
+            const { data } = await supabase
                 .from('profiles')
-                .select('bio, avatar_url')
+                .select('full_name, bio, avatar_url')
                 .eq('id', user.id)
                 .single();
 
             if (data) {
+                setFullName(data.full_name || '');
                 setBio(data.bio || '');
                 setCurrentAvatarUrl(data.avatar_url || '');
             }
@@ -71,6 +73,7 @@ export default function UserProfileModal({ user, onClose, onUpdate, showNotifica
                 .from('profiles')
                 .upsert({
                     id: user.id,
+                    full_name: fullName,
                     bio,
                     avatar_url: avatarUrl,
                     updated_at: new Date().toISOString(),
@@ -137,6 +140,17 @@ export default function UserProfileModal({ user, onClose, onUpdate, showNotifica
                                 style={{ display: 'none' }}
                             />
                         </div>
+                    </div>
+
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-muted)' }}>Full Name</label>
+                        <input
+                            type="text"
+                            className="manikant-input"
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                            placeholder="Enter your full name"
+                        />
                     </div>
 
                     <div>

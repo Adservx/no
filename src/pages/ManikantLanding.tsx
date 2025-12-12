@@ -45,6 +45,14 @@ interface Post {
   user_has_liked?: boolean;
 }
 
+interface UserProfile {
+  id: string;
+  username: string | null;
+  full_name: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+}
+
 export default function ManikantLanding() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,6 +63,7 @@ export default function ManikantLanding() {
   const [isLogin, setIsLogin] = useState<boolean | null>(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [allProfiles, setAllProfiles] = useState<UserProfile[]>([]);
 
   // New Post State
   const [newTitle, setNewTitle] = useState('');
@@ -69,6 +78,9 @@ export default function ManikantLanding() {
   const [editContent, setEditContent] = useState('');
   const [editType, setEditType] = useState<'photo' | 'video' | 'material'>('material');
   const [editFile, setEditFile] = useState<File | null>(null);
+
+  // Create Post Dropdown State
+  const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
 
   // Likes and Comments State
   const [postLikes, setPostLikes] = useState<Record<string, number>>({});
@@ -92,6 +104,21 @@ export default function ManikantLanding() {
   // Memoized notification handler
   const showNotification = useCallback((message: string, type: 'success' | 'error') => {
     setNotification({ message, type });
+  }, []);
+
+  // Fetch all user profiles for footer
+  const fetchAllProfiles = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, username, full_name, avatar_url, bio');
+      
+      if (!error && data) {
+        setAllProfiles(data);
+      }
+    } catch (error) {
+      // Silent fail - not critical
+    }
   }, []);
 
   // Initialize data on mount - run auth and posts in parallel
@@ -122,6 +149,9 @@ export default function ManikantLanding() {
       if (currentUser) {
         fetchProfile(currentUser.id);
       }
+
+      // Fetch all profiles for footer
+      fetchAllProfiles();
 
       setLoading(false);
     };
@@ -606,7 +636,7 @@ export default function ManikantLanding() {
         <Suspense fallback={<CornerPlaceholder />}>
           <SpiderWebCorner className="spider-web-top-left" size={80} />
         </Suspense>
-        <Link to="/" className="manikant-logo">Manikant.com.np <Suspense fallback={<SpiderWebPlaceholder />}><SpiderWebLogo /></Suspense></Link>
+        <Link to="/" className="manikant-logo">Manikant<span className="logo-highlight">.com.np</span></Link>
         <div className="manikant-links">
           <Link to="/prajols-web">Prajol's Web</Link>
           {user ? (
@@ -700,7 +730,7 @@ export default function ManikantLanding() {
           <SpiderWebCorner className="spider-web-top-left" size={100} />
           <SpiderWebCorner className="spider-web-top-right" size={100} />
         </Suspense>
-        <h1>Sub-Electrical Engineers Hub <Suspense fallback={<SpiderWebPlaceholder />}><SpiderWebLogo /></Suspense></h1>
+        <h1>Sub-Electrical Engineers <span className="highlight">Hub</span></h1>
         <p>A place to share project memories, photos, videos, and study materials.</p>
         <div className="manikant-scroll-indicator">
           <span></span>
@@ -743,11 +773,10 @@ export default function ManikantLanding() {
         </Suspense>
         <div className="posts-section-header">
           <span className="section-icon">📝</span>
-          <h2>Community Posts</h2>
-          <p>Explore shared memories, study materials, and experiences from fellow sub-electrical engineers</p>
+          <h2>Community <span className="highlight">Posts</span></h2>
+          <p>Explore shared memories, study materials, and experiences from fellow engineers</p>
           <div className="posts-section-divider">
             <span></span>
-            <Suspense fallback={<SpiderWebPlaceholder />}><SpiderWebLogo /></Suspense>
             <span></span>
           </div>
         </div>
@@ -932,16 +961,7 @@ export default function ManikantLanding() {
                         <span className="engagement-count">{postComments[post.id].length}</span>
                       )}
                     </button>
-                    <button
-                      className="engagement-btn share-btn"
-                      onClick={() => {
-                        navigator.clipboard.writeText(window.location.href + '#post-' + post.id);
-                        showNotification('Link copied to clipboard!', 'success');
-                      }}
-                      title="Share"
-                    >
-                      🔗
-                    </button>
+
                   </div>
                 </div>
 
@@ -1018,51 +1038,84 @@ export default function ManikantLanding() {
         <aside className="manikant-sidebar">
           {user ? (
             <div className="manikant-auth-box">
-              <h3>Create Post</h3>
-              <form onSubmit={handleCreatePost}>
-                <input
-                  type="text"
-                  placeholder="Title"
-                  className="manikant-input"
-                  value={newTitle}
-                  onChange={e => setNewTitle(e.target.value)}
-                  required
-                />
-                <textarea
-                  placeholder="Content"
-                  className="manikant-input"
-                  value={newContent}
-                  onChange={e => setNewContent(e.target.value)}
-                  rows={4}
-                  required
-                />
-                <select
-                  className="manikant-input"
-                  value={newType}
-                  onChange={(e: any) => setNewType(e.target.value)}
+              <div 
+                className="create-post-header"
+                onClick={() => setIsCreatePostOpen(!isCreatePostOpen)}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                  padding: '10px 0',
+                  marginBottom: isCreatePostOpen ? '15px' : '0'
+                }}
+              >
+                <h3 style={{ margin: 0 }}>Create Post</h3>
+                <span 
+                  style={{
+                    transform: isCreatePostOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.3s ease',
+                    fontSize: '1.2rem'
+                  }}
                 >
-                  <option value="material">Study Material</option>
-                  <option value="photo">Photo</option>
-                  <option value="video">Video</option>
-                </select>
-
-                <div className="manikant-file-input-wrapper">
+                  ▼
+                </span>
+              </div>
+              
+              <div 
+                className="create-post-content"
+                style={{
+                  maxHeight: isCreatePostOpen ? '500px' : '0',
+                  overflow: 'hidden',
+                  transition: 'max-height 0.3s ease-in-out',
+                  opacity: isCreatePostOpen ? 1 : 0
+                }}
+              >
+                <form onSubmit={handleCreatePost}>
                   <input
-                    type="file"
-                    id="file-upload"
-                    className="manikant-file-input-hidden"
-                    onChange={e => setFile(e.target.files?.[0] || null)}
+                    type="text"
+                    placeholder="Title"
+                    className="manikant-input"
+                    value={newTitle}
+                    onChange={e => setNewTitle(e.target.value)}
+                    required
                   />
-                  <label htmlFor="file-upload" className="manikant-file-label">
-                    <span className="file-icon">📎</span>
-                    {file ? file.name : 'Choose a file...'}
-                  </label>
-                </div>
+                  <textarea
+                    placeholder="Content"
+                    className="manikant-input"
+                    value={newContent}
+                    onChange={e => setNewContent(e.target.value)}
+                    rows={4}
+                    required
+                  />
+                  <select
+                    className="manikant-input"
+                    value={newType}
+                    onChange={(e: any) => setNewType(e.target.value)}
+                  >
+                    <option value="material">Study Material</option>
+                    <option value="photo">Photo</option>
+                    <option value="video">Video</option>
+                  </select>
 
-                <button type="submit" className="manikant-btn" disabled={uploading}>
-                  {uploading ? 'Posting...' : 'Post'}
-                </button>
-              </form>
+                  <div className="manikant-file-input-wrapper">
+                    <input
+                      type="file"
+                      id="file-upload"
+                      className="manikant-file-input-hidden"
+                      onChange={e => setFile(e.target.files?.[0] || null)}
+                    />
+                    <label htmlFor="file-upload" className="manikant-file-label">
+                      <span className="file-icon">📎</span>
+                      {file ? file.name : 'Choose a file...'}
+                    </label>
+                  </div>
+
+                  <button type="submit" className="manikant-btn" disabled={uploading}>
+                    {uploading ? 'Posting...' : 'Post'}
+                  </button>
+                </form>
+              </div>
             </div>
           ) : (
             <div className="manikant-auth-box">
@@ -1080,24 +1133,83 @@ export default function ManikantLanding() {
 
 
       <footer className="manikant-footer">
+        <div className="footer-glow"></div>
         <div className="footer-content">
-          <div className="footer-section">
-            <h4>Manikant.com.np</h4>
-            <p>Empowering Sub-Electrical Engineers with resources, community, and shared knowledge.</p>
+          <div className="footer-brand">
+            <div className="footer-logo">
+              <span className="footer-logo-icon">⚡</span>
+              <span className="footer-logo-text">Manikant</span>
+            </div>
+            <p className="footer-tagline">Empowering Sub-Electrical Engineers with resources, community, and shared knowledge.</p>
+            <div className="footer-social">
+              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="Facebook">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+              </a>
+              <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="YouTube">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+              </a>
+              <a href="https://mail.google.com/mail/?view=cm&to=imserv67@gmail.com" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="Email">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+              </a>
+            </div>
           </div>
-          <div className="footer-section">
-            <h4>Quick Links</h4>
-            <Link to="/">Home</Link>
-            <Link to="/prajols-web">Prajol's Web</Link>
+          
+          <div className="footer-links-grid">
+            <div className="footer-section">
+              <h4>Navigation</h4>
+              <Link to="/">Home</Link>
+              <Link to="/prajols-web">Prajol's Web</Link>
+              <Link to="/prajols-web">Study Notes</Link>
+            </div>
+            <div className="footer-section">
+              <h4>Resources</h4>
+              <Link to="/prajols-web">PDF Library</Link>
+              <Link to="/community">Community</Link>
+              <Link to="/about">About Us</Link>
+            </div>
+            <div className="footer-section">
+              <h4>Contact</h4>
+              <a href="https://mail.google.com/mail/?view=cm&to=imserv67@gmail.com" target="_blank" rel="noopener noreferrer">imserv67@gmail.com</a>
+              <span className="footer-location">📍 Nepal</span>
+            </div>
           </div>
-          <div className="footer-section">
-            <h4>Connect</h4>
-            <p>Join the conversation and share your journey with us.</p>
-            <p style={{ marginTop: '10px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>contact@manikant.com.np</p>
-          </div>
+
+          {/* Community Members Section - Right Side */}
+          {allProfiles.length > 0 && (
+            <div className="footer-members">
+              <h4>👥 Community Members</h4>
+              <div className="footer-members-list">
+                {allProfiles.map((userProfile) => (
+                  <div key={userProfile.id} className="footer-member-card">
+                    <div className="footer-member-avatar">
+                      {userProfile.avatar_url ? (
+                        <img src={userProfile.avatar_url} alt={userProfile.username || 'User'} loading="lazy" />
+                      ) : (
+                        <span>👤</span>
+                      )}
+                    </div>
+                    <div className="footer-member-info">
+                      <span className="footer-member-name">
+                        {userProfile.full_name || userProfile.username || 'Anonymous'}
+                      </span>
+                      {userProfile.bio && (
+                        <span className="footer-member-bio">
+                          {userProfile.bio.length > 40 ? userProfile.bio.substring(0, 40) + '...' : userProfile.bio}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
+        
         <div className="footer-bottom">
-          <p>&copy; {new Date().getFullYear()} Manikant. All rights reserved.</p>
+          <div className="footer-bottom-content">
+            <p className="copyright">&copy; {new Date().getFullYear()} Manikant. All rights reserved.</p>
+            <p className="footer-credit">Built with ⚡ for Sub-Engineers</p>
+          </div>
         </div>
       </footer>
     </div>
