@@ -5,6 +5,37 @@ import '../../styles/ManikantLanding.css';
 // Lazy load R2 upload only when needed
 const loadR2Upload = () => import('../../utils/r2Storage').then(m => m.uploadToR2);
 
+// Lazy load heic2any for HEIC/HEIF conversion
+const loadHeic2Any = () => import('heic2any');
+
+// Convert HEIC/HEIF to JPEG if needed
+const convertHeicIfNeeded = async (file: File): Promise<File> => {
+    const isHeic =
+        file.type === 'image/heic' ||
+        file.type === 'image/heif' ||
+        file.name.toLowerCase().endsWith('.heic') ||
+        file.name.toLowerCase().endsWith('.heif');
+
+    if (!isHeic) return file;
+
+    try {
+        const heic2any = (await loadHeic2Any()).default;
+        const convertedBlob = await heic2any({
+            blob: file,
+            toType: 'image/jpeg',
+            quality: 0.9,
+        });
+
+        const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+        const newFileName = file.name.replace(/\.(heic|heif)$/i, '.jpg');
+
+        return new File([blob], newFileName, { type: 'image/jpeg' });
+    } catch (error) {
+        console.error('HEIC conversion failed:', error);
+        throw new Error('Could not convert HEIC image. Please convert to JPEG/PNG first.');
+    }
+};
+
 interface UserProfileModalProps {
     user: any;
     onClose: () => void;
@@ -42,11 +73,18 @@ export default function UserProfileModal({ user, onClose, onUpdate, showNotifica
         }
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            setAvatarFile(file);
-            setPreviewUrl(URL.createObjectURL(file));
+            
+            try {
+                // Convert HEIC/HEIF to JPEG if needed
+                const processedFile = await convertHeicIfNeeded(file);
+                setAvatarFile(processedFile);
+                setPreviewUrl(URL.createObjectURL(processedFile));
+            } catch (error: any) {
+                showNotification(error.message || 'Failed to process image', 'error');
+            }
         }
     };
 
@@ -57,10 +95,11 @@ export default function UserProfileModal({ user, onClose, onUpdate, showNotifica
             let avatarUrl = currentAvatarUrl;
 
             if (avatarFile) {
+                // avatarFile is already converted from HEIC if needed in handleFileChange
                 const fileExt = avatarFile.name.split('.').pop();
                 const fileName = `avatar_${Math.random()}.${fileExt}`;
                 const filePath = `avatars/${user.id}/${fileName}`;
-                
+
                 // Lazy load R2 upload only when actually uploading
                 const uploadToR2 = await loadR2Upload();
                 const { success, url, error } = await uploadToR2(avatarFile, filePath);
