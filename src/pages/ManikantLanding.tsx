@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense, memo } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
+import SmartImage from '../components/SmartImage';
 import '../styles/ManikantLanding.css';
 import '../styles/SpiderWeb.css';
 
@@ -880,7 +881,7 @@ export default function ManikantLanding() {
                     {post.type === 'video' ? (
                       <video src={post.media_url} controls className="post-media" preload="metadata" />
                     ) : post.type === 'photo' ? (
-                      <img src={post.media_url} alt={post.title} className="post-media" loading="lazy" decoding="async" />
+                      <SmartImage src={post.media_url || ''} alt={post.title} className="post-media" loading="lazy" decoding="async" />
                     ) : (
                       <div className="post-material">
                         {post.media_url.toLowerCase().endsWith('.pdf') ? (
@@ -1050,7 +1051,7 @@ export default function ManikantLanding() {
                   marginBottom: isCreatePostOpen ? '15px' : '0'
                 }}
               >
-                <h3 style={{ margin: 0 }}>Create Post</h3>
+                <h3 style={{ margin: 0, background: 'var(--accent)', color: '#000', padding: '6px 14px', borderRadius: '6px', fontWeight: 600 }}>Create Post</h3>
                 <span 
                   style={{
                     transform: isCreatePostOpen ? 'rotate(180deg)' : 'rotate(0deg)',
