@@ -1,5 +1,6 @@
 import { S3Client, GetObjectCommand, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { supabase } from './supabase';
+import heic2any from 'heic2any';
 // Cloudflare R2 configuration
 const R2_ACCOUNT_ID = import.meta.env.VITE_R2_ACCOUNT_ID;
 const R2_ACCESS_KEY_ID = import.meta.env.VITE_R2_ACCESS_KEY_ID;
@@ -64,6 +65,32 @@ export const isR2Configured = (): boolean => {
   return !!(R2_ACCOUNT_ID && R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY && R2_BUCKET_NAME);
 };
 
+// Check if file is HEIC/HEIF
+const isHeicFile = (file: File): boolean => {
+  const name = file.name.toLowerCase();
+  const type = file.type.toLowerCase();
+  return name.endsWith('.heic') || name.endsWith('.heif') || 
+         type === 'image/heic' || type === 'image/heif';
+};
+
+// Convert HEIC to JPEG
+const convertHeicToJpeg = async (file: File): Promise<{ blob: Blob; newKey: string; originalKey: string }> => {
+  const jpegBlob = await heic2any({
+    blob: file,
+    toType: 'image/jpeg',
+    quality: 0.9
+  });
+  
+  const resultBlob = Array.isArray(jpegBlob) ? jpegBlob[0] : jpegBlob;
+  const newFileName = file.name.replace(/\.(heic|heif)$/i, '.jpg');
+  
+  return {
+    blob: resultBlob,
+    newKey: newFileName,
+    originalKey: file.name
+  };
+};
+
 // Upload file to R2
 export const uploadToR2 = async (
   file: File,
@@ -71,17 +98,36 @@ export const uploadToR2 = async (
   onProgress?: (progress: number) => void
 ): Promise<{ success: boolean; error?: string; url?: string }> => {
   try {
+    let uploadFile: File | Blob = file;
+    let uploadKey = key;
+    let contentType = file.type;
+
+    // Convert HEIC to JPEG before upload
+    if (isHeicFile(file)) {
+      onProgress?.(10);
+      try {
+        const converted = await convertHeicToJpeg(file);
+        uploadFile = converted.blob;
+        uploadKey = key.replace(/\.(heic|heif)$/i, '.jpg');
+        contentType = 'image/jpeg';
+        onProgress?.(25);
+      } catch (conversionError) {
+        console.error('HEIC conversion failed:', conversionError);
+        return { success: false, error: 'Failed to convert HEIC image. Please convert to JPEG before uploading.' };
+      }
+    }
+
     // If R2 is not configured, fallback to Supabase storage (public bucket 'avatars')
     if (!isR2Configured()) {
-      const { data, error } = await supabase.storage.from('avatars').upload(key, file, {
+      const { data, error } = await supabase.storage.from('avatars').upload(uploadKey, uploadFile, {
         upsert: true,
-        contentType: file.type,
+        contentType: contentType,
       });
       if (error) {
         return { success: false, error: error.message };
       }
       // Get public URL from Supabase storage
-      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(key);
+      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(uploadKey);
       if (!urlData?.publicUrl) {
         return { success: false, error: 'Failed to get public URL' };
       }
@@ -89,7 +135,7 @@ export const uploadToR2 = async (
     }
 
     // Read file as ArrayBuffer
-    const arrayBuffer = await file.arrayBuffer();
+    const arrayBuffer = await uploadFile.arrayBuffer();
 
     // Simulate progress for user feedback
     if (onProgress) {
@@ -98,9 +144,9 @@ export const uploadToR2 = async (
 
     const command = new PutObjectCommand({
       Bucket: R2_BUCKET_NAME,
-      Key: key,
+      Key: uploadKey,
       Body: new Uint8Array(arrayBuffer),
-      ContentType: file.type,
+      ContentType: contentType,
     });
 
     if (onProgress) {
@@ -113,7 +159,7 @@ export const uploadToR2 = async (
       onProgress(100);
     }
 
-    const url = getR2FileUrl(key);
+    const url = getR2FileUrl(uploadKey);
     return { success: true, url };
   } catch (error) {
     console.error('Error uploading file to R2:', error);

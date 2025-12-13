@@ -9,6 +9,15 @@ export function isHeicUrl(url: string): boolean {
   return lowerUrl.includes('.heic') || lowerUrl.includes('.heif');
 }
 
+// Get proxied URL for CORS bypass in production
+function getProxiedUrl(url: string): string {
+  // In production, use proxy to bypass CORS
+  if (import.meta.env.PROD && (url.includes('r2.dev') || url.includes('r2.cloudflarestorage.com'))) {
+    return `/api/proxy-image?url=${encodeURIComponent(url)}`;
+  }
+  return url;
+}
+
 export type ProgressCallback = (progress: number) => void;
 
 export async function convertHeicToJpeg(
@@ -24,8 +33,9 @@ export async function convertHeicToJpeg(
   try {
     onProgress?.(5); // Starting fetch
 
-    // Fetch the HEIC file with progress tracking
-    const response = await fetch(heicUrl);
+    // Use proxy in production to bypass CORS
+    const fetchUrl = getProxiedUrl(heicUrl);
+    const response = await fetch(fetchUrl);
     const contentLength = response.headers.get('content-length');
     const total = contentLength ? parseInt(contentLength, 10) : 0;
 
