@@ -13,6 +13,37 @@ const SpiderWebCorner = lazy(() => import('../components/SpiderWeb').then(m => (
 // Lazy load R2 upload only when needed
 const loadR2Upload = () => import('../utils/r2Storage').then(m => m.uploadToR2);
 
+// Lazy load heic2any for HEIC/HEIF conversion
+const loadHeic2Any = () => import('heic2any');
+
+// Convert HEIC/HEIF to JPEG if needed
+const convertHeicIfNeeded = async (file: File): Promise<File> => {
+  const isHeic = file.type === 'image/heic' || 
+                 file.type === 'image/heif' || 
+                 file.name.toLowerCase().endsWith('.heic') ||
+                 file.name.toLowerCase().endsWith('.heif');
+  
+  if (!isHeic) return file;
+  
+  try {
+    const heic2any = (await loadHeic2Any()).default;
+    const convertedBlob = await heic2any({ 
+      blob: file, 
+      toType: 'image/jpeg', 
+      quality: 0.9 
+    });
+    
+    // heic2any can return a single blob or array of blobs
+    const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+    const newFileName = file.name.replace(/\.(heic|heif)$/i, '.jpg');
+    
+    return new File([blob], newFileName, { type: 'image/jpeg' });
+  } catch (error) {
+    console.error('HEIC conversion failed:', error);
+    throw new Error('Could not convert HEIC image. Please convert to JPEG/PNG first.');
+  }
+};
+
 // Memoized placeholder for SpiderWeb components during load
 const SpiderWebPlaceholder = memo(() => <span style={{ width: 20, height: 20, display: 'inline-block' }} />);
 const CornerPlaceholder = memo(() => <div style={{ position: 'absolute', width: 80, height: 80 }} />);
@@ -430,13 +461,16 @@ export default function ManikantLanding() {
       let mediaUrl = '';
 
       if (file) {
-        const fileExt = file.name.split('.').pop();
+        // Convert HEIC/HEIF to JPEG if needed
+        const processedFile = await convertHeicIfNeeded(file);
+        
+        const fileExt = processedFile.name.split('.').pop();
         const fileName = `${Math.random()}.${fileExt}`;
         const filePath = `manikant_files/${user.id}/${fileName}`;
 
         // Lazy load R2 upload only when needed
         const uploadToR2 = await loadR2Upload();
-        const { success, url, error: uploadError } = await uploadToR2(file, filePath);
+        const { success, url, error: uploadError } = await uploadToR2(processedFile, filePath);
 
         if (!success || !url) {
           throw new Error(uploadError || 'File upload to R2 failed');
@@ -484,13 +518,16 @@ export default function ManikantLanding() {
       let mediaUrl = editingPost.media_url || '';
 
       if (editFile) {
-        const fileExt = editFile.name.split('.').pop();
+        // Convert HEIC/HEIF to JPEG if needed
+        const processedFile = await convertHeicIfNeeded(editFile);
+        
+        const fileExt = processedFile.name.split('.').pop();
         const fileName = `${Math.random()}.${fileExt}`;
         const filePath = `manikant_files/${user.id}/${fileName}`;
 
         // Lazy load R2 upload only when needed
         const uploadToR2 = await loadR2Upload();
-        const { success, url, error: uploadError } = await uploadToR2(editFile, filePath);
+        const { success, url, error: uploadError } = await uploadToR2(processedFile, filePath);
 
         if (!success || !url) {
           throw new Error(uploadError || 'File upload failed');
