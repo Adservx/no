@@ -1,11 +1,11 @@
 {
-    "name": "Prajol's Web",
-    "short_name": "Prajol's Web",
+    "name": "manikant.com.np",
+    "short_name": "manikant.com.np",
     "description": "Study materials and resources for students",
     "start_url": "/",
     "display": "standalone",
-    "background_color": "#1a1a1a",
-    "theme_color": "#1a1a1a",
+    "background_color": "#FF9900",
+    "theme_color": "#FF9900",
     "icons": [
         {
             "src": "/favicon.svg",
