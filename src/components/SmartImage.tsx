@@ -7,9 +7,10 @@ interface SmartImageProps {
   className?: string;
   loading?: 'lazy' | 'eager';
   decoding?: 'async' | 'sync' | 'auto';
+  onClick?: () => void;
 }
 
-export default function SmartImage({ src, alt, className, loading = 'lazy', decoding = 'async' }: SmartImageProps) {
+export default function SmartImage({ src, alt, className, loading = 'lazy', decoding = 'async', onClick }: SmartImageProps) {
   const [imageSrc, setImageSrc] = useState<string>(src);
   const [isConverting, setIsConverting] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -95,6 +96,8 @@ export default function SmartImage({ src, alt, className, loading = 'lazy', deco
       className={className}
       loading={loading}
       decoding={decoding}
+      onClick={onClick}
+      style={onClick ? { cursor: 'pointer' } : undefined}
     />
   );
 }

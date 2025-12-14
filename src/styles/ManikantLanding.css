@@ -2434,3 +2434,322 @@ select.manikant-input {
         transition-duration: 0.01ms !important;
     }
 }
+
+/* ========================================
+   MULTIPLE FILE UPLOAD STYLES
+======================================== */
+.selected-files-list {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.selected-file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.8rem;
+}
+
+.file-name-preview {
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 200px;
+}
+
+.remove-file-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: none;
+    background: var(--bg-hover);
+    color: var(--text-muted);
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--fast);
+    flex-shrink: 0;
+}
+
+.remove-file-btn:hover {
+    background: var(--error);
+    color: #fff;
+}
+
+/* ========================================
+   MEDIA GRID FOR MULTIPLE FILES
+======================================== */
+.post-media-grid {
+    display: grid;
+    gap: 4px;
+    background: #000;
+}
+
+.post-media-grid.grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.post-media-grid.grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+}
+
+.post-media-grid.grid-3 .media-grid-item:first-child {
+    grid-row: span 2;
+}
+
+.post-media-grid.grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+}
+
+.media-grid-item {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+    cursor: pointer;
+    transition: opacity var(--fast);
+}
+
+.media-grid-item:hover {
+    opacity: 0.9;
+}
+
+.grid-media {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.grid-file-preview {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-elevated);
+    gap: 8px;
+}
+
+.grid-file-preview .file-icon {
+    font-size: 2rem;
+}
+
+.grid-file-preview .file-ext {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.grid-file-preview.pdf {
+    background: linear-gradient(135deg, var(--bg-elevated) 0%, rgba(255, 153, 0, 0.1) 100%);
+}
+
+.more-files-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+/* ========================================
+   CLICKABLE MEDIA STYLES
+======================================== */
+.clickable-media {
+    cursor: pointer;
+    transition: transform var(--fast), opacity var(--fast);
+}
+
+.clickable-media:hover {
+    opacity: 0.95;
+}
+
+.pdf-preview-wrapper {
+    position: relative;
+    cursor: pointer;
+}
+
+.pdf-click-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all var(--base);
+    pointer-events: none;
+}
+
+.pdf-preview-wrapper:hover .pdf-click-overlay {
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 1;
+}
+
+.pdf-click-overlay span {
+    background: var(--accent);
+    color: #000;
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* ========================================
+   MEDIA PREVIEW MODAL
+======================================== */
+.media-preview-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 20px;
+    animation: fadeIn 0.2s ease;
+}
+
+.media-preview-modal {
+    position: relative;
+    max-width: 95vw;
+    max-height: 95vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    animation: modalIn 0.2s ease;
+}
+
+.preview-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: all var(--fast);
+}
+
+.preview-close-btn:hover {
+    background: var(--error);
+    transform: scale(1.1);
+}
+
+.preview-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    background: #000;
+}
+
+.preview-media {
+    max-width: 90vw;
+    max-height: 80vh;
+    object-fit: contain;
+}
+
+.preview-pdf {
+    width: 90vw;
+    height: 80vh;
+    border: none;
+    background: #fff;
+}
+
+.preview-actions {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    background: var(--bg-tertiary);
+    border-top: 1px solid var(--border);
+    justify-content: center;
+}
+
+.preview-action-btn {
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    font-family: var(--font);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    transition: all var(--fast);
+}
+
+.preview-action-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.preview-action-btn.primary {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+}
+
+.preview-action-btn.primary:hover {
+    background: var(--accent-hover);
+    box-shadow: var(--glow);
+}
+
+/* Mobile responsive for preview */
+@media (max-width: 768px) {
+    .media-preview-overlay {
+        padding: 10px;
+    }
+    
+    .preview-media {
+        max-width: 100%;
+        max-height: 70vh;
+    }
+    
+    .preview-pdf {
+        width: 100%;
+        height: 70vh;
+    }
+    
+    .preview-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .preview-action-btn {
+        justify-content: center;
+    }
+}

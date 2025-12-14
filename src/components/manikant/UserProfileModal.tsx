@@ -50,6 +50,7 @@ export default function UserProfileModal({ user, onClose, onUpdate, showNotifica
     const [loading, setLoading] = useState(false);
     const [currentAvatarUrl, setCurrentAvatarUrl] = useState('');
     const [previewUrl, setPreviewUrl] = useState('');
+    const [converting, setConverting] = useState(false);
 
     useEffect(() => {
         fetchProfile();
@@ -77,13 +78,31 @@ export default function UserProfileModal({ user, onClose, onUpdate, showNotifica
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
             
+            const isHeic =
+                file.type === 'image/heic' ||
+                file.type === 'image/heif' ||
+                file.name.toLowerCase().endsWith('.heic') ||
+                file.name.toLowerCase().endsWith('.heif');
+
+            if (isHeic) {
+                setConverting(true);
+                showNotification('Converting HEIC image...', 'success');
+            }
+
             try {
                 // Convert HEIC/HEIF to JPEG if needed
                 const processedFile = await convertHeicIfNeeded(file);
                 setAvatarFile(processedFile);
                 setPreviewUrl(URL.createObjectURL(processedFile));
+                
+                if (isHeic) {
+                    showNotification('Image converted successfully!', 'success');
+                }
             } catch (error: any) {
+                console.error('File processing error:', error);
                 showNotification(error.message || 'Failed to process image', 'error');
+            } finally {
+                setConverting(false);
             }
         }
     };
@@ -148,9 +167,25 @@ export default function UserProfileModal({ user, onClose, onUpdate, showNotifica
                                     borderRadius: '50%',
                                     objectFit: 'cover',
                                     border: '3px solid var(--primary-color)',
-                                    boxShadow: '0 0 15px rgba(140, 82, 255, 0.3)'
+                                    boxShadow: '0 0 15px rgba(140, 82, 255, 0.3)',
+                                    opacity: converting ? 0.5 : 1,
                                 }}
                             />
+                            {converting && (
+                                <div
+                                    style={{
+                                        position: 'absolute',
+                                        top: '50%',
+                                        left: '50%',
+                                        transform: 'translate(-50%, -50%)',
+                                        color: 'var(--primary-color)',
+                                        fontSize: '12px',
+                                        textAlign: 'center',
+                                    }}
+                                >
+                                    Converting...
+                                </div>
+                            )}
                             <label
                                 htmlFor="avatar-upload"
                                 style={{
@@ -165,8 +200,8 @@ export default function UserProfileModal({ user, onClose, onUpdate, showNotifica
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    cursor: 'pointer',
-                                    border: '2px solid var(--card-bg)'
+                                    cursor: converting ? 'wait' : 'pointer',
+                                    border: '2px solid var(--card-bg)',
                                 }}
                             >
                                 ✎
@@ -176,6 +211,7 @@ export default function UserProfileModal({ user, onClose, onUpdate, showNotifica
                                 id="avatar-upload"
                                 accept="image/*"
                                 onChange={handleFileChange}
+                                disabled={converting}
                                 style={{ display: 'none' }}
                             />
                         </div>

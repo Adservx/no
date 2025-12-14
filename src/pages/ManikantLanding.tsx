@@ -48,6 +48,29 @@ const convertHeicIfNeeded = async (file: File): Promise<File> => {
 const SpiderWebPlaceholder = memo(() => <span style={{ width: 20, height: 20, display: 'inline-block' }} />);
 const CornerPlaceholder = memo(() => <div style={{ position: 'absolute', width: 80, height: 80 }} />);
 
+// Helper to parse media URLs (handles both single URL and JSON array)
+const parseMediaUrls = (mediaUrl: string | undefined): string[] => {
+  if (!mediaUrl) return [];
+  try {
+    // Try to parse as JSON array
+    const parsed = JSON.parse(mediaUrl);
+    if (Array.isArray(parsed)) return parsed;
+    return [mediaUrl];
+  } catch {
+    // Not JSON, treat as single URL
+    return [mediaUrl];
+  }
+};
+
+// Helper to determine file type from URL
+const getFileType = (url: string): 'image' | 'video' | 'pdf' | 'other' => {
+  const lower = url.toLowerCase();
+  if (lower.match(/\.(jpg|jpeg|png|gif|webp|heic|heif)$/)) return 'image';
+  if (lower.match(/\.(mp4|webm|mov|avi)$/)) return 'video';
+  if (lower.endsWith('.pdf')) return 'pdf';
+  return 'other';
+};
+
 interface Comment {
   id: string;
   post_id: string;
@@ -101,7 +124,7 @@ export default function ManikantLanding() {
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
   const [newType, setNewType] = useState<'photo' | 'video' | 'material'>('material');
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
 
   // Edit Post State
@@ -109,7 +132,10 @@ export default function ManikantLanding() {
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
   const [editType, setEditType] = useState<'photo' | 'video' | 'material'>('material');
-  const [editFile, setEditFile] = useState<File | null>(null);
+  const [editFiles, setEditFiles] = useState<File[]>([]);
+
+  // Media Preview Modal State
+  const [previewMedia, setPreviewMedia] = useState<{ url: string; type: 'photo' | 'video' | 'material'; title: string } | null>(null);
 
   // Create Post Dropdown State
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
@@ -460,23 +486,29 @@ export default function ManikantLanding() {
     try {
       let mediaUrl = '';
 
-      if (file) {
-        // Convert HEIC/HEIF to JPEG if needed
-        const processedFile = await convertHeicIfNeeded(file);
-        
-        const fileExt = processedFile.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `manikant_files/${user.id}/${fileName}`;
-
-        // Lazy load R2 upload only when needed
+      if (files.length > 0) {
         const uploadToR2 = await loadR2Upload();
-        const { success, url, error: uploadError } = await uploadToR2(processedFile, filePath);
+        const uploadedUrls: string[] = [];
 
-        if (!success || !url) {
-          throw new Error(uploadError || 'File upload to R2 failed');
+        for (const file of files) {
+          // Convert HEIC/HEIF to JPEG if needed
+          const processedFile = await convertHeicIfNeeded(file);
+          
+          const fileExt = processedFile.name.split('.').pop();
+          const fileName = `${Math.random()}.${fileExt}`;
+          const filePath = `manikant_files/${user.id}/${fileName}`;
+
+          const { success, url, error: uploadError } = await uploadToR2(processedFile, filePath);
+
+          if (!success || !url) {
+            throw new Error(uploadError || 'File upload to R2 failed');
+          }
+
+          uploadedUrls.push(url);
         }
 
-        mediaUrl = url;
+        // Store as JSON array if multiple files, single URL if one file
+        mediaUrl = uploadedUrls.length === 1 ? uploadedUrls[0] : JSON.stringify(uploadedUrls);
       }
 
       const { error } = await supabase.from('manikant_posts').insert({
@@ -491,7 +523,7 @@ export default function ManikantLanding() {
 
       setNewTitle('');
       setNewContent('');
-      setFile(null);
+      setFiles([]);
       fetchPosts();
       showNotification('Post created successfully!', 'success');
     } catch (error: any) {
@@ -499,14 +531,14 @@ export default function ManikantLanding() {
     } finally {
       setUploading(false);
     }
-  }, [user, file, newTitle, newContent, newType, showNotification]);
+  }, [user, files, newTitle, newContent, newType, showNotification]);
 
   const handleEditPost = (post: Post) => {
     setEditingPost(post);
     setEditTitle(post.title);
     setEditContent(post.content);
     setEditType(post.type);
-    setEditFile(null);
+    setEditFiles([]);
   };
 
   const handleUpdatePost = useCallback(async (e: React.FormEvent) => {
@@ -517,22 +549,28 @@ export default function ManikantLanding() {
     try {
       let mediaUrl = editingPost.media_url || '';
 
-      if (editFile) {
-        // Convert HEIC/HEIF to JPEG if needed
-        const processedFile = await convertHeicIfNeeded(editFile);
-        
-        const fileExt = processedFile.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `manikant_files/${user.id}/${fileName}`;
-
-        // Lazy load R2 upload only when needed
+      if (editFiles.length > 0) {
         const uploadToR2 = await loadR2Upload();
-        const { success, url, error: uploadError } = await uploadToR2(processedFile, filePath);
+        const uploadedUrls: string[] = [];
 
-        if (!success || !url) {
-          throw new Error(uploadError || 'File upload failed');
+        for (const file of editFiles) {
+          // Convert HEIC/HEIF to JPEG if needed
+          const processedFile = await convertHeicIfNeeded(file);
+          
+          const fileExt = processedFile.name.split('.').pop();
+          const fileName = `${Math.random()}.${fileExt}`;
+          const filePath = `manikant_files/${user.id}/${fileName}`;
+
+          const { success, url, error: uploadError } = await uploadToR2(processedFile, filePath);
+
+          if (!success || !url) {
+            throw new Error(uploadError || 'File upload failed');
+          }
+          uploadedUrls.push(url);
         }
-        mediaUrl = url;
+
+        // Store as JSON array if multiple files, single URL if one file
+        mediaUrl = uploadedUrls.length === 1 ? uploadedUrls[0] : JSON.stringify(uploadedUrls);
       }
 
       const { error } = await supabase
@@ -551,7 +589,7 @@ export default function ManikantLanding() {
       setEditingPost(null);
       setEditTitle('');
       setEditContent('');
-      setEditFile(null);
+      setEditFiles([]);
       fetchPosts();
       showNotification('Post updated successfully!', 'success');
     } catch (error: any) {
@@ -559,7 +597,7 @@ export default function ManikantLanding() {
     } finally {
       setUploading(false);
     }
-  }, [user, editingPost, editFile, editTitle, editContent, editType, showNotification]);
+  }, [user, editingPost, editFiles, editTitle, editContent, editType, showNotification]);
 
   const handleDeletePost = async (postId: string) => {
     if (!user) return;
@@ -635,26 +673,56 @@ export default function ManikantLanding() {
                 <option value="video">Video</option>
               </select>
 
-              {editingPost.media_url && (
-                <div style={{ marginBottom: '15px', padding: '10px', background: 'var(--card-bg)', borderRadius: '8px' }}>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '8px' }}>Current file:</p>
-                  <a href={editingPost.media_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary-color)', fontSize: '0.9rem' }}>
-                    View current file
-                  </a>
-                </div>
-              )}
+              {editingPost.media_url && (() => {
+                const currentUrls = parseMediaUrls(editingPost.media_url);
+                return (
+                  <div style={{ marginBottom: '15px', padding: '10px', background: 'var(--bg-elevated)', borderRadius: '8px' }}>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                      Current file{currentUrls.length > 1 ? 's' : ''} ({currentUrls.length}):
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {currentUrls.map((url, idx) => (
+                        <a 
+                          key={idx}
+                          href={url} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          style={{ color: 'var(--accent)', fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                        >
+                          {url.split('/').pop()}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
               <div className="manikant-file-input-wrapper">
                 <input
                   type="file"
                   id="edit-file-upload"
                   className="manikant-file-input-hidden"
-                  onChange={e => setEditFile(e.target.files?.[0] || null)}
+                  multiple
+                  onChange={e => setEditFiles(e.target.files ? Array.from(e.target.files) : [])}
                 />
                 <label htmlFor="edit-file-upload" className="manikant-file-label">
                   <span className="file-icon">📎</span>
-                  {editFile ? editFile.name : 'Replace file (optional)...'}
+                  {editFiles.length > 0 ? `${editFiles.length} file(s) selected` : 'Replace files (optional)...'}
                 </label>
+                {editFiles.length > 0 && (
+                  <div className="selected-files-list">
+                    {editFiles.map((f, i) => (
+                      <div key={i} className="selected-file-item">
+                        <span className="file-name-preview">{f.name}</span>
+                        <button
+                          type="button"
+                          className="remove-file-btn"
+                          onClick={() => setEditFiles(editFiles.filter((_, idx) => idx !== i))}
+                        >×</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
@@ -666,6 +734,36 @@ export default function ManikantLanding() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Media Preview Modal */}
+      {previewMedia && (
+        <div className="media-preview-overlay" onClick={() => setPreviewMedia(null)}>
+          <div className="media-preview-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="preview-close-btn" onClick={() => setPreviewMedia(null)}>×</button>
+            <div className="preview-content">
+              {previewMedia.type === 'video' ? (
+                <video src={previewMedia.url} controls autoPlay className="preview-media" />
+              ) : previewMedia.type === 'photo' ? (
+                <img src={previewMedia.url} alt={previewMedia.title} className="preview-media" />
+              ) : (
+                <iframe
+                  src={`${previewMedia.url}#toolbar=1&navpanes=1&scrollbar=1`}
+                  className="preview-pdf"
+                  title={previewMedia.title}
+                />
+              )}
+            </div>
+            <div className="preview-actions">
+              <a href={previewMedia.url} target="_blank" rel="noopener noreferrer" className="preview-action-btn">
+                📖 Open in new tab
+              </a>
+              <a href={previewMedia.url} download className="preview-action-btn primary">
+                📥 Download
+              </a>
+            </div>
           </div>
         </div>
       )}
@@ -913,62 +1011,110 @@ export default function ManikantLanding() {
                 </div>
 
                 {/* Media Section - Full width like Instagram */}
-                {post.media_url && (
-                  <div className="post-media-container">
-                    {post.type === 'video' ? (
-                      <video src={post.media_url} controls className="post-media" preload="metadata" />
-                    ) : post.type === 'photo' ? (
-                      <SmartImage src={post.media_url || ''} alt={post.title} className="post-media" loading="lazy" decoding="async" />
-                    ) : (
-                      <div className="post-material">
-                        {post.media_url.toLowerCase().endsWith('.pdf') ? (
-                          <>
-                            <iframe
-                              src={`${post.media_url}#toolbar=1&navpanes=0`}
-                              className="post-pdf-preview"
-                              title={post.title}
+                {post.media_url && (() => {
+                  const mediaUrls = parseMediaUrls(post.media_url);
+                  return (
+                    <div className="post-media-container">
+                      {mediaUrls.length === 1 ? (
+                        // Single file display
+                        <>
+                          {post.type === 'video' || getFileType(mediaUrls[0]) === 'video' ? (
+                            <video 
+                              src={mediaUrls[0]} 
+                              controls 
+                              className="post-media clickable-media" 
+                              preload="metadata"
+                              onClick={() => setPreviewMedia({ url: mediaUrls[0], type: 'video', title: post.title })}
                             />
-                            <div className="post-material-actions">
-                              <a
-                                href={post.media_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="material-btn secondary"
+                          ) : post.type === 'photo' || getFileType(mediaUrls[0]) === 'image' ? (
+                            <SmartImage 
+                              src={mediaUrls[0]} 
+                              alt={post.title} 
+                              className="post-media clickable-media" 
+                              loading="lazy" 
+                              decoding="async"
+                              onClick={() => setPreviewMedia({ url: mediaUrls[0], type: 'photo', title: post.title })}
+                            />
+                          ) : getFileType(mediaUrls[0]) === 'pdf' ? (
+                            <div className="post-material">
+                              <div 
+                                className="pdf-preview-wrapper clickable-media"
+                                onClick={() => setPreviewMedia({ url: mediaUrls[0], type: 'material', title: post.title })}
                               >
-                                📖 Open
-                              </a>
-                              <a
-                                href={post.media_url}
-                                download
-                                className="material-btn primary"
-                              >
+                                <iframe
+                                  src={`${mediaUrls[0]}#toolbar=0&navpanes=0`}
+                                  className="post-pdf-preview"
+                                  title={post.title}
+                                />
+                                <div className="pdf-click-overlay">
+                                  <span>🔍 Click to preview</span>
+                                </div>
+                              </div>
+                              <div className="post-material-actions">
+                                <a href={mediaUrls[0]} target="_blank" rel="noopener noreferrer" className="material-btn secondary">
+                                  📖 Open
+                                </a>
+                                <a href={mediaUrls[0]} download className="material-btn primary">
+                                  📥 Download
+                                </a>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="post-file-display clickable-media" onClick={() => window.open(mediaUrls[0], '_blank')}>
+                              <div className="file-icon-large">📄</div>
+                              <span className="file-name">{mediaUrls[0].split('/').pop()}</span>
+                              <a href={mediaUrls[0]} target="_blank" rel="noopener noreferrer" className="material-btn primary">
                                 📥 Download
                               </a>
                             </div>
-                          </>
-                        ) : (
-                          <div className="post-file-display">
-                            <div className="file-icon-large">📄</div>
-                            <span className="file-name">{post.media_url.split('/').pop()}</span>
-                            <a
-                              href={post.media_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="material-btn primary"
-                            >
-                              📥 Download
-                            </a>
-                          </div>
-                        )}
+                          )}
+                        </>
+                      ) : (
+                        // Multiple files - grid display
+                        <div className={`post-media-grid grid-${Math.min(mediaUrls.length, 4)}`}>
+                          {mediaUrls.slice(0, 4).map((url, idx) => {
+                            const fileType = getFileType(url);
+                            return (
+                              <div 
+                                key={idx} 
+                                className="media-grid-item clickable-media"
+                                onClick={() => setPreviewMedia({ 
+                                  url, 
+                                  type: fileType === 'video' ? 'video' : fileType === 'image' ? 'photo' : 'material',
+                                  title: post.title 
+                                })}
+                              >
+                                {fileType === 'video' ? (
+                                  <video src={url} className="grid-media" preload="metadata" />
+                                ) : fileType === 'image' ? (
+                                  <SmartImage src={url} alt={`${post.title} ${idx + 1}`} className="grid-media" loading="lazy" />
+                                ) : fileType === 'pdf' ? (
+                                  <div className="grid-file-preview pdf">
+                                    <span className="file-icon">📄</span>
+                                    <span className="file-ext">PDF</span>
+                                  </div>
+                                ) : (
+                                  <div className="grid-file-preview">
+                                    <span className="file-icon">📎</span>
+                                    <span className="file-ext">{url.split('.').pop()?.toUpperCase()}</span>
+                                  </div>
+                                )}
+                                {idx === 3 && mediaUrls.length > 4 && (
+                                  <div className="more-files-overlay">+{mediaUrls.length - 4}</div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                      {/* Type badge */}
+                      <div className="post-type-badge">
+                        {post.type === 'photo' ? '📷' : post.type === 'video' ? '🎥' : '📚'}
+                        <span>{post.type}{mediaUrls.length > 1 ? ` (${mediaUrls.length})` : ''}</span>
                       </div>
-                    )}
-                    {/* Type badge */}
-                    <div className="post-type-badge">
-                      {post.type === 'photo' ? '📷' : post.type === 'video' ? '🎥' : '📚'}
-                      <span>{post.type}</span>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* Caption/Content Section */}
                 <div className="post-body">
@@ -1141,12 +1287,27 @@ export default function ManikantLanding() {
                       type="file"
                       id="file-upload"
                       className="manikant-file-input-hidden"
-                      onChange={e => setFile(e.target.files?.[0] || null)}
+                      multiple
+                      onChange={e => setFiles(e.target.files ? Array.from(e.target.files) : [])}
                     />
                     <label htmlFor="file-upload" className="manikant-file-label">
                       <span className="file-icon">📎</span>
-                      {file ? file.name : 'Choose a file...'}
+                      {files.length > 0 ? `${files.length} file(s) selected` : 'Choose files...'}
                     </label>
+                    {files.length > 0 && (
+                      <div className="selected-files-list">
+                        {files.map((f, i) => (
+                          <div key={i} className="selected-file-item">
+                            <span className="file-name-preview">{f.name}</span>
+                            <button
+                              type="button"
+                              className="remove-file-btn"
+                              onClick={() => setFiles(files.filter((_, idx) => idx !== i))}
+                            >×</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <button type="submit" className="manikant-btn" disabled={uploading}>
