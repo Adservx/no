@@ -33,8 +33,8 @@ export default defineConfig({
             registerType: 'autoUpdate',
             includeAssets: ['favicon.svg'],
             manifest: {
-                name: 'Prajol\'s Web',
-                short_name: 'Prajol\'s Web',
+                name: 'manikant.com.np',
+                short_name: 'manikant.com.np',
                 description: 'PDF Contact Sheet and Store for Engineering Notes',
                 theme_color: '#ffffff',
                 icons: [

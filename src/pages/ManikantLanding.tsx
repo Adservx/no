@@ -7,6 +7,7 @@ import '../styles/SpiderWeb.css';
 
 // Lazy load heavy components
 const UserProfileModal = lazy(() => import('../components/manikant/UserProfileModal'));
+const ProfileViewModal = lazy(() => import('../components/manikant/ProfileViewModal'));
 const SpiderWebLogo = lazy(() => import('../components/SpiderWeb').then(m => ({ default: m.SpiderWebLogo })));
 const SpiderWebCorner = lazy(() => import('../components/SpiderWeb').then(m => ({ default: m.SpiderWebCorner })));
 
@@ -119,6 +120,7 @@ export default function ManikantLanding() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [allProfiles, setAllProfiles] = useState<UserProfile[]>([]);
+  const [viewProfileId, setViewProfileId] = useState<string | null>(null);
 
   // New Post State
   const [newTitle, setNewTitle] = useState('');
@@ -640,6 +642,16 @@ export default function ManikantLanding() {
         </Suspense>
       )}
 
+      {/* Profile View Modal - Instagram style */}
+      {viewProfileId && (
+        <Suspense fallback={<div className="manikant-loading"><div className="spinner"></div></div>}>
+          <ProfileViewModal
+            profileId={viewProfileId}
+            onClose={() => setViewProfileId(null)}
+          />
+        </Suspense>
+      )}
+
       {/* Edit Post Modal */}
       {editingPost && (
         <div className="manikant-modal-overlay" onClick={() => setEditingPost(null)}>
@@ -772,7 +784,7 @@ export default function ManikantLanding() {
         <Suspense fallback={<CornerPlaceholder />}>
           <SpiderWebCorner className="spider-web-top-left" size={80} />
         </Suspense>
-        <Link to="/" className="manikant-logo">Manikant<span className="logo-highlight">.com.np</span></Link>
+        <Link to="/" className="manikant-logo">manikant<span className="logo-highlight">.com.np</span></Link>
         <div className="manikant-links">
           <Link to="/prajols-web">Prajol's Web</Link>
           {user ? (
@@ -969,12 +981,18 @@ export default function ManikantLanding() {
                       <img
                         src={post.profiles.avatar_url}
                         alt="Author"
-                        className="post-avatar"
+                        className="post-avatar clickable-avatar"
                         loading="lazy"
                         decoding="async"
+                        onClick={() => setViewProfileId(post.user_id)}
+                        style={{ cursor: 'pointer' }}
                       />
                     ) : (
-                      <div className="post-avatar post-avatar-placeholder">
+                      <div 
+                        className="post-avatar post-avatar-placeholder clickable-avatar"
+                        onClick={() => setViewProfileId(post.user_id)}
+                        style={{ cursor: 'pointer' }}
+                      >
                         👤
                       </div>
                     )}
@@ -1130,7 +1148,7 @@ export default function ManikantLanding() {
                       disabled={loadingLike === post.id}
                       title={userLikes[post.id] ? 'Unlike' : 'Like'}
                     >
-                      {userLikes[post.id] ? '❤️' : '🤍'}
+                      {userLikes[post.id] ? '👍' : '👍🏻'}
                       {(postLikes[post.id] || 0) > 0 && (
                         <span className="engagement-count">{postLikes[post.id]}</span>
                       )}
@@ -1379,7 +1397,12 @@ export default function ManikantLanding() {
               <h4>👥 Community Members</h4>
               <div className="footer-members-list">
                 {allProfiles.map((userProfile) => (
-                  <div key={userProfile.id} className="footer-member-card">
+                  <div 
+                    key={userProfile.id} 
+                    className="footer-member-card"
+                    onClick={() => setViewProfileId(userProfile.id)}
+                    style={{ cursor: 'pointer' }}
+                  >
                     <div className="footer-member-avatar">
                       {userProfile.avatar_url ? (
                         <img src={userProfile.avatar_url} alt={userProfile.username || 'User'} loading="lazy" />

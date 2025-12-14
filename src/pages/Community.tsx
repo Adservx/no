@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
+import ProfileViewModal from '../components/manikant/ProfileViewModal';
 import '../styles/ManikantLanding.css';
 
 interface UserProfile {
@@ -14,6 +15,7 @@ interface UserProfile {
 export default function Community() {
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProfiles();
@@ -38,7 +40,7 @@ export default function Community() {
     <div className="manikant-container">
       <nav className="manikant-nav">
         <Link to="/" className="manikant-logo">
-          Manikant<span className="logo-highlight">.com.np</span>
+          manikant<span className="logo-highlight">.com.np</span>
         </Link>
         <div className="manikant-links">
           <Link to="/">Home</Link>
@@ -69,7 +71,20 @@ export default function Community() {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
             {profiles.map((profile) => (
-              <div key={profile.id} className="manikant-post instagram-style" style={{ padding: '20px' }}>
+              <div 
+                key={profile.id} 
+                className="manikant-post instagram-style" 
+                style={{ padding: '20px', cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s' }}
+                onClick={() => setSelectedProfileId(profile.id)}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(140, 82, 255, 0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '';
+                }}
+              >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <div style={{
                     width: '60px',
@@ -113,6 +128,14 @@ export default function Community() {
           </div>
         </div>
       </footer>
+
+      {/* Profile View Modal */}
+      {selectedProfileId && (
+        <ProfileViewModal
+          profileId={selectedProfileId}
+          onClose={() => setSelectedProfileId(null)}
+        />
+      )}
     </div>
   );
 }

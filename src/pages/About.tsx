@@ -6,7 +6,7 @@ export default function About() {
     <div className="manikant-container">
       <nav className="manikant-nav">
         <Link to="/" className="manikant-logo">
-          Manikant<span className="logo-highlight">.com.np</span>
+          manikant<span className="logo-highlight">.com.np</span>
         </Link>
         <div className="manikant-links">
           <Link to="/">Home</Link>
