@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../../utils/supabase';
 import '../../styles/ProfileViewModal.css';
 
@@ -10,6 +10,20 @@ interface Post {
   title: string | null;
   created_at: string;
 }
+
+// Parse all media URLs from a post
+const getAllMediaUrls = (mediaUrl: string | null): string[] => {
+  if (!mediaUrl) return [];
+  try {
+    if (mediaUrl.startsWith('[')) {
+      const parsed = JSON.parse(mediaUrl);
+      return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+    }
+    return [mediaUrl];
+  } catch {
+    return [mediaUrl];
+  }
+};
 
 interface ProfileData {
   id: string;
@@ -33,6 +47,12 @@ export default function ProfileViewModal({ profileId, onClose }: ProfileViewModa
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [activeTab, setActiveTab] = useState<'posts' | 'about'>('posts');
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+  
+  // Touch/swipe handling
+  const touchStartX = useRef<number>(0);
+  const touchEndX = useRef<number>(0);
+  const mediaContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchProfileData();
@@ -101,17 +121,65 @@ export default function ProfileViewModal({ profileId, onClose }: ProfileViewModa
     }
   };
 
-  // Handle escape key
+  // Reset media index when post changes
   useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
+    setCurrentMediaIndex(0);
+  }, [selectedPost?.id]);
+
+  // Get media URLs for selected post
+  const mediaUrls = selectedPost ? getAllMediaUrls(selectedPost.media_url) : [];
+  const hasMultipleMedia = mediaUrls.length > 1;
+
+  // Navigation handlers
+  const goToPrevMedia = useCallback(() => {
+    setCurrentMediaIndex(prev => (prev > 0 ? prev - 1 : mediaUrls.length - 1));
+  }, [mediaUrls.length]);
+
+  const goToNextMedia = useCallback(() => {
+    setCurrentMediaIndex(prev => (prev < mediaUrls.length - 1 ? prev + 1 : 0));
+  }, [mediaUrls.length]);
+
+  // Touch handlers for swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    const diff = touchStartX.current - touchEndX.current;
+    const minSwipeDistance = 50;
+    
+    if (Math.abs(diff) > minSwipeDistance && hasMultipleMedia) {
+      if (diff > 0) {
+        // Swiped left - go to next
+        goToNextMedia();
+      } else {
+        // Swiped right - go to previous
+        goToPrevMedia();
+      }
+    }
+  };
+
+  // Handle escape key and arrow keys
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (selectedPost) setSelectedPost(null);
         else onClose();
+      } else if (selectedPost && hasMultipleMedia) {
+        if (e.key === 'ArrowLeft') {
+          goToPrevMedia();
+        } else if (e.key === 'ArrowRight') {
+          goToNextMedia();
+        }
       }
     };
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
-  }, [selectedPost, onClose]);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedPost, onClose, hasMultipleMedia, goToPrevMedia, goToNextMedia]);
 
   if (loading) {
     return (
@@ -331,12 +399,56 @@ export default function ProfileViewModal({ profileId, onClose }: ProfileViewModa
                 </svg>
               </button>
               
-              {getMediaUrl(selectedPost.media_url) && (
-                <div className="detail-media">
+              {mediaUrls.length > 0 && (
+                <div 
+                  className="detail-media"
+                  ref={mediaContainerRef}
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                >
                   {selectedPost.type === 'video' ? (
-                    <video src={getMediaUrl(selectedPost.media_url)!} controls autoPlay />
+                    <video src={mediaUrls[currentMediaIndex]} controls autoPlay />
                   ) : (
-                    <img src={getMediaUrl(selectedPost.media_url)!} alt={selectedPost.title || 'Post'} />
+                    <img src={mediaUrls[currentMediaIndex]} alt={selectedPost.title || 'Post'} />
+                  )}
+                  
+                  {/* Arrow buttons for desktop */}
+                  {hasMultipleMedia && (
+                    <>
+                      <button 
+                        className="media-nav-btn media-nav-prev"
+                        onClick={(e) => { e.stopPropagation(); goToPrevMedia(); }}
+                        aria-label="Previous image"
+                      >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                          <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                      <button 
+                        className="media-nav-btn media-nav-next"
+                        onClick={(e) => { e.stopPropagation(); goToNextMedia(); }}
+                        aria-label="Next image"
+                      >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                          <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                    </>
+                  )}
+                  
+                  {/* Dots indicator */}
+                  {hasMultipleMedia && (
+                    <div className="media-dots">
+                      {mediaUrls.map((_, index) => (
+                        <button
+                          key={index}
+                          className={`media-dot ${index === currentMediaIndex ? 'active' : ''}`}
+                          onClick={(e) => { e.stopPropagation(); setCurrentMediaIndex(index); }}
+                          aria-label={`Go to image ${index + 1}`}
+                        />
+                      ))}
+                    </div>
                   )}
                 </div>
               )}
@@ -360,6 +472,9 @@ export default function ProfileViewModal({ profileId, onClose }: ProfileViewModa
                 
                 <div className="detail-meta">
                   <span className="meta-tag">{selectedPost.type}</span>
+                  {hasMultipleMedia && (
+                    <span className="meta-tag">{currentMediaIndex + 1} / {mediaUrls.length}</span>
+                  )}
                 </div>
               </div>
             </div>

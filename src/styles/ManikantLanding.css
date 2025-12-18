@@ -2681,6 +2681,97 @@ select.manikant-input {
     justify-content: center;
     min-height: 300px;
     background: #000;
+    position: relative;
+    touch-action: pan-y pinch-zoom;
+}
+
+/* Preview Navigation Buttons (Desktop) */
+.preview-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    z-index: 10;
+    opacity: 0;
+}
+
+.preview-content:hover .preview-nav-btn {
+    opacity: 1;
+}
+
+.preview-nav-prev {
+    left: 16px;
+}
+
+.preview-nav-next {
+    right: 16px;
+}
+
+.preview-nav-btn:hover {
+    background: var(--accent, #F90);
+    border-color: var(--accent, #F90);
+    color: #000;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.preview-nav-btn:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+/* Preview Dots Indicator */
+.preview-dots {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    z-index: 10;
+}
+
+.preview-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4);
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.preview-dot:hover {
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.preview-dot.active {
+    background: var(--accent, #F90);
+    transform: scale(1.2);
+}
+
+/* Preview Counter */
+.preview-counter {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    padding: 8px 12px;
+    background: var(--bg-elevated);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
 }
 
 .preview-media {
@@ -2761,5 +2852,22 @@ select.manikant-input {
     
     .preview-action-btn {
         justify-content: center;
+    }
+    
+    /* Hide arrow buttons on mobile - use swipe instead */
+    .preview-nav-btn {
+        display: none;
+    }
+    
+    /* Smaller dots on mobile */
+    .preview-dots {
+        bottom: 12px;
+        padding: 6px 10px;
+        gap: 6px;
+    }
+    
+    .preview-dot {
+        width: 8px;
+        height: 8px;
     }
 }

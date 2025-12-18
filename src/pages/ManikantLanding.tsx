@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense, memo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense, memo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
 import SmartImage from '../components/SmartImage';
@@ -136,8 +136,12 @@ export default function ManikantLanding() {
   const [editType, setEditType] = useState<'photo' | 'video' | 'material'>('material');
   const [editFiles, setEditFiles] = useState<File[]>([]);
 
-  // Media Preview Modal State
-  const [previewMedia, setPreviewMedia] = useState<{ url: string; type: 'photo' | 'video' | 'material'; title: string } | null>(null);
+  // Media Preview Modal State - now supports multiple files
+  const [previewMedia, setPreviewMedia] = useState<{ urls: string[]; type: 'photo' | 'video' | 'material'; title: string; currentIndex: number } | null>(null);
+  
+  // Touch/swipe handling for media preview
+  const previewTouchStartX = useRef<number>(0);
+  const previewTouchEndX = useRef<number>(0);
 
   // Create Post Dropdown State
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
@@ -621,6 +625,65 @@ export default function ManikantLanding() {
     }
   };
 
+  // Preview navigation handlers
+  const goToPrevPreview = useCallback(() => {
+    if (!previewMedia || previewMedia.urls.length <= 1) return;
+    setPreviewMedia(prev => prev ? {
+      ...prev,
+      currentIndex: prev.currentIndex > 0 ? prev.currentIndex - 1 : prev.urls.length - 1
+    } : null);
+  }, [previewMedia]);
+
+  const goToNextPreview = useCallback(() => {
+    if (!previewMedia || previewMedia.urls.length <= 1) return;
+    setPreviewMedia(prev => prev ? {
+      ...prev,
+      currentIndex: prev.currentIndex < prev.urls.length - 1 ? prev.currentIndex + 1 : 0
+    } : null);
+  }, [previewMedia]);
+
+  const handlePreviewTouchStart = (e: React.TouchEvent) => {
+    previewTouchStartX.current = e.touches[0].clientX;
+  };
+
+  const handlePreviewTouchMove = (e: React.TouchEvent) => {
+    previewTouchEndX.current = e.touches[0].clientX;
+  };
+
+  const handlePreviewTouchEnd = () => {
+    if (!previewMedia || previewMedia.urls.length <= 1) return;
+    const diff = previewTouchStartX.current - previewTouchEndX.current;
+    const minSwipeDistance = 50;
+    
+    if (Math.abs(diff) > minSwipeDistance) {
+      if (diff > 0) {
+        goToNextPreview();
+      } else {
+        goToPrevPreview();
+      }
+    }
+  };
+
+  // Keyboard navigation for preview
+  useEffect(() => {
+    if (!previewMedia) return;
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setPreviewMedia(null);
+      } else if (previewMedia.urls.length > 1) {
+        if (e.key === 'ArrowLeft') {
+          goToPrevPreview();
+        } else if (e.key === 'ArrowRight') {
+          goToNextPreview();
+        }
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [previewMedia, goToPrevPreview, goToNextPreview]);
+
   return (
     <div className="manikant-container">
       {notification && (
@@ -755,24 +818,80 @@ export default function ManikantLanding() {
         <div className="media-preview-overlay" onClick={() => setPreviewMedia(null)}>
           <div className="media-preview-modal" onClick={(e) => e.stopPropagation()}>
             <button className="preview-close-btn" onClick={() => setPreviewMedia(null)}>×</button>
-            <div className="preview-content">
-              {previewMedia.type === 'video' ? (
-                <video src={previewMedia.url} controls autoPlay className="preview-media" />
-              ) : previewMedia.type === 'photo' ? (
-                <img src={previewMedia.url} alt={previewMedia.title} className="preview-media" />
-              ) : (
-                <iframe
-                  src={`${previewMedia.url}#toolbar=1&navpanes=1&scrollbar=1`}
-                  className="preview-pdf"
-                  title={previewMedia.title}
-                />
+            <div 
+              className="preview-content"
+              onTouchStart={handlePreviewTouchStart}
+              onTouchMove={handlePreviewTouchMove}
+              onTouchEnd={handlePreviewTouchEnd}
+            >
+              {(() => {
+                const currentUrl = previewMedia.urls[previewMedia.currentIndex];
+                const currentType = getFileType(currentUrl);
+                
+                if (currentType === 'video') {
+                  return <video src={currentUrl} controls autoPlay className="preview-media" />;
+                } else if (currentType === 'image') {
+                  return <img src={currentUrl} alt={previewMedia.title} className="preview-media" />;
+                } else {
+                  return (
+                    <iframe
+                      src={`${currentUrl}#toolbar=1&navpanes=1&scrollbar=1`}
+                      className="preview-pdf"
+                      title={previewMedia.title}
+                    />
+                  );
+                }
+              })()}
+              
+              {/* Arrow buttons for desktop - only show if multiple files */}
+              {previewMedia.urls.length > 1 && (
+                <>
+                  <button 
+                    className="preview-nav-btn preview-nav-prev"
+                    onClick={(e) => { e.stopPropagation(); goToPrevPreview(); }}
+                    aria-label="Previous file"
+                  >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                  <button 
+                    className="preview-nav-btn preview-nav-next"
+                    onClick={(e) => { e.stopPropagation(); goToNextPreview(); }}
+                    aria-label="Next file"
+                  >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                </>
+              )}
+              
+              {/* Dots indicator - only show if multiple files */}
+              {previewMedia.urls.length > 1 && (
+                <div className="preview-dots">
+                  {previewMedia.urls.map((_, index) => (
+                    <button
+                      key={index}
+                      className={`preview-dot ${index === previewMedia.currentIndex ? 'active' : ''}`}
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        setPreviewMedia(prev => prev ? { ...prev, currentIndex: index } : null);
+                      }}
+                      aria-label={`Go to file ${index + 1}`}
+                    />
+                  ))}
+                </div>
               )}
             </div>
             <div className="preview-actions">
-              <a href={previewMedia.url} target="_blank" rel="noopener noreferrer" className="preview-action-btn">
+              {previewMedia.urls.length > 1 && (
+                <span className="preview-counter">{previewMedia.currentIndex + 1} / {previewMedia.urls.length}</span>
+              )}
+              <a href={previewMedia.urls[previewMedia.currentIndex]} target="_blank" rel="noopener noreferrer" className="preview-action-btn">
                 📖 Open in new tab
               </a>
-              <a href={previewMedia.url} download className="preview-action-btn primary">
+              <a href={previewMedia.urls[previewMedia.currentIndex]} download className="preview-action-btn primary">
                 📥 Download
               </a>
             </div>
@@ -1042,7 +1161,7 @@ export default function ManikantLanding() {
                               controls 
                               className="post-media clickable-media" 
                               preload="metadata"
-                              onClick={() => setPreviewMedia({ url: mediaUrls[0], type: 'video', title: post.title })}
+                              onClick={() => setPreviewMedia({ urls: mediaUrls, type: 'video', title: post.title, currentIndex: 0 })}
                             />
                           ) : post.type === 'photo' || getFileType(mediaUrls[0]) === 'image' ? (
                             <SmartImage 
@@ -1051,13 +1170,13 @@ export default function ManikantLanding() {
                               className="post-media clickable-media" 
                               loading="lazy" 
                               decoding="async"
-                              onClick={() => setPreviewMedia({ url: mediaUrls[0], type: 'photo', title: post.title })}
+                              onClick={() => setPreviewMedia({ urls: mediaUrls, type: 'photo', title: post.title, currentIndex: 0 })}
                             />
                           ) : getFileType(mediaUrls[0]) === 'pdf' ? (
                             <div className="post-material">
                               <div 
                                 className="pdf-preview-wrapper clickable-media"
-                                onClick={() => setPreviewMedia({ url: mediaUrls[0], type: 'material', title: post.title })}
+                                onClick={() => setPreviewMedia({ urls: mediaUrls, type: 'material', title: post.title, currentIndex: 0 })}
                               >
                                 <iframe
                                   src={`${mediaUrls[0]}#toolbar=0&navpanes=0`}
@@ -1097,9 +1216,10 @@ export default function ManikantLanding() {
                                 key={idx} 
                                 className="media-grid-item clickable-media"
                                 onClick={() => setPreviewMedia({ 
-                                  url, 
+                                  urls: mediaUrls, 
                                   type: fileType === 'video' ? 'video' : fileType === 'image' ? 'photo' : 'material',
-                                  title: post.title 
+                                  title: post.title,
+                                  currentIndex: idx
                                 })}
                               >
                                 {fileType === 'video' ? (
