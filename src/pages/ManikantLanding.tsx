@@ -1000,9 +1000,10 @@ export default function ManikantLanding() {
         <h1>Sub-Electrical Engineers <span className="highlight">Hub</span></h1>
         <p>A place to share project memories, photos, videos, and study materials.</p>
         <div className="manikant-scroll-indicator">
-          <span></span>
-          <span></span>
-          <span></span>
+          <div className="mouse">
+            <div className="wheel"></div>
+          </div>
+          <span className="scroll-text">Scroll</span>
         </div>
         <Suspense fallback={null}>
           <SpiderWebCorner className="spider-web-bottom-left" size={100} />

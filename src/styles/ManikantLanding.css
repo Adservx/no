@@ -327,21 +327,50 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
     margin-top: 32px;
-    animation: bounce 2s infinite;
 }
-.manikant-scroll-indicator span {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
+.manikant-scroll-indicator .mouse {
+    width: 26px;
+    height: 42px;
+    border: 2px solid var(--accent);
+    border-radius: 20px;
+    position: relative;
+    opacity: 0.8;
+    transition: opacity 0.3s, border-color 0.3s;
+}
+.manikant-scroll-indicator:hover .mouse {
+    opacity: 1;
+    border-color: var(--accent);
+    box-shadow: 0 0 12px rgba(var(--accent-rgb, 255, 107, 107), 0.4);
+}
+.manikant-scroll-indicator .wheel {
+    width: 4px;
+    height: 8px;
     background: var(--accent);
+    border-radius: 2px;
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: scroll-wheel 1.8s ease-in-out infinite;
 }
-.manikant-scroll-indicator span:nth-child(2) { opacity: 0.6; }
-.manikant-scroll-indicator span:nth-child(3) { opacity: 0.3; }
-@keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(6px); }
+.manikant-scroll-indicator .scroll-text {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-secondary, rgba(255,255,255,0.5));
+    font-weight: 500;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+}
+.manikant-scroll-indicator:hover .scroll-text {
+    opacity: 1;
+}
+@keyframes scroll-wheel {
+    0% { opacity: 1; top: 8px; }
+    50% { opacity: 0.5; top: 20px; }
+    100% { opacity: 0; top: 20px; }
 }
 
 /* ========================================
@@ -1999,6 +2028,13 @@ select.manikant-input {
     }
     .manikant-scroll-indicator {
         margin-top: 20px;
+    }
+    .manikant-scroll-indicator .mouse {
+        width: 22px;
+        height: 36px;
+    }
+    .manikant-scroll-indicator .scroll-text {
+        font-size: 10px;
     }
     .manikant-features {
         grid-template-columns: 1fr 1fr;
