@@ -433,7 +433,15 @@ export default function ProfileViewModal({ profileId, onClose }: ProfileViewModa
                   onTouchEnd={handleTouchEnd}
                 >
                   {selectedPost.type === 'video' ? (
-                    <video src={mediaUrls[currentMediaIndex]} controls autoPlay />
+                    <video 
+                      src={mediaUrls[currentMediaIndex]} 
+                      controls 
+                      autoPlay 
+                      playsInline
+                      webkit-playsinline="true"
+                      x5-playsinline="true"
+                      preload="auto"
+                    />
                   ) : (
                     <img src={mediaUrls[currentMediaIndex]} alt={selectedPost.title || 'Post'} />
                   )}

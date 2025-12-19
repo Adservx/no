@@ -867,7 +867,18 @@ export default function ManikantLanding() {
                 const currentType = getFileType(currentUrl);
                 
                 if (currentType === 'video') {
-                  return <video src={currentUrl} controls autoPlay className="preview-media" />;
+                  return (
+                    <video 
+                      src={currentUrl} 
+                      controls 
+                      autoPlay 
+                      playsInline
+                      webkit-playsinline="true"
+                      x5-playsinline="true"
+                      preload="auto"
+                      className="preview-media" 
+                    />
+                  );
                 } else if (currentType === 'image') {
                   return <img src={currentUrl} alt={previewMedia.title} className="preview-media" />;
                 } else {
@@ -1201,8 +1212,12 @@ export default function ManikantLanding() {
                             <video 
                               src={mediaUrls[0]} 
                               controls 
+                              playsInline
+                              webkit-playsinline="true"
+                              x5-playsinline="true"
                               className="post-media clickable-media" 
-                              preload="metadata"
+                              preload="auto"
+                              poster=""
                               onClick={() => setPreviewMedia({ urls: mediaUrls, type: 'video', title: post.title, currentIndex: 0 })}
                             />
                           ) : post.type === 'photo' || getFileType(mediaUrls[0]) === 'image' ? (
@@ -1271,7 +1286,15 @@ export default function ManikantLanding() {
                                 })}
                               >
                                 {fileType === 'video' ? (
-                                  <video src={url} className="grid-media" preload="metadata" />
+                                  <video 
+                                    src={url} 
+                                    className="grid-media" 
+                                    preload="auto" 
+                                    playsInline
+                                    webkit-playsinline="true"
+                                    x5-playsinline="true"
+                                    muted
+                                  />
                                 ) : fileType === 'image' ? (
                                   <SmartImage src={url} alt={`${post.title} ${idx + 1}`} className="grid-media" loading="lazy" />
                                 ) : fileType === 'pdf' ? (

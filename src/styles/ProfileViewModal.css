@@ -594,6 +594,11 @@
   -webkit-user-drag: none;
 }
 
+.detail-media video {
+  min-height: 200px;
+  background: #000;
+}
+
 /* Media Navigation Buttons (Desktop) */
 .media-nav-btn {
   position: absolute;
