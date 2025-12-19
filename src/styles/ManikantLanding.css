@@ -694,6 +694,61 @@ video.post-media:not([src]),
 video.post-media[src=""] {
     background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
 }
+
+/* Optimized Video Component Styles */
+.optimized-video-container {
+    position: relative;
+    width: 100%;
+    min-height: 200px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-radius: inherit;
+    overflow: hidden;
+}
+
+.video-thumbnail-overlay {
+    transition: all 0.3s ease;
+}
+
+.video-thumbnail-overlay:hover {
+    filter: brightness(1.1);
+}
+
+.video-thumbnail-overlay:hover .play-button-overlay {
+    transform: scale(1.1);
+    box-shadow: 0 6px 30px rgba(140, 82, 255, 0.6);
+}
+
+.optimized-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.video-loading-placeholder {
+    min-height: 200px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+}
+
+/* Grid video wrapper */
+.grid-video-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.grid-video-wrapper .video-play-icon {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.media-grid-item:hover .video-play-icon {
+    transform: translate(-50%, -50%) scale(1.1);
+    box-shadow: 0 4px 20px rgba(140, 82, 255, 0.5);
+}
 .post-type-badge {
     position: absolute;
     top: 10px;
@@ -1085,6 +1140,163 @@ select.manikant-input {
 .manikant-btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
+}
+
+/* Button loading state */
+.btn-loading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    border-top-color: #000;
+    border-radius: 50%;
+    animation: btnSpin 0.8s linear infinite;
+}
+
+@keyframes btnSpin {
+    to { transform: rotate(360deg); }
+}
+
+/* ========================================
+   UPLOAD PROGRESS VISUALIZATION
+======================================== */
+.upload-progress-container {
+    background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-tertiary) 100%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    margin-bottom: 16px;
+    animation: progressFadeIn 0.3s ease;
+}
+
+@keyframes progressFadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.upload-progress-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.upload-stage-icon {
+    font-size: 1.2rem;
+    animation: iconPulse 1s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.upload-stage-text {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+
+.upload-file-count {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-left: auto;
+}
+
+.upload-progress-bar-container {
+    position: relative;
+    height: 8px;
+    background: var(--bg-primary);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.upload-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent-hover) 100%);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+    position: relative;
+}
+
+.upload-progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.3) 50%,
+        transparent 100%
+    );
+    animation: progressShine 1.5s ease-in-out infinite;
+}
+
+@keyframes progressShine {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.upload-progress-percent {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.upload-progress-message {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin: 0 0 4px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.upload-current-file {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin: 0;
+    padding: 6px 10px;
+    background: var(--bg-primary);
+    border-radius: var(--radius);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Progress stages colors */
+.upload-progress-container[data-stage="idle"] .upload-progress-bar {
+    background: linear-gradient(90deg, #64748b 0%, #94a3b8 100%);
+}
+
+.upload-progress-container[data-stage="compressing"] .upload-progress-bar {
+    background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+}
+
+.upload-progress-container[data-stage="uploading"] .upload-progress-bar {
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent-hover) 100%);
+}
+
+.upload-progress-container[data-stage="saving"] .upload-progress-bar {
+    background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+}
+
+.upload-progress-container[data-stage="complete"] .upload-progress-bar {
+    background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
 }
 
 /* ========================================

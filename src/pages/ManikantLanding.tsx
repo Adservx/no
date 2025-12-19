@@ -10,12 +10,16 @@ const UserProfileModal = lazy(() => import('../components/manikant/UserProfileMo
 const ProfileViewModal = lazy(() => import('../components/manikant/ProfileViewModal'));
 const SpiderWebLogo = lazy(() => import('../components/SpiderWeb').then(m => ({ default: m.SpiderWebLogo })));
 const SpiderWebCorner = lazy(() => import('../components/SpiderWeb').then(m => ({ default: m.SpiderWebCorner })));
+const OptimizedVideo = lazy(() => import('../components/OptimizedVideo'));
 
 // Lazy load R2 upload only when needed
 const loadR2Upload = () => import('../utils/r2Storage').then(m => m.uploadToR2);
 
 // Lazy load heic2any for HEIC/HEIF conversion
 const loadHeic2Any = () => import('heic2any');
+
+// Lazy load video compressor
+const loadVideoCompressor = () => import('../utils/videoCompressor');
 
 // Convert HEIC/HEIF to JPEG if needed
 const convertHeicIfNeeded = async (file: File): Promise<File> => {
@@ -128,6 +132,23 @@ export default function ManikantLanding() {
   const [newType, setNewType] = useState<'photo' | 'video' | 'material'>('material');
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+  
+  // Upload Progress State
+  const [uploadProgress, setUploadProgress] = useState<{
+    stage: 'idle' | 'compressing' | 'uploading' | 'saving' | 'complete';
+    percent: number;
+    currentFile: string;
+    totalFiles: number;
+    currentFileIndex: number;
+    message: string;
+  }>({
+    stage: 'idle',
+    percent: 0,
+    currentFile: '',
+    totalFiles: 0,
+    currentFileIndex: 0,
+    message: ''
+  });
 
   // Edit Post State
   const [editingPost, setEditingPost] = useState<Post | null>(null);
@@ -489,33 +510,126 @@ export default function ManikantLanding() {
     }
 
     setUploading(true);
+    
+    // Always show progress - even for text-only posts
+    setUploadProgress({
+      stage: files.length > 0 ? 'compressing' : 'saving',
+      percent: files.length > 0 ? 0 : 50,
+      currentFile: '',
+      totalFiles: files.length,
+      currentFileIndex: 0,
+      message: files.length > 0 ? 'Preparing files...' : 'Creating post...'
+    });
+
     try {
       let mediaUrl = '';
 
       if (files.length > 0) {
         const uploadToR2 = await loadR2Upload();
+        const { isVideoFile, compressVideo, formatFileSize } = await loadVideoCompressor();
         const uploadedUrls: string[] = [];
 
-        for (const file of files) {
-          // Convert HEIC/HEIF to JPEG if needed
-          const processedFile = await convertHeicIfNeeded(file);
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          let processedFile: File | Blob = file;
+          let fileName = file.name;
           
-          const fileExt = processedFile.name.split('.').pop();
-          const fileName = `${Math.random()}.${fileExt}`;
-          const filePath = `manikant_files/${user.id}/${fileName}`;
+          // Update progress for current file
+          setUploadProgress(prev => ({
+            ...prev,
+            currentFileIndex: i + 1,
+            currentFile: file.name,
+            stage: 'compressing',
+            message: `Processing file ${i + 1} of ${files.length}...`
+          }));
+          
+          // Compress video files for faster loading
+          if (isVideoFile(file)) {
+            setUploadProgress(prev => ({
+              ...prev,
+              stage: 'compressing',
+              message: `Compressing video: ${file.name}`,
+              percent: Math.round((i / files.length) * 50)
+            }));
+            
+            try {
+              const result = await compressVideo(file, {
+                maxWidth: 1280,
+                maxHeight: 720,
+                videoBitrate: 1500000,
+                onProgress: (p) => {
+                  setUploadProgress(prev => ({
+                    ...prev,
+                    percent: Math.round((i / files.length) * 50 + (p / 100) * (25 / files.length)),
+                    message: `Compressing: ${Math.round(p)}%`
+                  }));
+                }
+              });
+              processedFile = result.blob;
+              
+              // Change extension to .webm if compressed
+              if (result.compressionRatio > 1) {
+                fileName = file.name.replace(/\.[^.]+$/, '.webm');
+                setUploadProgress(prev => ({
+                  ...prev,
+                  message: `Compressed: ${formatFileSize(result.originalSize)} → ${formatFileSize(result.compressedSize)}`
+                }));
+              }
+            } catch (compressError) {
+              console.warn('Video compression failed, using original:', compressError);
+            }
+          } else {
+            // Convert HEIC/HEIF to JPEG if needed
+            setUploadProgress(prev => ({
+              ...prev,
+              stage: 'compressing',
+              message: `Processing: ${file.name}`,
+              percent: Math.round((i / files.length) * 50)
+            }));
+            processedFile = await convertHeicIfNeeded(file);
+            fileName = (processedFile as File).name || file.name;
+          }
+          
+          // Upload file
+          setUploadProgress(prev => ({
+            ...prev,
+            stage: 'uploading',
+            message: `Uploading: ${fileName}`,
+            percent: Math.round(50 + (i / files.length) * 40)
+          }));
+          
+          const fileExt = fileName.split('.').pop();
+          const uniqueName = `${Math.random()}.${fileExt}`;
+          const filePath = `manikant_files/${user.id}/${uniqueName}`;
 
-          const { success, url, error: uploadError } = await uploadToR2(processedFile, filePath);
+          const { success, url, error: uploadError } = await uploadToR2(
+            processedFile instanceof File ? processedFile : new File([processedFile], fileName),
+            filePath
+          );
 
           if (!success || !url) {
             throw new Error(uploadError || 'File upload to R2 failed');
           }
 
           uploadedUrls.push(url);
+          
+          setUploadProgress(prev => ({
+            ...prev,
+            percent: Math.round(50 + ((i + 1) / files.length) * 40)
+          }));
         }
 
         // Store as JSON array if multiple files, single URL if one file
         mediaUrl = uploadedUrls.length === 1 ? uploadedUrls[0] : JSON.stringify(uploadedUrls);
       }
+
+      // Save to database
+      setUploadProgress(prev => ({
+        ...prev,
+        stage: 'saving',
+        message: 'Saving post...',
+        percent: 95
+      }));
 
       const { error } = await supabase.from('manikant_posts').insert({
         user_id: user.id,
@@ -527,13 +641,42 @@ export default function ManikantLanding() {
 
       if (error) throw error;
 
-      setNewTitle('');
-      setNewContent('');
-      setFiles([]);
+      setUploadProgress({
+        stage: 'complete',
+        percent: 100,
+        currentFile: '',
+        totalFiles: 0,
+        currentFileIndex: 0,
+        message: 'Post created!'
+      });
+
+      // Reset form after short delay to show completion
+      setTimeout(() => {
+        setNewTitle('');
+        setNewContent('');
+        setFiles([]);
+        setUploadProgress({
+          stage: 'idle',
+          percent: 0,
+          currentFile: '',
+          totalFiles: 0,
+          currentFileIndex: 0,
+          message: ''
+        });
+      }, 1000);
+      
       fetchPosts();
       showNotification('Post created successfully!', 'success');
     } catch (error: any) {
       showNotification('Error creating post: ' + error.message, 'error');
+      setUploadProgress({
+        stage: 'idle',
+        percent: 0,
+        currentFile: '',
+        totalFiles: 0,
+        currentFileIndex: 0,
+        message: ''
+      });
     } finally {
       setUploading(false);
     }
@@ -552,32 +695,118 @@ export default function ManikantLanding() {
     if (!user || !editingPost) return;
 
     setUploading(true);
+    
+    // Always show progress - even for text-only updates
+    setUploadProgress({
+      stage: editFiles.length > 0 ? 'compressing' : 'saving',
+      percent: editFiles.length > 0 ? 0 : 50,
+      currentFile: '',
+      totalFiles: editFiles.length,
+      currentFileIndex: 0,
+      message: editFiles.length > 0 ? 'Preparing files...' : 'Updating post...'
+    });
+
     try {
       let mediaUrl = editingPost.media_url || '';
 
       if (editFiles.length > 0) {
         const uploadToR2 = await loadR2Upload();
+        const { isVideoFile, compressVideo, formatFileSize } = await loadVideoCompressor();
         const uploadedUrls: string[] = [];
 
-        for (const file of editFiles) {
-          // Convert HEIC/HEIF to JPEG if needed
-          const processedFile = await convertHeicIfNeeded(file);
+        for (let i = 0; i < editFiles.length; i++) {
+          const file = editFiles[i];
+          let processedFile: File | Blob = file;
+          let fileName = file.name;
           
-          const fileExt = processedFile.name.split('.').pop();
-          const fileName = `${Math.random()}.${fileExt}`;
-          const filePath = `manikant_files/${user.id}/${fileName}`;
+          setUploadProgress(prev => ({
+            ...prev,
+            currentFileIndex: i + 1,
+            currentFile: file.name
+          }));
+          
+          // Compress video files for faster loading
+          if (isVideoFile(file)) {
+            setUploadProgress(prev => ({
+              ...prev,
+              stage: 'compressing',
+              message: `Compressing: ${file.name}`,
+              percent: Math.round((i / editFiles.length) * 50)
+            }));
+            
+            try {
+              const result = await compressVideo(file, {
+                maxWidth: 1280,
+                maxHeight: 720,
+                videoBitrate: 1500000,
+                onProgress: (p) => {
+                  setUploadProgress(prev => ({
+                    ...prev,
+                    percent: Math.round((i / editFiles.length) * 50 + (p / 100) * (25 / editFiles.length)),
+                    message: `Compressing: ${Math.round(p)}%`
+                  }));
+                }
+              });
+              processedFile = result.blob;
+              
+              if (result.compressionRatio > 1) {
+                fileName = file.name.replace(/\.[^.]+$/, '.webm');
+                setUploadProgress(prev => ({
+                  ...prev,
+                  message: `Compressed: ${formatFileSize(result.originalSize)} → ${formatFileSize(result.compressedSize)}`
+                }));
+              }
+            } catch (compressError) {
+              console.warn('Video compression failed, using original:', compressError);
+            }
+          } else {
+            setUploadProgress(prev => ({
+              ...prev,
+              stage: 'compressing',
+              message: `Processing: ${file.name}`,
+              percent: Math.round((i / editFiles.length) * 50)
+            }));
+            processedFile = await convertHeicIfNeeded(file);
+            fileName = (processedFile as File).name || file.name;
+          }
+          
+          setUploadProgress(prev => ({
+            ...prev,
+            stage: 'uploading',
+            message: `Uploading: ${fileName}`,
+            percent: Math.round(50 + (i / editFiles.length) * 40)
+          }));
+          
+          const fileExt = fileName.split('.').pop();
+          const uniqueName = `${Math.random()}.${fileExt}`;
+          const filePath = `manikant_files/${user.id}/${uniqueName}`;
 
-          const { success, url, error: uploadError } = await uploadToR2(processedFile, filePath);
+          const { success, url, error: uploadError } = await uploadToR2(
+            processedFile instanceof File ? processedFile : new File([processedFile], fileName),
+            filePath
+          );
 
           if (!success || !url) {
             throw new Error(uploadError || 'File upload failed');
           }
           uploadedUrls.push(url);
+          
+          setUploadProgress(prev => ({
+            ...prev,
+            percent: Math.round(50 + ((i + 1) / editFiles.length) * 40)
+          }));
         }
 
         // Store as JSON array if multiple files, single URL if one file
         mediaUrl = uploadedUrls.length === 1 ? uploadedUrls[0] : JSON.stringify(uploadedUrls);
       }
+
+      setUploadProgress(prev => ({
+        ...prev,
+        stage: 'saving',
+        message: 'Saving changes...',
+        percent: 95
+      }));
 
       const { error } = await supabase
         .from('manikant_posts')
@@ -592,14 +821,42 @@ export default function ManikantLanding() {
 
       if (error) throw error;
 
-      setEditingPost(null);
-      setEditTitle('');
-      setEditContent('');
-      setEditFiles([]);
+      setUploadProgress({
+        stage: 'complete',
+        percent: 100,
+        currentFile: '',
+        totalFiles: 0,
+        currentFileIndex: 0,
+        message: 'Updated!'
+      });
+
+      setTimeout(() => {
+        setEditingPost(null);
+        setEditTitle('');
+        setEditContent('');
+        setEditFiles([]);
+        setUploadProgress({
+          stage: 'idle',
+          percent: 0,
+          currentFile: '',
+          totalFiles: 0,
+          currentFileIndex: 0,
+          message: ''
+        });
+      }, 800);
+      
       fetchPosts();
       showNotification('Post updated successfully!', 'success');
     } catch (error: any) {
       showNotification('Error updating post: ' + error.message, 'error');
+      setUploadProgress({
+        stage: 'idle',
+        percent: 0,
+        currentFile: '',
+        totalFiles: 0,
+        currentFileIndex: 0,
+        message: ''
+      });
     } finally {
       setUploading(false);
     }
@@ -838,12 +1095,65 @@ export default function ManikantLanding() {
                 )}
               </div>
 
+              {/* Upload Progress for Edit - Shows for ALL updates */}
+              {uploading && (
+                <div className="upload-progress-container" data-stage={uploadProgress.stage} style={{ marginTop: '15px' }}>
+                  <div className="upload-progress-header">
+                    <span className="upload-stage-icon">
+                      {uploadProgress.stage === 'idle' && '⏳'}
+                      {uploadProgress.stage === 'compressing' && '🔄'}
+                      {uploadProgress.stage === 'uploading' && '📤'}
+                      {uploadProgress.stage === 'saving' && '💾'}
+                      {uploadProgress.stage === 'complete' && '✅'}
+                    </span>
+                    <span className="upload-stage-text">
+                      {uploadProgress.stage === 'idle' && 'Preparing'}
+                      {uploadProgress.stage === 'compressing' && 'Processing'}
+                      {uploadProgress.stage === 'uploading' && 'Uploading'}
+                      {uploadProgress.stage === 'saving' && 'Saving'}
+                      {uploadProgress.stage === 'complete' && 'Complete!'}
+                    </span>
+                    {uploadProgress.totalFiles > 0 && (
+                      <span className="upload-file-count">
+                        {uploadProgress.currentFileIndex > 0 
+                          ? `(${uploadProgress.currentFileIndex}/${uploadProgress.totalFiles} files)`
+                          : `(${uploadProgress.totalFiles} file${uploadProgress.totalFiles > 1 ? 's' : ''})`
+                        }
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="upload-progress-bar-container">
+                    <div 
+                      className="upload-progress-bar"
+                      style={{ width: `${uploadProgress.percent}%` }}
+                    />
+                    <span className="upload-progress-percent">{uploadProgress.percent}%</span>
+                  </div>
+                  
+                  <p className="upload-progress-message">{uploadProgress.message}</p>
+                  
+                  {uploadProgress.currentFile && (
+                    <p className="upload-current-file">
+                      📁 {uploadProgress.currentFile.length > 25 
+                        ? uploadProgress.currentFile.substring(0, 22) + '...' 
+                        : uploadProgress.currentFile}
+                    </p>
+                  )}
+                </div>
+              )}
+
               <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
-                <button type="button" className="manikant-btn" style={{ background: 'var(--text-muted)' }} onClick={() => setEditingPost(null)}>
+                <button type="button" className="manikant-btn" style={{ background: 'var(--text-muted)' }} onClick={() => setEditingPost(null)} disabled={uploading}>
                   Cancel
                 </button>
                 <button type="submit" className="manikant-btn" disabled={uploading}>
-                  {uploading ? 'Updating...' : 'Update Post'}
+                  {uploading ? (
+                    <span className="btn-loading">
+                      <span className="btn-spinner"></span>
+                      {uploadProgress.stage === 'complete' ? 'Done!' : 'Updating...'}
+                    </span>
+                  ) : 'Update Post'}
                 </button>
               </div>
             </form>
@@ -873,10 +1183,9 @@ export default function ManikantLanding() {
                       controls 
                       autoPlay 
                       playsInline
-                      webkit-playsinline="true"
-                      x5-playsinline="true"
-                      preload="auto"
-                      className="preview-media" 
+                      preload="metadata"
+                      className="preview-media"
+                      style={{ maxHeight: '80vh', objectFit: 'contain' }}
                     />
                   );
                 } else if (currentType === 'image') {
@@ -1209,17 +1518,15 @@ export default function ManikantLanding() {
                         // Single file display
                         <>
                           {post.type === 'video' || getFileType(mediaUrls[0]) === 'video' ? (
-                            <video 
-                              src={mediaUrls[0]} 
-                              controls 
-                              playsInline
-                              webkit-playsinline="true"
-                              x5-playsinline="true"
-                              className="post-media clickable-media" 
-                              preload="auto"
-                              poster=""
-                              onClick={() => setPreviewMedia({ urls: mediaUrls, type: 'video', title: post.title, currentIndex: 0 })}
-                            />
+                            <Suspense fallback={<div className="video-loading-placeholder" style={{ minHeight: '200px', background: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span>🎬 Loading...</span></div>}>
+                              <OptimizedVideo
+                                src={mediaUrls[0]}
+                                className="post-media clickable-media"
+                                previewMode={true}
+                                controls={true}
+                                onClick={() => setPreviewMedia({ urls: mediaUrls, type: 'video', title: post.title, currentIndex: 0 })}
+                              />
+                            </Suspense>
                           ) : post.type === 'photo' || getFileType(mediaUrls[0]) === 'image' ? (
                             <SmartImage 
                               src={mediaUrls[0]} 
@@ -1286,15 +1593,33 @@ export default function ManikantLanding() {
                                 })}
                               >
                                 {fileType === 'video' ? (
-                                  <video 
-                                    src={url} 
-                                    className="grid-media" 
-                                    preload="auto" 
-                                    playsInline
-                                    webkit-playsinline="true"
-                                    x5-playsinline="true"
-                                    muted
-                                  />
+                                  <div className="grid-video-wrapper" style={{ position: 'relative', width: '100%', height: '100%' }}>
+                                    <video 
+                                      src={url} 
+                                      className="grid-media" 
+                                      preload="metadata"
+                                      playsInline
+                                      muted
+                                      style={{ objectFit: 'cover' }}
+                                    />
+                                    <div className="video-play-icon" style={{
+                                      position: 'absolute',
+                                      top: '50%',
+                                      left: '50%',
+                                      transform: 'translate(-50%, -50%)',
+                                      width: '40px',
+                                      height: '40px',
+                                      borderRadius: '50%',
+                                      background: 'rgba(140, 82, 255, 0.9)',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center'
+                                    }}>
+                                      <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+                                        <path d="M8 5v14l11-7z"/>
+                                      </svg>
+                                    </div>
+                                  </div>
                                 ) : fileType === 'image' ? (
                                   <SmartImage src={url} alt={`${post.title} ${idx + 1}`} className="grid-media" loading="lazy" />
                                 ) : fileType === 'pdf' ? (
@@ -1519,8 +1844,61 @@ export default function ManikantLanding() {
                     )}
                   </div>
 
+                  {/* Upload Progress Visualization - Shows for ALL posts */}
+                  {uploading && (
+                    <div className="upload-progress-container" data-stage={uploadProgress.stage}>
+                      <div className="upload-progress-header">
+                        <span className="upload-stage-icon">
+                          {uploadProgress.stage === 'idle' && '⏳'}
+                          {uploadProgress.stage === 'compressing' && '🔄'}
+                          {uploadProgress.stage === 'uploading' && '📤'}
+                          {uploadProgress.stage === 'saving' && '💾'}
+                          {uploadProgress.stage === 'complete' && '✅'}
+                        </span>
+                        <span className="upload-stage-text">
+                          {uploadProgress.stage === 'idle' && 'Preparing'}
+                          {uploadProgress.stage === 'compressing' && 'Processing'}
+                          {uploadProgress.stage === 'uploading' && 'Uploading'}
+                          {uploadProgress.stage === 'saving' && 'Saving'}
+                          {uploadProgress.stage === 'complete' && 'Complete!'}
+                        </span>
+                        {uploadProgress.totalFiles > 0 && (
+                          <span className="upload-file-count">
+                            {uploadProgress.currentFileIndex > 0 
+                              ? `(${uploadProgress.currentFileIndex}/${uploadProgress.totalFiles} files)`
+                              : `(${uploadProgress.totalFiles} file${uploadProgress.totalFiles > 1 ? 's' : ''})`
+                            }
+                          </span>
+                        )}
+                      </div>
+                      
+                      <div className="upload-progress-bar-container">
+                        <div 
+                          className="upload-progress-bar"
+                          style={{ width: `${uploadProgress.percent}%` }}
+                        />
+                        <span className="upload-progress-percent">{uploadProgress.percent}%</span>
+                      </div>
+                      
+                      <p className="upload-progress-message">{uploadProgress.message}</p>
+                      
+                      {uploadProgress.currentFile && (
+                        <p className="upload-current-file">
+                          📁 {uploadProgress.currentFile.length > 25 
+                            ? uploadProgress.currentFile.substring(0, 22) + '...' 
+                            : uploadProgress.currentFile}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   <button type="submit" className="manikant-btn" disabled={uploading}>
-                    {uploading ? 'Posting...' : 'Post'}
+                    {uploading ? (
+                      <span className="btn-loading">
+                        <span className="btn-spinner"></span>
+                        {uploadProgress.stage === 'complete' ? 'Done!' : 'Posting...'}
+                      </span>
+                    ) : 'Post'}
                   </button>
                 </form>
               </div>

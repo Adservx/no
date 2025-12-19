@@ -438,9 +438,8 @@ export default function ProfileViewModal({ profileId, onClose }: ProfileViewModa
                       controls 
                       autoPlay 
                       playsInline
-                      webkit-playsinline="true"
-                      x5-playsinline="true"
-                      preload="auto"
+                      preload="metadata"
+                      style={{ maxHeight: '70vh', objectFit: 'contain' }}
                     />
                   ) : (
                     <img src={mediaUrls[currentMediaIndex]} alt={selectedPost.title || 'Post'} />
