@@ -684,6 +684,44 @@ export default function ManikantLanding() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [previewMedia, goToPrevPreview, goToNextPreview]);
 
+  // Download handler for cross-origin files using proxy
+  const handleDownload = useCallback(async (url: string, filename?: string) => {
+    try {
+      showNotification('Starting download...', 'success');
+      
+      // Use proxy API to bypass CORS
+      const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`;
+      const response = await fetch(proxyUrl);
+      
+      if (!response.ok) throw new Error('Download failed');
+      
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      
+      // Get filename from URL or use provided filename
+      const originalFilename = url.split('/').pop() || 'download';
+      const downloadFilename = filename 
+        ? `${filename}.${originalFilename.split('.').pop()}` 
+        : originalFilename;
+      
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = downloadFilename;
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+      showNotification('Download complete!', 'success');
+    } catch (error) {
+      console.error('Download error:', error);
+      // Fallback: open in new tab
+      window.open(url, '_blank');
+      showNotification('Opening in new tab instead', 'error');
+    }
+  }, [showNotification]);
+
   return (
     <div className="manikant-container">
       {notification && (
@@ -891,9 +929,12 @@ export default function ManikantLanding() {
               <a href={previewMedia.urls[previewMedia.currentIndex]} target="_blank" rel="noopener noreferrer" className="preview-action-btn">
                 📖 Open in new tab
               </a>
-              <a href={previewMedia.urls[previewMedia.currentIndex]} download className="preview-action-btn primary">
+              <button 
+                onClick={() => handleDownload(previewMedia.urls[previewMedia.currentIndex], previewMedia.title)}
+                className="preview-action-btn primary"
+              >
                 📥 Download
-              </a>
+              </button>
             </div>
           </div>
         </div>
@@ -1192,18 +1233,24 @@ export default function ManikantLanding() {
                                 <a href={mediaUrls[0]} target="_blank" rel="noopener noreferrer" className="material-btn secondary">
                                   📖 Open
                                 </a>
-                                <a href={mediaUrls[0]} download className="material-btn primary">
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); handleDownload(mediaUrls[0], post.title); }}
+                                  className="material-btn primary"
+                                >
                                   📥 Download
-                                </a>
+                                </button>
                               </div>
                             </div>
                           ) : (
                             <div className="post-file-display clickable-media" onClick={() => window.open(mediaUrls[0], '_blank')}>
                               <div className="file-icon-large">📄</div>
                               <span className="file-name">{mediaUrls[0].split('/').pop()}</span>
-                              <a href={mediaUrls[0]} target="_blank" rel="noopener noreferrer" className="material-btn primary">
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); handleDownload(mediaUrls[0], post.title); }}
+                                className="material-btn primary"
+                              >
                                 📥 Download
-                              </a>
+                              </button>
                             </div>
                           )}
                         </>

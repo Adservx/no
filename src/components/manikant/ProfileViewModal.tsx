@@ -55,6 +55,12 @@ export default function ProfileViewModal({ profileId, onClose }: ProfileViewModa
   const mediaContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Reset state when profileId changes
+    setLoading(true);
+    setPosts([]);
+    setProfile(null);
+    setTotalLikes(0);
+    setActiveTab('posts');
     fetchProfileData();
   }, [profileId]);
 
@@ -333,29 +339,48 @@ export default function ProfileViewModal({ profileId, onClose }: ProfileViewModa
                 </div>
               ) : (
                 <div className="posts-grid-pro">
-                  {posts.map(post => (
-                    <div 
-                      key={post.id} 
-                      className="post-card"
-                      onClick={() => setSelectedPost(post)}
-                    >
-                      {getMediaUrl(post.media_url) ? (
-                        <img src={getMediaUrl(post.media_url)!} alt={post.title || 'Post'} />
-                      ) : (
-                        <div className="post-card-text">
-                          <span className="post-type-icon">
-                            {post.type === 'material' ? '📄' : '💬'}
+                  {posts.map(post => {
+                    const mediaUrl = getMediaUrl(post.media_url);
+                    return (
+                      <div 
+                        key={post.id} 
+                        className="post-card"
+                        onClick={() => setSelectedPost(post)}
+                      >
+                        {mediaUrl ? (
+                          <>
+                            <div className="post-card-loading">
+                              <span className="post-type-icon">
+                                {post.type === 'photo' ? '📷' : post.type === 'video' ? '🎬' : '📄'}
+                              </span>
+                            </div>
+                            <img 
+                              src={mediaUrl} 
+                              alt={post.title || 'Post'}
+                              loading="lazy"
+                              onLoad={(e) => {
+                                const parent = (e.target as HTMLImageElement).parentElement;
+                                const loadingDiv = parent?.querySelector('.post-card-loading');
+                                if (loadingDiv) loadingDiv.remove();
+                              }}
+                            />
+                          </>
+                        ) : (
+                          <div className="post-card-text">
+                            <span className="post-type-icon">
+                              {post.type === 'material' ? '📄' : post.type === 'video' ? '🎬' : '💬'}
+                            </span>
+                            <p>{post.title || post.content?.substring(0, 40) || 'Post'}</p>
+                          </div>
+                        )}
+                        <div className="post-card-overlay">
+                          <span className="overlay-icon">
+                            {post.type === 'photo' ? '📷' : post.type === 'video' ? '🎬' : '📄'}
                           </span>
-                          <p>{post.title || post.content?.substring(0, 40) || 'Post'}</p>
                         </div>
-                      )}
-                      <div className="post-card-overlay">
-                        <span className="overlay-icon">
-                          {post.type === 'photo' ? '📷' : post.type === 'video' ? '🎬' : '📄'}
-                        </span>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </>
