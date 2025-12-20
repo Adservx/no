@@ -17,9 +17,6 @@ const loadR2Upload = () => import('../utils/r2Storage').then(m => m.uploadToR2);
 // Lazy load heic2any for HEIC/HEIF conversion
 const loadHeic2Any = () => import('heic2any');
 
-// Lazy load video compressor
-const loadVideoCompressor = () => import('../utils/videoCompressor');
-
 // Convert HEIC/HEIF to JPEG if needed
 const convertHeicIfNeeded = async (file: File): Promise<File> => {
   const isHeic = file.type === 'image/heic' || 
@@ -512,7 +509,7 @@ export default function ManikantLanding() {
     
     // Always show progress - even for text-only posts
     setUploadProgress({
-      stage: files.length > 0 ? 'compressing' : 'saving',
+      stage: files.length > 0 ? 'uploading' : 'saving',
       percent: files.length > 0 ? 0 : 50,
       currentFile: '',
       totalFiles: files.length,
@@ -525,12 +522,11 @@ export default function ManikantLanding() {
 
       if (files.length > 0) {
         const uploadToR2 = await loadR2Upload();
-        const { isVideoFile, compressVideo, formatFileSize } = await loadVideoCompressor();
         const uploadedUrls: string[] = [];
 
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
-          let processedFile: File | Blob = file;
+          let processedFile: File = file;
           let fileName = file.name;
           
           // Update progress for current file
@@ -538,71 +534,21 @@ export default function ManikantLanding() {
             ...prev,
             currentFileIndex: i + 1,
             currentFile: file.name,
-            stage: 'compressing',
-            message: `Processing file ${i + 1} of ${files.length}...`
-          }));
-          
-          // Compress video files for faster loading
-          if (isVideoFile(file)) {
-            setUploadProgress(prev => ({
-              ...prev,
-              stage: 'compressing',
-              message: `Compressing video: ${file.name}`,
-              percent: Math.round((i / files.length) * 50)
-            }));
-            
-            try {
-              const result = await compressVideo(file, {
-                maxWidth: 1280,
-                maxHeight: 720,
-                videoBitrate: 1500000,
-                onProgress: (p) => {
-                  setUploadProgress(prev => ({
-                    ...prev,
-                    percent: Math.round((i / files.length) * 50 + (p / 100) * (25 / files.length)),
-                    message: `Compressing: ${Math.round(p)}%`
-                  }));
-                }
-              });
-              processedFile = result.blob;
-              
-              // Change extension to .webm if compressed
-              if (result.compressionRatio > 1) {
-                fileName = file.name.replace(/\.[^.]+$/, '.webm');
-                setUploadProgress(prev => ({
-                  ...prev,
-                  message: `Compressed: ${formatFileSize(result.originalSize)} → ${formatFileSize(result.compressedSize)}`
-                }));
-              }
-            } catch (compressError) {
-              console.warn('Video compression failed, using original:', compressError);
-            }
-          } else {
-            // Convert HEIC/HEIF to JPEG if needed
-            setUploadProgress(prev => ({
-              ...prev,
-              stage: 'compressing',
-              message: `Processing: ${file.name}`,
-              percent: Math.round((i / files.length) * 50)
-            }));
-            processedFile = await convertHeicIfNeeded(file);
-            fileName = (processedFile as File).name || file.name;
-          }
-          
-          // Upload file
-          setUploadProgress(prev => ({
-            ...prev,
             stage: 'uploading',
-            message: `Uploading: ${fileName}`,
-            percent: Math.round(50 + (i / files.length) * 40)
+            message: `Uploading file ${i + 1} of ${files.length}...`,
+            percent: Math.round((i / files.length) * 90)
           }));
+          
+          // Only convert HEIC/HEIF to JPEG (no compression)
+          processedFile = await convertHeicIfNeeded(file);
+          fileName = processedFile.name || file.name;
           
           const fileExt = fileName.split('.').pop();
           const uniqueName = `${Math.random()}.${fileExt}`;
           const filePath = `manikant_files/${user.id}/${uniqueName}`;
 
           const { success, url, error: uploadError } = await uploadToR2(
-            processedFile instanceof File ? processedFile : new File([processedFile], fileName),
+            processedFile,
             filePath
           );
 
@@ -614,7 +560,7 @@ export default function ManikantLanding() {
           
           setUploadProgress(prev => ({
             ...prev,
-            percent: Math.round(50 + ((i + 1) / files.length) * 40)
+            percent: Math.round(((i + 1) / files.length) * 90)
           }));
         }
 
@@ -710,78 +656,32 @@ export default function ManikantLanding() {
 
       if (editFiles.length > 0) {
         const uploadToR2 = await loadR2Upload();
-        const { isVideoFile, compressVideo, formatFileSize } = await loadVideoCompressor();
         const uploadedUrls: string[] = [];
 
         for (let i = 0; i < editFiles.length; i++) {
           const file = editFiles[i];
-          let processedFile: File | Blob = file;
+          let processedFile: File = file;
           let fileName = file.name;
           
           setUploadProgress(prev => ({
             ...prev,
             currentFileIndex: i + 1,
-            currentFile: file.name
-          }));
-          
-          // Compress video files for faster loading
-          if (isVideoFile(file)) {
-            setUploadProgress(prev => ({
-              ...prev,
-              stage: 'compressing',
-              message: `Compressing: ${file.name}`,
-              percent: Math.round((i / editFiles.length) * 50)
-            }));
-            
-            try {
-              const result = await compressVideo(file, {
-                maxWidth: 1280,
-                maxHeight: 720,
-                videoBitrate: 1500000,
-                onProgress: (p) => {
-                  setUploadProgress(prev => ({
-                    ...prev,
-                    percent: Math.round((i / editFiles.length) * 50 + (p / 100) * (25 / editFiles.length)),
-                    message: `Compressing: ${Math.round(p)}%`
-                  }));
-                }
-              });
-              processedFile = result.blob;
-              
-              if (result.compressionRatio > 1) {
-                fileName = file.name.replace(/\.[^.]+$/, '.webm');
-                setUploadProgress(prev => ({
-                  ...prev,
-                  message: `Compressed: ${formatFileSize(result.originalSize)} → ${formatFileSize(result.compressedSize)}`
-                }));
-              }
-            } catch (compressError) {
-              console.warn('Video compression failed, using original:', compressError);
-            }
-          } else {
-            setUploadProgress(prev => ({
-              ...prev,
-              stage: 'compressing',
-              message: `Processing: ${file.name}`,
-              percent: Math.round((i / editFiles.length) * 50)
-            }));
-            processedFile = await convertHeicIfNeeded(file);
-            fileName = (processedFile as File).name || file.name;
-          }
-          
-          setUploadProgress(prev => ({
-            ...prev,
+            currentFile: file.name,
             stage: 'uploading',
-            message: `Uploading: ${fileName}`,
-            percent: Math.round(50 + (i / editFiles.length) * 40)
+            message: `Uploading file ${i + 1} of ${editFiles.length}...`,
+            percent: Math.round((i / editFiles.length) * 90)
           }));
+          
+          // Only convert HEIC/HEIF to JPEG (no compression)
+          processedFile = await convertHeicIfNeeded(file);
+          fileName = processedFile.name || file.name;
           
           const fileExt = fileName.split('.').pop();
           const uniqueName = `${Math.random()}.${fileExt}`;
           const filePath = `manikant_files/${user.id}/${uniqueName}`;
 
           const { success, url, error: uploadError } = await uploadToR2(
-            processedFile instanceof File ? processedFile : new File([processedFile], fileName),
+            processedFile,
             filePath
           );
 
@@ -792,7 +692,7 @@ export default function ManikantLanding() {
           
           setUploadProgress(prev => ({
             ...prev,
-            percent: Math.round(50 + ((i + 1) / editFiles.length) * 40)
+            percent: Math.round(((i + 1) / editFiles.length) * 90)
           }));
         }
 
