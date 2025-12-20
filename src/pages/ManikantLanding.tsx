@@ -10,7 +10,6 @@ const UserProfileModal = lazy(() => import('../components/manikant/UserProfileMo
 const ProfileViewModal = lazy(() => import('../components/manikant/ProfileViewModal'));
 const SpiderWebLogo = lazy(() => import('../components/SpiderWeb').then(m => ({ default: m.SpiderWebLogo })));
 const SpiderWebCorner = lazy(() => import('../components/SpiderWeb').then(m => ({ default: m.SpiderWebCorner })));
-const OptimizedVideo = lazy(() => import('../components/OptimizedVideo'));
 
 // Lazy load R2 upload only when needed
 const loadR2Upload = () => import('../utils/r2Storage').then(m => m.uploadToR2);
@@ -1518,15 +1517,30 @@ export default function ManikantLanding() {
                         // Single file display
                         <>
                           {post.type === 'video' || getFileType(mediaUrls[0]) === 'video' ? (
-                            <Suspense fallback={<div className="video-loading-placeholder" style={{ minHeight: '200px', background: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span>🎬 Loading...</span></div>}>
-                              <OptimizedVideo
-                                src={mediaUrls[0]}
-                                className="post-media clickable-media"
-                                previewMode={true}
-                                controls={true}
-                                onClick={() => setPreviewMedia({ urls: mediaUrls, type: 'video', title: post.title, currentIndex: 0 })}
-                              />
-                            </Suspense>
+                            <video 
+                              src={mediaUrls[0]} 
+                              controls 
+                              playsInline
+                              className="post-media clickable-media" 
+                              preload="metadata"
+                              onPlay={(e) => {
+                                // Check video size - if > 10MB, open in new tab
+                                const video = e.currentTarget;
+                                // Use fetch to check content-length header
+                                fetch(mediaUrls[0], { method: 'HEAD' })
+                                  .then(res => {
+                                    const size = parseInt(res.headers.get('content-length') || '0', 10);
+                                    if (size > 10 * 1024 * 1024) { // 10MB
+                                      video.pause();
+                                      window.open(mediaUrls[0], '_blank');
+                                    }
+                                  })
+                                  .catch(() => {
+                                    // If HEAD request fails, allow normal playback
+                                  });
+                              }}
+                              onClick={() => setPreviewMedia({ urls: mediaUrls, type: 'video', title: post.title, currentIndex: 0 })}
+                            />
                           ) : post.type === 'photo' || getFileType(mediaUrls[0]) === 'image' ? (
                             <SmartImage 
                               src={mediaUrls[0]} 
@@ -1585,41 +1599,50 @@ export default function ManikantLanding() {
                               <div 
                                 key={idx} 
                                 className="media-grid-item clickable-media"
-                                onClick={() => setPreviewMedia({ 
-                                  urls: mediaUrls, 
-                                  type: fileType === 'video' ? 'video' : fileType === 'image' ? 'photo' : 'material',
-                                  title: post.title,
-                                  currentIndex: idx
-                                })}
+                                onClick={() => {
+                                  // For videos > 10MB, open in new tab
+                                  if (fileType === 'video') {
+                                    fetch(url, { method: 'HEAD' })
+                                      .then(res => {
+                                        const size = parseInt(res.headers.get('content-length') || '0', 10);
+                                        if (size > 10 * 1024 * 1024) {
+                                          window.open(url, '_blank');
+                                        } else {
+                                          setPreviewMedia({ 
+                                            urls: mediaUrls, 
+                                            type: 'video',
+                                            title: post.title,
+                                            currentIndex: idx
+                                          });
+                                        }
+                                      })
+                                      .catch(() => {
+                                        setPreviewMedia({ 
+                                          urls: mediaUrls, 
+                                          type: 'video',
+                                          title: post.title,
+                                          currentIndex: idx
+                                        });
+                                      });
+                                  } else {
+                                    setPreviewMedia({ 
+                                      urls: mediaUrls, 
+                                      type: fileType === 'image' ? 'photo' : 'material',
+                                      title: post.title,
+                                      currentIndex: idx
+                                    });
+                                  }
+                                }}
                               >
                                 {fileType === 'video' ? (
-                                  <div className="grid-video-wrapper" style={{ position: 'relative', width: '100%', height: '100%' }}>
-                                    <video 
-                                      src={url} 
-                                      className="grid-media" 
-                                      preload="metadata"
-                                      playsInline
-                                      muted
-                                      style={{ objectFit: 'cover' }}
-                                    />
-                                    <div className="video-play-icon" style={{
-                                      position: 'absolute',
-                                      top: '50%',
-                                      left: '50%',
-                                      transform: 'translate(-50%, -50%)',
-                                      width: '40px',
-                                      height: '40px',
-                                      borderRadius: '50%',
-                                      background: 'rgba(140, 82, 255, 0.9)',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center'
-                                    }}>
-                                      <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
-                                        <path d="M8 5v14l11-7z"/>
-                                      </svg>
-                                    </div>
-                                  </div>
+                                  <video 
+                                    src={url} 
+                                    className="grid-media" 
+                                    preload="metadata"
+                                    playsInline
+                                    muted
+                                    style={{ objectFit: 'cover' }}
+                                  />
                                 ) : fileType === 'image' ? (
                                   <SmartImage src={url} alt={`${post.title} ${idx + 1}`} className="grid-media" loading="lazy" />
                                 ) : fileType === 'pdf' ? (
