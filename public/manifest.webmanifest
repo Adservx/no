@@ -1,17 +1,39 @@
 {
-    "name": "manikant.com.np",
-    "short_name": "manikant.com.np",
-    "description": "Study materials and resources for students",
+    "name": "Manikant - Study Materials & Notes",
+    "short_name": "Manikant",
+    "description": "Free study materials, engineering notes, PDF resources, and educational content for students in Nepal. Share and download study materials for all semesters.",
     "start_url": "/",
     "display": "standalone",
-    "background_color": "#FF9900",
+    "background_color": "#050508",
     "theme_color": "#FF9900",
+    "orientation": "portrait-primary",
+    "categories": ["education", "productivity"],
+    "lang": "en",
+    "dir": "ltr",
+    "scope": "/",
     "icons": [
         {
             "src": "/favicon.svg",
             "sizes": "any",
             "type": "image/svg+xml",
             "purpose": "any maskable"
+        }
+    ],
+    "screenshots": [],
+    "shortcuts": [
+        {
+            "name": "Community",
+            "short_name": "Community",
+            "description": "Browse community posts",
+            "url": "/community",
+            "icons": [{ "src": "/favicon.svg", "sizes": "96x96" }]
+        },
+        {
+            "name": "PDF Tools",
+            "short_name": "PDF",
+            "description": "PDF contact sheet generator",
+            "url": "/prajols-web",
+            "icons": [{ "src": "/favicon.svg", "sizes": "96x96" }]
         }
     ]
 }

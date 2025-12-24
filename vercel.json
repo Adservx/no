@@ -15,6 +15,35 @@
   ],
   "routes": [
     {
+      "src": "/google0411e24d2561d35a.html",
+      "headers": {
+        "content-type": "text/html"
+      },
+      "dest": "/google0411e24d2561d35a.html"
+    },
+    {
+      "src": "/robots.txt",
+      "headers": {
+        "cache-control": "public, max-age=86400",
+        "content-type": "text/plain"
+      },
+      "dest": "/robots.txt"
+    },
+    {
+      "src": "/sitemap.xml",
+      "headers": {
+        "cache-control": "public, max-age=86400",
+        "content-type": "application/xml"
+      },
+      "dest": "/sitemap.xml"
+    },
+    {
+      "src": "/og-image\\.(png|svg)$",
+      "headers": {
+        "cache-control": "public, max-age=604800"
+      }
+    },
+    {
       "src": "/api/list-files",
       "dest": "/api/list-files.ts",
       "headers": {
@@ -100,7 +129,8 @@
     {
       "src": "/(.*)",
       "headers": {
-        "cache-control": "public, max-age=0, must-revalidate"
+        "cache-control": "public, max-age=0, must-revalidate",
+        "x-robots-tag": "index, follow"
       },
       "dest": "/index.html"
     }
