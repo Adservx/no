@@ -19,25 +19,25 @@ const loadHeic2Any = () => import('heic2any');
 
 // Convert HEIC/HEIF to JPEG if needed
 const convertHeicIfNeeded = async (file: File): Promise<File> => {
-  const isHeic = file.type === 'image/heic' || 
-                 file.type === 'image/heif' || 
-                 file.name.toLowerCase().endsWith('.heic') ||
-                 file.name.toLowerCase().endsWith('.heif');
-  
+  const isHeic = file.type === 'image/heic' ||
+    file.type === 'image/heif' ||
+    file.name.toLowerCase().endsWith('.heic') ||
+    file.name.toLowerCase().endsWith('.heif');
+
   if (!isHeic) return file;
-  
+
   try {
     const heic2any = (await loadHeic2Any()).default;
-    const convertedBlob = await heic2any({ 
-      blob: file, 
-      toType: 'image/jpeg', 
-      quality: 0.9 
+    const convertedBlob = await heic2any({
+      blob: file,
+      toType: 'image/jpeg',
+      quality: 0.9
     });
-    
+
     // heic2any can return a single blob or array of blobs
     const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
     const newFileName = file.name.replace(/\.(heic|heif)$/i, '.jpg');
-    
+
     return new File([blob], newFileName, { type: 'image/jpeg' });
   } catch (error) {
     console.error('HEIC conversion failed:', error);
@@ -79,8 +79,10 @@ interface Comment {
   content: string;
   created_at: string;
   profiles?: {
+    username: string;
     avatar_url: string;
     bio: string;
+    full_name: string;
   };
 }
 
@@ -93,8 +95,10 @@ interface Post {
   title: string;
   user_id: string;
   profiles?: {
+    username: string;
     avatar_url: string;
     bio: string;
+    full_name: string;
   };
   likes_count?: number;
   comments_count?: number;
@@ -128,7 +132,7 @@ export default function ManikantLanding() {
   const [newType, setNewType] = useState<'photo' | 'video' | 'material'>('material');
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
-  
+
   // Upload Progress State
   const [uploadProgress, setUploadProgress] = useState<{
     stage: 'idle' | 'compressing' | 'uploading' | 'saving' | 'complete';
@@ -155,7 +159,7 @@ export default function ManikantLanding() {
 
   // Media Preview Modal State - now supports multiple files
   const [previewMedia, setPreviewMedia] = useState<{ urls: string[]; type: 'photo' | 'video' | 'material'; title: string; currentIndex: number } | null>(null);
-  
+
   // Touch/swipe handling for media preview
   const previewTouchStartX = useRef<number>(0);
   const previewTouchEndX = useRef<number>(0);
@@ -168,12 +172,13 @@ export default function ManikantLanding() {
   const [userLikes, setUserLikes] = useState<Record<string, boolean>>({});
   const [postComments, setPostComments] = useState<Record<string, Comment[]>>({});
   const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
+  const [expandedAllComments, setExpandedAllComments] = useState<Record<string, boolean>>({});
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [loadingLike, setLoadingLike] = useState<string | null>(null);
   const [loadingComment, setLoadingComment] = useState<string | null>(null);
 
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-  
+
   // Memoized post stats to avoid recalculating on every render
   const postStats = useMemo(() => ({
     materials: posts.filter(p => p.type === 'material').length,
@@ -187,13 +192,56 @@ export default function ManikantLanding() {
     setNotification({ message, type });
   }, []);
 
+  // Memoized grouped posts (max 2 per set)
+  const groupedPosts = useMemo(() => {
+    const groups = [];
+    for (let i = 0; i < posts.length; i += 2) {
+      groups.push(posts.slice(i, i + 2));
+    }
+    return groups;
+  }, [posts]);
+
+  // Book Pagination State
+  const [currentPage, setCurrentPage] = useState(0);
+  const [isFlipping, setIsFlipping] = useState(false);
+  const [flashPage, setFlashPage] = useState<number | null>(null);
+  const [flipDirection, setFlipDirection] = useState<'next' | 'prev'>('next');
+
+  const handleNextPage = useCallback(() => {
+    if (currentPage < groupedPosts.length - 1 && !isFlipping) {
+      setFlipDirection('next');
+      setFlashPage(currentPage);
+      setIsFlipping(true);
+      setCurrentPage(prev => prev + 1);
+
+      setTimeout(() => {
+        setIsFlipping(false);
+        setFlashPage(null);
+      }, window.innerWidth <= 1024 ? 50 : 1000);
+    }
+  }, [currentPage, groupedPosts.length, isFlipping]);
+
+  const handlePrevPage = useCallback(() => {
+    if (currentPage > 0 && !isFlipping) {
+      setFlipDirection('prev');
+      setFlashPage(currentPage);
+      setIsFlipping(true);
+      setCurrentPage(prev => prev - 1);
+
+      setTimeout(() => {
+        setIsFlipping(false);
+        setFlashPage(null);
+      }, window.innerWidth <= 1024 ? 50 : 1000);
+    }
+  }, [currentPage, isFlipping]);
+
   // Fetch all user profiles for footer
   const fetchAllProfiles = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('id, username, full_name, avatar_url, bio');
-      
+
       if (!error && data) {
         setAllProfiles(data);
       }
@@ -210,7 +258,7 @@ export default function ManikantLanding() {
         supabase.auth.getUser(),
         supabase
           .from('manikant_posts')
-          .select('*, profiles(avatar_url, bio)')
+          .select('*, profiles(username, avatar_url, bio)')
           .order('created_at', { ascending: false })
           .limit(20) // Limit initial load for faster response
       ]);
@@ -279,7 +327,7 @@ export default function ManikantLanding() {
     try {
       const { data, error } = await supabase
         .from('manikant_posts')
-        .select('*, profiles(avatar_url, bio)')
+        .select('*, profiles(username, avatar_url, bio, full_name)')
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -304,7 +352,7 @@ export default function ManikantLanding() {
       // Run ALL queries in parallel - much faster!
       const likesPromise = supabase.from('manikant_likes').select('post_id').in('post_id', postIds);
       const commentsPromise = supabase.from('manikant_comments').select('post_id').in('post_id', postIds);
-      const userLikesPromise = userId 
+      const userLikesPromise = userId
         ? supabase.from('manikant_likes').select('post_id').eq('user_id', userId).in('post_id', postIds)
         : Promise.resolve({ data: null });
 
@@ -392,7 +440,7 @@ export default function ManikantLanding() {
     try {
       const { data, error } = await supabase
         .from('manikant_comments')
-        .select('*, profiles(avatar_url, bio)')
+        .select('*, profiles(username, avatar_url, bio, full_name)')
         .eq('post_id', postId)
         .order('created_at', { ascending: true });
 
@@ -506,7 +554,7 @@ export default function ManikantLanding() {
     }
 
     setUploading(true);
-    
+
     // Always show progress - even for text-only posts
     setUploadProgress({
       stage: files.length > 0 ? 'uploading' : 'saving',
@@ -528,7 +576,7 @@ export default function ManikantLanding() {
           const file = files[i];
           let processedFile: File = file;
           let fileName = file.name;
-          
+
           // Update progress for current file
           setUploadProgress(prev => ({
             ...prev,
@@ -538,11 +586,11 @@ export default function ManikantLanding() {
             message: `Uploading file ${i + 1} of ${files.length}...`,
             percent: Math.round((i / files.length) * 90)
           }));
-          
+
           // Only convert HEIC/HEIF to JPEG (no compression)
           processedFile = await convertHeicIfNeeded(file);
           fileName = processedFile.name || file.name;
-          
+
           const fileExt = fileName.split('.').pop();
           const uniqueName = `${Math.random()}.${fileExt}`;
           const filePath = `manikant_files/${user.id}/${uniqueName}`;
@@ -557,7 +605,7 @@ export default function ManikantLanding() {
           }
 
           uploadedUrls.push(url);
-          
+
           setUploadProgress(prev => ({
             ...prev,
             percent: Math.round(((i + 1) / files.length) * 90)
@@ -609,7 +657,7 @@ export default function ManikantLanding() {
           message: ''
         });
       }, 1000);
-      
+
       fetchPosts();
       showNotification('Post created successfully!', 'success');
     } catch (error: any) {
@@ -640,7 +688,7 @@ export default function ManikantLanding() {
     if (!user || !editingPost) return;
 
     setUploading(true);
-    
+
     // Always show progress - even for text-only updates
     setUploadProgress({
       stage: editFiles.length > 0 ? 'compressing' : 'saving',
@@ -662,7 +710,7 @@ export default function ManikantLanding() {
           const file = editFiles[i];
           let processedFile: File = file;
           let fileName = file.name;
-          
+
           setUploadProgress(prev => ({
             ...prev,
             currentFileIndex: i + 1,
@@ -671,11 +719,11 @@ export default function ManikantLanding() {
             message: `Uploading file ${i + 1} of ${editFiles.length}...`,
             percent: Math.round((i / editFiles.length) * 90)
           }));
-          
+
           // Only convert HEIC/HEIF to JPEG (no compression)
           processedFile = await convertHeicIfNeeded(file);
           fileName = processedFile.name || file.name;
-          
+
           const fileExt = fileName.split('.').pop();
           const uniqueName = `${Math.random()}.${fileExt}`;
           const filePath = `manikant_files/${user.id}/${uniqueName}`;
@@ -689,7 +737,7 @@ export default function ManikantLanding() {
             throw new Error(uploadError || 'File upload failed');
           }
           uploadedUrls.push(url);
-          
+
           setUploadProgress(prev => ({
             ...prev,
             percent: Math.round(((i + 1) / editFiles.length) * 90)
@@ -743,7 +791,7 @@ export default function ManikantLanding() {
           message: ''
         });
       }, 800);
-      
+
       fetchPosts();
       showNotification('Post updated successfully!', 'success');
     } catch (error: any) {
@@ -810,7 +858,7 @@ export default function ManikantLanding() {
     if (!previewMedia || previewMedia.urls.length <= 1) return;
     const diff = previewTouchStartX.current - previewTouchEndX.current;
     const minSwipeDistance = 50;
-    
+
     if (Math.abs(diff) > minSwipeDistance) {
       if (diff > 0) {
         goToNextPreview();
@@ -823,7 +871,7 @@ export default function ManikantLanding() {
   // Keyboard navigation for preview
   useEffect(() => {
     if (!previewMedia) return;
-    
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setPreviewMedia(null);
@@ -835,7 +883,7 @@ export default function ManikantLanding() {
         }
       }
     };
-    
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [previewMedia, goToPrevPreview, goToNextPreview]);
@@ -844,30 +892,30 @@ export default function ManikantLanding() {
   const handleDownload = useCallback(async (url: string, filename?: string) => {
     try {
       showNotification('Starting download...', 'success');
-      
+
       // Use proxy API to bypass CORS
       const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`;
       const response = await fetch(proxyUrl);
-      
+
       if (!response.ok) throw new Error('Download failed');
-      
+
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
-      
+
       // Get filename from URL or use provided filename
       const originalFilename = url.split('/').pop() || 'download';
-      const downloadFilename = filename 
-        ? `${filename}.${originalFilename.split('.').pop()}` 
+      const downloadFilename = filename
+        ? `${filename}.${originalFilename.split('.').pop()}`
         : originalFilename;
-      
+
       const link = document.createElement('a');
       link.href = blobUrl;
       link.download = downloadFilename;
-      
+
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
       showNotification('Download complete!', 'success');
     } catch (error) {
@@ -877,6 +925,242 @@ export default function ManikantLanding() {
       showNotification('Opening in new tab instead', 'error');
     }
   }, [showNotification]);
+
+  // Helper for rendering a post article, used in multiple layers of the book for 3D flip effects
+  const renderPost = (post: Post, isBookView: boolean = false) => {
+    if (!post) return null;
+    const mediaUrls = post.media_url ? parseMediaUrls(post.media_url) : [];
+
+    return (
+      <article className={`manikant-post instagram-style ${isBookView ? 'book-page-post' : ''}`}>
+        {/* Header */}
+        <div className="post-header">
+          <div className="post-user-info">
+            {post.profiles?.avatar_url ? (
+              <img
+                src={post.profiles.avatar_url}
+                alt="Author"
+                className="post-avatar clickable-avatar"
+                loading="lazy"
+                decoding="async"
+                onClick={() => setViewProfileId(post.user_id)}
+                style={{ cursor: 'pointer' }}
+              />
+            ) : (
+              <div
+                className="post-avatar post-avatar-placeholder clickable-avatar"
+                onClick={() => setViewProfileId(post.user_id)}
+                style={{ cursor: 'pointer' }}
+              >
+                👤
+              </div>
+            )}
+            <div className="post-user-details">
+              <span
+                className="post-username clickable"
+                onClick={() => setViewProfileId(post.user_id)}
+              >
+                {post.profiles?.full_name || post.profiles?.username || 'User'}
+                {post.profiles?.username && post.profiles?.full_name && (
+                  <span className="post-handle"> @{post.profiles.username}</span>
+                )}
+              </span>
+              <span className="post-timestamp">
+                {new Date(post.created_at).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric'
+                })}
+              </span>
+            </div>
+          </div>
+          {user && user.id === post.user_id && (
+            <div className="post-options">
+              <button onClick={() => handleEditPost(post)} className="post-option-btn" title="Edit">✏️</button>
+              <button onClick={() => handleDeletePost(post.id)} className="post-option-btn delete" title="Delete">🗑️</button>
+            </div>
+          )}
+        </div>
+
+        {/* Media */}
+        {post.media_url && (
+          <div className="post-media-container book-media">
+            {mediaUrls.length === 1 ? (
+              <>
+                {post.type === 'video' || getFileType(mediaUrls[0]) === 'video' ? (
+                  <video
+                    src={mediaUrls[0]}
+                    controls
+                    playsInline
+                    className="post-media"
+                    onClick={() => setPreviewMedia({ urls: mediaUrls, type: 'video', title: post.title, currentIndex: 0 })}
+                  />
+                ) : post.type === 'photo' || getFileType(mediaUrls[0]) === 'image' ? (
+                  <SmartImage
+                    src={mediaUrls[0]}
+                    alt={post.title}
+                    className="post-media"
+                    onClick={() => setPreviewMedia({ urls: mediaUrls, type: 'photo', title: post.title, currentIndex: 0 })}
+                  />
+                ) : (
+                  <div className="post-file-display book-file-display" onClick={() => setPreviewMedia({ urls: mediaUrls, type: 'material', title: post.title, currentIndex: 0 })}>
+                    <div className="file-icon-large">📄</div>
+                    <span className="file-name">{mediaUrls[0].split('/').pop()}</span>
+                    <div className="post-material-actions">
+                      <button onClick={(e) => { e.stopPropagation(); handleDownload(mediaUrls[0], post.title); }} className="material-btn primary mini">📥 Download</button>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className={`post-media-grid grid-${Math.min(mediaUrls.length, 4)}`}>
+                {mediaUrls.slice(0, 4).map((url, i) => (
+                  <div key={i} className="media-grid-item" onClick={() => {
+                    const type = getFileType(url);
+                    setPreviewMedia({ urls: mediaUrls, type: type === 'image' ? 'photo' : type === 'video' ? 'video' : 'material', title: post.title, currentIndex: i });
+                  }}>
+                    {getFileType(url) === 'video' ? (
+                      <video src={url} className="grid-media" muted />
+                    ) : getFileType(url) === 'image' ? (
+                      <SmartImage src={url} alt="" className="grid-media" />
+                    ) : (
+                      <div className="grid-file-preview"><span className="file-icon">📄</span></div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Body */}
+        <div className="post-body">
+          <p className="post-caption">{post.content}</p>
+        </div>
+
+        {/* Footer */}
+        <div className="post-footer">
+          <div className="post-engagement">
+            <button
+              className={`engagement-btn ${userLikes[post.id] ? 'liked' : ''}`}
+              onClick={() => handleLike(post.id)}
+              aria-label="Like post"
+            >
+              <svg className="engagement-icon" viewBox="0 0 24 24" fill={userLikes[post.id] ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+              </svg>
+              <span className="engagement-count">{postLikes[post.id] || 0}</span>
+            </button>
+            <button
+              className="engagement-btn"
+              onClick={() => toggleComments(post.id)}
+              aria-label="View comments"
+            >
+              <svg className="engagement-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+              </svg>
+              <span className="engagement-count">{postComments[post.id]?.length || 0}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Comments Section */}
+        <div className={`comments-section mini ${expandedComments[post.id] ? 'expanded' : ''}`}>
+          <div className="comments-list">
+            {(expandedAllComments[post.id] ? postComments[post.id] : postComments[post.id]?.slice(0, 3))?.map((comment, idx) => (
+              <div key={comment.id || `comment-${idx}`} className={`comment-item mini ${user && user.id === comment.user_id ? 'own-comment' : ''}`}>
+                <div
+                  className="comment-avatar clickable"
+                  onClick={() => setViewProfileId(comment.user_id)}
+                >
+                  {comment.profiles?.avatar_url ? (
+                    <img src={comment.profiles.avatar_url} alt="" loading="lazy" />
+                  ) : (
+                    <span>{(comment.profiles?.full_name || comment.profiles?.username || 'U').charAt(0).toUpperCase()}</span>
+                  )}
+                </div>
+                <div className="comment-content">
+                  <div className="comment-text-wrap">
+                    <span
+                      className="comment-author clickable"
+                      onClick={() => setViewProfileId(comment.user_id)}
+                    >
+                      {comment.profiles?.full_name || comment.profiles?.username || 'User'}
+                    </span>
+                    <span className="comment-text">{comment.content}</span>
+                  </div>
+                  {comment.created_at && (
+                    <span className="comment-time">
+                      {new Date(comment.created_at).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                    </span>
+                  )}
+                </div>
+                {user && user.id === comment.user_id && (
+                  <button
+                    className="comment-delete-btn"
+                    onClick={() => handleDeleteComment(comment.id, post.id)}
+                    title="Delete comment"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            ))}
+            {postComments[post.id]?.length > 3 && !expandedAllComments[post.id] && (
+              <button
+                className="view-all-comments"
+                onClick={() => setExpandedAllComments(prev => ({ ...prev, [post.id]: true }))}
+              >
+                View all {postComments[post.id].length} comments
+              </button>
+            )}
+            {expandedAllComments[post.id] && postComments[post.id]?.length > 3 && (
+              <button
+                className="view-all-comments"
+                onClick={() => setExpandedAllComments(prev => ({ ...prev, [post.id]: false }))}
+              >
+                Show less
+              </button>
+            )}
+            {(!postComments[post.id] || postComments[post.id].length === 0) && (
+              <p className="no-comments">No comments yet. Be the first to share your thoughts!</p>
+            )}
+          </div>
+          <div className="comment-input-wrapper">
+            <input
+              type="text"
+              placeholder="Add a comment..."
+              className="comment-input"
+              value={commentInputs[post.id] || ''}
+              onChange={(e) => setCommentInputs(prev => ({ ...prev, [post.id]: e.target.value }))}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleAddComment(post.id);
+                }
+              }}
+            />
+            <button
+              className="comment-submit-btn"
+              onClick={() => handleAddComment(post.id)}
+              disabled={loadingComment === post.id || !commentInputs[post.id]?.trim()}
+            >
+              {loadingComment === post.id ? (
+                <span className="btn-spinner mini"></span>
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+              )}
+            </button>
+          </div>
+        </div>
+      </article>
+    );
+  };
 
   return (
     <div className="manikant-container">
@@ -951,11 +1235,11 @@ export default function ManikantLanding() {
                     </p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       {currentUrls.map((url, idx) => (
-                        <a 
+                        <a
                           key={idx}
-                          href={url} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           style={{ color: 'var(--accent)', fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
                         >
                           {url.split('/').pop()}
@@ -1014,28 +1298,28 @@ export default function ManikantLanding() {
                     </span>
                     {uploadProgress.totalFiles > 0 && (
                       <span className="upload-file-count">
-                        {uploadProgress.currentFileIndex > 0 
+                        {uploadProgress.currentFileIndex > 0
                           ? `(${uploadProgress.currentFileIndex}/${uploadProgress.totalFiles} files)`
                           : `(${uploadProgress.totalFiles} file${uploadProgress.totalFiles > 1 ? 's' : ''})`
                         }
                       </span>
                     )}
                   </div>
-                  
+
                   <div className="upload-progress-bar-container">
-                    <div 
+                    <div
                       className="upload-progress-bar"
                       style={{ width: `${uploadProgress.percent}%` }}
                     />
                     <span className="upload-progress-percent">{uploadProgress.percent}%</span>
                   </div>
-                  
+
                   <p className="upload-progress-message">{uploadProgress.message}</p>
-                  
+
                   {uploadProgress.currentFile && (
                     <p className="upload-current-file">
-                      📁 {uploadProgress.currentFile.length > 25 
-                        ? uploadProgress.currentFile.substring(0, 22) + '...' 
+                      📁 {uploadProgress.currentFile.length > 25
+                        ? uploadProgress.currentFile.substring(0, 22) + '...'
                         : uploadProgress.currentFile}
                     </p>
                   )}
@@ -1065,7 +1349,7 @@ export default function ManikantLanding() {
         <div className="media-preview-overlay" onClick={() => setPreviewMedia(null)}>
           <div className="media-preview-modal" onClick={(e) => e.stopPropagation()}>
             <button className="preview-close-btn" onClick={() => setPreviewMedia(null)}>×</button>
-            <div 
+            <div
               className="preview-content"
               onTouchStart={handlePreviewTouchStart}
               onTouchMove={handlePreviewTouchMove}
@@ -1074,13 +1358,13 @@ export default function ManikantLanding() {
               {(() => {
                 const currentUrl = previewMedia.urls[previewMedia.currentIndex];
                 const currentType = getFileType(currentUrl);
-                
+
                 if (currentType === 'video') {
                   return (
-                    <video 
-                      src={currentUrl} 
-                      controls 
-                      autoPlay 
+                    <video
+                      src={currentUrl}
+                      controls
+                      autoPlay
                       playsInline
                       preload="metadata"
                       className="preview-media"
@@ -1099,31 +1383,31 @@ export default function ManikantLanding() {
                   );
                 }
               })()}
-              
+
               {/* Arrow buttons for desktop - only show if multiple files */}
               {previewMedia.urls.length > 1 && (
                 <>
-                  <button 
+                  <button
                     className="preview-nav-btn preview-nav-prev"
                     onClick={(e) => { e.stopPropagation(); goToPrevPreview(); }}
                     aria-label="Previous file"
                   >
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                      <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </button>
-                  <button 
+                  <button
                     className="preview-nav-btn preview-nav-next"
                     onClick={(e) => { e.stopPropagation(); goToNextPreview(); }}
                     aria-label="Next file"
                   >
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                      <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </button>
                 </>
               )}
-              
+
               {/* Dots indicator - only show if multiple files */}
               {previewMedia.urls.length > 1 && (
                 <div className="preview-dots">
@@ -1131,8 +1415,8 @@ export default function ManikantLanding() {
                     <button
                       key={index}
                       className={`preview-dot ${index === previewMedia.currentIndex ? 'active' : ''}`}
-                      onClick={(e) => { 
-                        e.stopPropagation(); 
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setPreviewMedia(prev => prev ? { ...prev, currentIndex: index } : null);
                       }}
                       aria-label={`Go to file ${index + 1}`}
@@ -1148,7 +1432,7 @@ export default function ManikantLanding() {
               <a href={previewMedia.urls[previewMedia.currentIndex]} target="_blank" rel="noopener noreferrer" className="preview-action-btn">
                 📖 Open in new tab
               </a>
-              <button 
+              <button
                 onClick={() => handleDownload(previewMedia.urls[previewMedia.currentIndex], previewMedia.title)}
                 className="preview-action-btn primary"
               >
@@ -1253,10 +1537,6 @@ export default function ManikantLanding() {
       <div className="manikant-bg-shape shape-2"></div>
 
       <header className="manikant-hero">
-        <Suspense fallback={null}>
-          <SpiderWebCorner className="spider-web-top-left" size={100} />
-          <SpiderWebCorner className="spider-web-top-right" size={100} />
-        </Suspense>
         <h1>Sub-Electrical Engineers <span className="highlight">Hub</span></h1>
         <p>A place to share project memories, photos, videos, and study materials.</p>
         <div className="manikant-scroll-indicator">
@@ -1265,31 +1545,45 @@ export default function ManikantLanding() {
           </div>
           <span className="scroll-text">Scroll</span>
         </div>
-        <Suspense fallback={null}>
-          <SpiderWebCorner className="spider-web-bottom-left" size={100} />
-          <SpiderWebCorner className="spider-web-bottom-right" size={100} />
-        </Suspense>
       </header>
 
       <section className="manikant-features">
         <Suspense fallback={null}>
-          <SpiderWebCorner className="spider-web-top-left" size={80} />
+          <SpiderWebCorner className="spider-web-top-left" size={120} />
         </Suspense>
-        <div className="manikant-feature-card">
-          <Suspense fallback={null}><SpiderWebCorner className="spider-web-top-right" size={60} /></Suspense>
+
+        <Link to="/prajols-web" className="manikant-feature-card study-card">
           <span className="manikant-feature-icon">📚</span>
           <h3>Study Materials</h3>
-          <p>Access a vast collection of notes, past papers, and reference books.</p>
-        </div>
+          <p>Access a vast collection of engineering notes, past papers, and essential reference books curated for sub-engineers.</p>
+          <div className="feature-badges">
+            <span className="feature-badge">Notes</span>
+            <span className="feature-badge">Papers</span>
+            <span className="feature-badge">Books</span>
+          </div>
+          <div className="feature-cta">
+            Browse Library <span>→</span>
+          </div>
+        </Link>
 
-        <div className="manikant-feature-card">
-          <Suspense fallback={null}><SpiderWebCorner className="spider-web-top-right" size={60} /></Suspense>
+        <div className="manikant-feature-card community-card" onClick={() => {
+          document.querySelector('.manikant-posts-section')?.scrollIntoView({ behavior: 'smooth' });
+        }}>
           <span className="manikant-feature-icon">🤝</span>
           <h3>Community</h3>
-          <p>Connect with fellow sub-engineers, share experiences and grow together.</p>
+          <p>Connect with fellow engineers, share your project experiences, ask questions, and grow your professional network.</p>
+          <div className="feature-badges">
+            <span className="feature-badge">Connect</span>
+            <span className="feature-badge">Share</span>
+            <span className="feature-badge">Grow</span>
+          </div>
+          <div className="feature-cta">
+            Join Discussion <span>↓</span>
+          </div>
         </div>
+
         <Suspense fallback={null}>
-          <SpiderWebCorner className="spider-web-bottom-right" size={80} />
+          <SpiderWebCorner className="spider-web-bottom-right" size={120} />
         </Suspense>
       </section>
 
@@ -1339,347 +1633,10 @@ export default function ManikantLanding() {
       </section>
 
       <div className="manikant-content">
-        <div className="manikant-feed">
-          {loading ? (
-            <div className="manikant-loading">
-              <div className="spinner"></div>
-              <p>Loading community posts...</p>
-            </div>
-          ) : posts.length === 0 ? (
-            <div className="manikant-empty">
-              <span className="empty-icon">📭</span>
-              <h3>No posts yet</h3>
-              <p>Be the first to share something with the community!</p>
-            </div>
-          ) : (
-            posts.map(post => (
-              <article key={post.id} className="manikant-post instagram-style">
-                {/* Instagram-style header */}
-                <div className="post-header">
-                  <div className="post-user-info">
-                    {post.profiles?.avatar_url ? (
-                      <img
-                        src={post.profiles.avatar_url}
-                        alt="Author"
-                        className="post-avatar clickable-avatar"
-                        loading="lazy"
-                        decoding="async"
-                        onClick={() => setViewProfileId(post.user_id)}
-                        style={{ cursor: 'pointer' }}
-                      />
-                    ) : (
-                      <div 
-                        className="post-avatar post-avatar-placeholder clickable-avatar"
-                        onClick={() => setViewProfileId(post.user_id)}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        👤
-                      </div>
-                    )}
-                    <div className="post-user-details">
-                      <span className="post-username">{post.title}</span>
-                      <span className="post-timestamp">
-                        {new Date(post.created_at).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric'
-                        })}
-                      </span>
-                    </div>
-                  </div>
-                  {/* Options menu for post owner */}
-                  {user && user.id === post.user_id && (
-                    <div className="post-options">
-                      <button
-                        onClick={() => handleEditPost(post)}
-                        className="post-option-btn"
-                        title="Edit post"
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        onClick={() => handleDeletePost(post.id)}
-                        className="post-option-btn delete"
-                        title="Delete post"
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Media Section - Full width like Instagram */}
-                {post.media_url && (() => {
-                  const mediaUrls = parseMediaUrls(post.media_url);
-                  return (
-                    <div className="post-media-container">
-                      {mediaUrls.length === 1 ? (
-                        // Single file display
-                        <>
-                          {post.type === 'video' || getFileType(mediaUrls[0]) === 'video' ? (
-                            <video 
-                              src={mediaUrls[0]} 
-                              controls 
-                              playsInline
-                              className="post-media clickable-media" 
-                              preload="metadata"
-                              onPlay={(e) => {
-                                // Check video size - if > 10MB, open in new tab
-                                const video = e.currentTarget;
-                                // Use fetch to check content-length header
-                                fetch(mediaUrls[0], { method: 'HEAD' })
-                                  .then(res => {
-                                    const size = parseInt(res.headers.get('content-length') || '0', 10);
-                                    if (size > 10 * 1024 * 1024) { // 10MB
-                                      video.pause();
-                                      window.open(mediaUrls[0], '_blank');
-                                    }
-                                  })
-                                  .catch(() => {
-                                    // If HEAD request fails, allow normal playback
-                                  });
-                              }}
-                              onClick={() => setPreviewMedia({ urls: mediaUrls, type: 'video', title: post.title, currentIndex: 0 })}
-                            />
-                          ) : post.type === 'photo' || getFileType(mediaUrls[0]) === 'image' ? (
-                            <SmartImage 
-                              src={mediaUrls[0]} 
-                              alt={post.title} 
-                              className="post-media clickable-media" 
-                              loading="lazy" 
-                              decoding="async"
-                              onClick={() => setPreviewMedia({ urls: mediaUrls, type: 'photo', title: post.title, currentIndex: 0 })}
-                            />
-                          ) : getFileType(mediaUrls[0]) === 'pdf' ? (
-                            <div className="post-material">
-                              <div 
-                                className="pdf-preview-wrapper clickable-media"
-                                onClick={() => setPreviewMedia({ urls: mediaUrls, type: 'material', title: post.title, currentIndex: 0 })}
-                              >
-                                <iframe
-                                  src={`${mediaUrls[0]}#toolbar=0&navpanes=0`}
-                                  className="post-pdf-preview"
-                                  title={post.title}
-                                />
-                                <div className="pdf-click-overlay">
-                                  <span>🔍 Click to preview</span>
-                                </div>
-                              </div>
-                              <div className="post-material-actions">
-                                <a href={mediaUrls[0]} target="_blank" rel="noopener noreferrer" className="material-btn secondary">
-                                  📖 Open
-                                </a>
-                                <button 
-                                  onClick={(e) => { e.stopPropagation(); handleDownload(mediaUrls[0], post.title); }}
-                                  className="material-btn primary"
-                                >
-                                  📥 Download
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="post-file-display clickable-media" onClick={() => window.open(mediaUrls[0], '_blank')}>
-                              <div className="file-icon-large">📄</div>
-                              <span className="file-name">{mediaUrls[0].split('/').pop()}</span>
-                              <button 
-                                onClick={(e) => { e.stopPropagation(); handleDownload(mediaUrls[0], post.title); }}
-                                className="material-btn primary"
-                              >
-                                📥 Download
-                              </button>
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        // Multiple files - grid display
-                        <div className={`post-media-grid grid-${Math.min(mediaUrls.length, 4)}`}>
-                          {mediaUrls.slice(0, 4).map((url, idx) => {
-                            const fileType = getFileType(url);
-                            return (
-                              <div 
-                                key={idx} 
-                                className="media-grid-item clickable-media"
-                                onClick={() => {
-                                  // For videos > 10MB, open in new tab
-                                  if (fileType === 'video') {
-                                    fetch(url, { method: 'HEAD' })
-                                      .then(res => {
-                                        const size = parseInt(res.headers.get('content-length') || '0', 10);
-                                        if (size > 10 * 1024 * 1024) {
-                                          window.open(url, '_blank');
-                                        } else {
-                                          setPreviewMedia({ 
-                                            urls: mediaUrls, 
-                                            type: 'video',
-                                            title: post.title,
-                                            currentIndex: idx
-                                          });
-                                        }
-                                      })
-                                      .catch(() => {
-                                        setPreviewMedia({ 
-                                          urls: mediaUrls, 
-                                          type: 'video',
-                                          title: post.title,
-                                          currentIndex: idx
-                                        });
-                                      });
-                                  } else {
-                                    setPreviewMedia({ 
-                                      urls: mediaUrls, 
-                                      type: fileType === 'image' ? 'photo' : 'material',
-                                      title: post.title,
-                                      currentIndex: idx
-                                    });
-                                  }
-                                }}
-                              >
-                                {fileType === 'video' ? (
-                                  <video 
-                                    src={url} 
-                                    className="grid-media" 
-                                    preload="metadata"
-                                    playsInline
-                                    muted
-                                    style={{ objectFit: 'cover' }}
-                                  />
-                                ) : fileType === 'image' ? (
-                                  <SmartImage src={url} alt={`${post.title} ${idx + 1}`} className="grid-media" loading="lazy" />
-                                ) : fileType === 'pdf' ? (
-                                  <div className="grid-file-preview pdf">
-                                    <span className="file-icon">📄</span>
-                                    <span className="file-ext">PDF</span>
-                                  </div>
-                                ) : (
-                                  <div className="grid-file-preview">
-                                    <span className="file-icon">📎</span>
-                                    <span className="file-ext">{url.split('.').pop()?.toUpperCase()}</span>
-                                  </div>
-                                )}
-                                {idx === 3 && mediaUrls.length > 4 && (
-                                  <div className="more-files-overlay">+{mediaUrls.length - 4}</div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                      {/* Type badge */}
-                      <div className="post-type-badge">
-                        {post.type === 'photo' ? '📷' : post.type === 'video' ? '🎥' : '📚'}
-                        <span>{post.type}{mediaUrls.length > 1 ? ` (${mediaUrls.length})` : ''}</span>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* Caption/Content Section */}
-                <div className="post-body">
-                  <p className="post-caption">{post.content}</p>
-                </div>
-
-                {/* Post Footer - Functional engagement */}
-                <div className="post-footer">
-                  <div className="post-engagement">
-                    <button
-                      className={`engagement-btn like-btn ${userLikes[post.id] ? 'liked' : ''}`}
-                      onClick={() => handleLike(post.id)}
-                      disabled={loadingLike === post.id}
-                      title={userLikes[post.id] ? 'Unlike' : 'Like'}
-                    >
-                      {userLikes[post.id] ? '👍' : '👍🏻'}
-                      {(postLikes[post.id] || 0) > 0 && (
-                        <span className="engagement-count">{postLikes[post.id]}</span>
-                      )}
-                    </button>
-                    <button
-                      className={`engagement-btn comment-btn ${expandedComments[post.id] ? 'active' : ''}`}
-                      onClick={() => toggleComments(post.id)}
-                      title="Comments"
-                    >
-                      💬
-                      {(postComments[post.id]?.length || 0) > 0 && (
-                        <span className="engagement-count">{postComments[post.id].length}</span>
-                      )}
-                    </button>
-
-                  </div>
-                </div>
-
-                {/* Comments Section */}
-                {expandedComments[post.id] && (
-                  <div className="comments-section">
-                    {/* Comment Input */}
-                    <div className="comment-input-wrapper">
-                      <input
-                        type="text"
-                        placeholder={user ? "Write a comment..." : "Login to comment"}
-                        className="comment-input"
-                        value={commentInputs[post.id] || ''}
-                        onChange={(e) => setCommentInputs(prev => ({ ...prev, [post.id]: e.target.value }))}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            handleAddComment(post.id);
-                          }
-                        }}
-                        disabled={!user || loadingComment === post.id}
-                      />
-                      <button
-                        className="comment-submit-btn"
-                        onClick={() => handleAddComment(post.id)}
-                        disabled={!user || loadingComment === post.id || !commentInputs[post.id]?.trim()}
-                      >
-                        {loadingComment === post.id ? '...' : '➤'}
-                      </button>
-                    </div>
-
-                    {/* Comments List */}
-                    <div className="comments-list">
-                      {postComments[post.id]?.filter(c => c.id).map(comment => (
-                        <div key={comment.id} className="comment-item">
-                          <div className="comment-avatar">
-                            {comment.profiles?.avatar_url ? (
-                              <img src={comment.profiles.avatar_url} alt="" />
-                            ) : (
-                              <span>👤</span>
-                            )}
-                          </div>
-                          <div className="comment-content">
-                            <p className="comment-text">{comment.content}</p>
-                            <span className="comment-time">
-                              {new Date(comment.created_at).toLocaleDateString('en-US', {
-                                month: 'short',
-                                day: 'numeric'
-                              })}
-                            </span>
-                          </div>
-                          {user && user.id === comment.user_id && (
-                            <button
-                              className="comment-delete-btn"
-                              onClick={() => handleDeleteComment(comment.id, post.id)}
-                              title="Delete comment"
-                            >
-                              ×
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                      {(!postComments[post.id] || postComments[post.id].filter(c => c.id).length === 0) && (
-                        <p className="no-comments">No comments yet. Be the first to comment!</p>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </article>
-            ))
-          )}
-        </div>
-
         <aside className="manikant-sidebar">
           {user ? (
             <div className="manikant-auth-box">
-              <div 
+              <div
                 className="create-post-header"
                 onClick={() => setIsCreatePostOpen(!isCreatePostOpen)}
                 style={{
@@ -1692,7 +1649,7 @@ export default function ManikantLanding() {
                 }}
               >
                 <h3 style={{ margin: 0, background: 'var(--accent)', color: '#000', padding: '6px 14px', borderRadius: '6px', fontWeight: 600 }}>Create Post</h3>
-                <span 
+                <span
                   style={{
                     transform: isCreatePostOpen ? 'rotate(180deg)' : 'rotate(0deg)',
                     transition: 'transform 0.3s ease',
@@ -1702,8 +1659,8 @@ export default function ManikantLanding() {
                   ▼
                 </span>
               </div>
-              
-              <div 
+
+              <div
                 className="create-post-content"
                 style={{
                   maxHeight: isCreatePostOpen ? '500px' : '0',
@@ -1787,28 +1744,28 @@ export default function ManikantLanding() {
                         </span>
                         {uploadProgress.totalFiles > 0 && (
                           <span className="upload-file-count">
-                            {uploadProgress.currentFileIndex > 0 
+                            {uploadProgress.currentFileIndex > 0
                               ? `(${uploadProgress.currentFileIndex}/${uploadProgress.totalFiles} files)`
                               : `(${uploadProgress.totalFiles} file${uploadProgress.totalFiles > 1 ? 's' : ''})`
                             }
                           </span>
                         )}
                       </div>
-                      
+
                       <div className="upload-progress-bar-container">
-                        <div 
+                        <div
                           className="upload-progress-bar"
                           style={{ width: `${uploadProgress.percent}%` }}
                         />
                         <span className="upload-progress-percent">{uploadProgress.percent}%</span>
                       </div>
-                      
+
                       <p className="upload-progress-message">{uploadProgress.message}</p>
-                      
+
                       {uploadProgress.currentFile && (
                         <p className="upload-current-file">
-                          📁 {uploadProgress.currentFile.length > 25 
-                            ? uploadProgress.currentFile.substring(0, 22) + '...' 
+                          📁 {uploadProgress.currentFile.length > 25
+                            ? uploadProgress.currentFile.substring(0, 22) + '...'
                             : uploadProgress.currentFile}
                         </p>
                       )}
@@ -1838,6 +1795,82 @@ export default function ManikantLanding() {
             </div>
           )}
         </aside>
+
+        <div className="manikant-feed">
+          {loading ? (
+            <div className="manikant-loading">
+              <div className="spinner"></div>
+              <p>Loading community posts...</p>
+            </div>
+          ) : posts.length === 0 ? (
+            <div className="manikant-empty">
+              <span className="empty-icon">📭</span>
+              <h3>No posts yet</h3>
+              <p>Be the first to share something with the community!</p>
+            </div>
+          ) : (
+            <div className={`manikant-book-container ${isFlipping ? 'flipping' : ''} ${isFlipping ? `flip-${flipDirection}` : ''}`}>
+              <div className="manikant-book">
+                <div className="book-spine"></div>
+                <div className="book-pages">
+                  {/* Background Layer: The target page already sitting underneath */}
+                  {groupedPosts[currentPage]?.map((post, idx) => (
+                    <div key={`bg-${post.id}`} className={`book-page-wrap page-${idx === 0 ? 'left' : 'right'} static-underlay`}>
+                      {renderPost(post, true)}
+                    </div>
+                  ))}
+
+                  {/* Flipping Layer: Rendered only during animation to perform the flip from OLD to NEW */}
+                  {isFlipping && flashPage !== null && (
+                    <div className="flipping-overlay">
+                      {groupedPosts[flashPage]?.map((post, idx) => (
+                        <div key={`flip-${post.id}`} className={`book-page-wrap page-${idx === 0 ? 'left' : 'right'} flipping-layer`}>
+                          {renderPost(post, true)}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Empty right page if set only has 1 post */}
+                  {groupedPosts[currentPage]?.length === 1 && (
+                    <div className="book-page-wrap page-right empty">
+                      <div className="empty-page-content">
+                        <span className="leaf-icon">🍂</span>
+                        <p>End of spread</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Book Navigation */}
+              <div className="book-nav-controls">
+                <button
+                  className="book-nav-btn prev"
+                  onClick={handlePrevPage}
+                  disabled={currentPage === 0 || isFlipping}
+                >
+                  <span className="nav-arrow">←</span>
+                  <span className="nav-label">Previous</span>
+                </button>
+
+                <div className="book-page-info">
+                  <span className="current-set">Set {currentPage + 1}</span>
+                  <span className="total-sets">of {groupedPosts.length}</span>
+                </div>
+
+                <button
+                  className="book-nav-btn next"
+                  onClick={handleNextPage}
+                  disabled={currentPage >= groupedPosts.length - 1 || isFlipping}
+                >
+                  <span className="nav-label">Next</span>
+                  <span className="nav-arrow">→</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
 
@@ -1852,17 +1885,17 @@ export default function ManikantLanding() {
             <p className="footer-tagline">Empowering Sub-Electrical Engineers with resources, community, and shared knowledge.</p>
             <div className="footer-social">
               <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="Facebook">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" /></svg>
               </a>
               <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="YouTube">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" /></svg>
               </a>
               <a href="https://mail.google.com/mail/?view=cm&to=imserv67@gmail.com" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="Email">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" /></svg>
               </a>
             </div>
           </div>
-          
+
           <div className="footer-links-grid">
             <div className="footer-section">
               <h4>Navigation</h4>
@@ -1889,8 +1922,8 @@ export default function ManikantLanding() {
               <h4>👥 Community Members</h4>
               <div className="footer-members-list">
                 {allProfiles.map((userProfile) => (
-                  <div 
-                    key={userProfile.id} 
+                  <div
+                    key={userProfile.id}
                     className="footer-member-card"
                     onClick={() => setViewProfileId(userProfile.id)}
                     style={{ cursor: 'pointer' }}
@@ -1918,7 +1951,7 @@ export default function ManikantLanding() {
             </div>
           )}
         </div>
-        
+
         <div className="footer-bottom">
           <div className="footer-bottom-content">
             <p className="copyright">&copy; {new Date().getFullYear()} Manikant. All rights reserved.</p>

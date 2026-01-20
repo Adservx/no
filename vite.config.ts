@@ -31,7 +31,7 @@ export default defineConfig({
         }),
         VitePWA({
             registerType: 'autoUpdate',
-            includeAssets: ['favicon.svg'],
+            includeAssets: ['favicon.svg', 'study-bg.png', 'community-bg.png'],
             manifest: {
                 name: 'manikant.com.np',
                 short_name: 'manikant.com.np',

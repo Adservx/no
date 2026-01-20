@@ -56,3 +56,6 @@ debug.log
 # Vite
 .vite/
 .vercel
+
+# Agent
+.agent/
