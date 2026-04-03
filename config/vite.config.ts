@@ -88,6 +88,7 @@ export default defineConfig({
         target: 'es2020',
         cssMinify: true,
         cssCodeSplit: true,
+        assetsInlineLimit: 4096, // Inline assets smaller than 4KB
         copyPublicDir: false, // Don't copy public dir to avoid pdf-files being copied
         rollupOptions: {
             input: {
