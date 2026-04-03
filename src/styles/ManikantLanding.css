@@ -204,6 +204,18 @@
         height: 60px;
         padding: 0 var(--space-sm);
     }
+
+    .manikant-logo {
+        font-size: 1.15rem;
+    }
+
+    .manikant-links {
+        gap: var(--space-sm);
+    }
+
+    .manikant-links a {
+        font-size: 0.8rem;
+    }
 }
 
 @media (max-width: 480px) {
@@ -1938,9 +1950,10 @@
 
 @media (max-width: 768px) {
     .manikant-feature-card {
-        padding: 18px 20px;
-        gap: 16px;
+        padding: 20px;
+        gap: 20px;
         flex-wrap: wrap;
+        border-radius: var(--radius);
     }
 
     .feature-content-minimal {
@@ -1950,6 +1963,9 @@
 
     .feature-icon-minimal {
         order: 1;
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
     }
 
     .feature-stats-minimal {
@@ -1960,17 +1976,26 @@
 
     .stat-minimal {
         flex: 1;
-        padding: 10px 12px;
+        padding: 12px;
         min-width: 0;
     }
 
     .stat-value-minimal {
-        font-size: 1.25rem;
+        font-size: 1.35rem;
     }
 
     .feature-arrow-minimal {
         order: 4;
         margin-left: auto;
+    }
+
+    .feature-title-minimal {
+        font-size: 1.15rem;
+    }
+
+    .feature-description-minimal {
+        font-size: 0.9rem;
+        line-height: 1.5;
     }
 }
 
@@ -2223,15 +2248,17 @@
     .posts-stats-bar {
         padding: var(--space-sm);
         gap: var(--space-xs);
-        width: calc(100% - 32px);
-        margin: 0 16px;
+        width: calc(100% - 16px);
+        margin: 0 8px;
         box-shadow: none;
+        border-radius: var(--radius);
     }
 
     .posts-stat {
-        padding: var(--space-xs) var(--space-sm);
+        padding: 12px;
         min-width: calc(50% - 8px);
         flex: 1;
+        border-radius: var(--radius);
     }
 
     .posts-stat:hover {
@@ -2240,11 +2267,15 @@
     }
 
     .posts-stat .stat-count {
-        font-size: 1.2rem;
+        font-size: 1.3rem;
     }
 
     .posts-stat .stat-label {
-        font-size: 0.6rem;
+        font-size: 0.65rem;
+    }
+
+    .posts-stat .stat-icon {
+        font-size: 1.4rem;
     }
 }
 
@@ -2296,9 +2327,19 @@
 
 @media (max-width: 768px) {
     .manikant-content {
-        padding: var(--space-sm) var(--space-xs);
-        gap: var(--space-sm);
+        padding: var(--space-md) var(--space-sm);
+        gap: var(--space-md);
     }
+}
+
+/* Hide create post/signup in feed on mobile/tablet - it stays in sidebar */
+.create-post-desktop {
+    display: none;
+}
+
+/* Show sidebar on mobile/tablet */
+.manikant-sidebar.sidebar-hidden {
+    display: flex;
 }
 
 /* ========================================
@@ -2476,7 +2517,7 @@
     z-index: 10;
 }
 
-/* Mobile Responsiveness */
+/* Mobile Responsiveness - Enhanced for desktop-level attractiveness */
 @media (max-width: 1024px) {
     .flipping-overlay {
         display: none !important;
@@ -2487,19 +2528,16 @@
         transform-style: flat !important;
         background: var(--bg-primary) !important;
         box-shadow: none !important;
-        border-left: none !important;
-        border-right: none !important;
-        border-top: var(--border-thick) !important;
-        border-bottom: var(--border-thick) !important;
+        border: none !important;
         transition: none !important;
         padding: 0 !important;
         margin-bottom: var(--space-md) !important;
-        width: 100vw !important;
+        width: 100% !important;
         position: relative !important;
-        left: 50% !important;
-        right: 50% !important;
-        margin-left: -50vw !important;
-        margin-right: -50vw !important;
+        left: 0 !important;
+        right: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
     }
 
     .book-spine {
@@ -2759,10 +2797,10 @@
 
 @media (max-width: 768px) {
     .manikant-post.instagram-style {
-        border-left: none;
-        border-right: none;
+        border: 2px solid var(--text-primary);
         margin-bottom: var(--space-md);
         box-shadow: none;
+        border-radius: var(--radius);
     }
 }
 
@@ -3543,14 +3581,20 @@ textarea.manikant-input {
     min-height: 80px;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 768px) {
     .manikant-input {
-        padding: 10px 0.75rem;
-        font-size: 0.85rem;
+        padding: 12px;
+        font-size: 0.9rem;
     }
 
     textarea.manikant-input {
-        min-height: 70px;
+        min-height: 80px;
+    }
+
+    .manikant-btn {
+        padding: 12px 20px;
+        font-size: 0.9rem;
+        width: 100%;
     }
 }
 
@@ -4682,6 +4726,40 @@ select.manikant-input {
 
     .footer-tagline {
         font-size: 0.95rem;
+    }
+
+    /* Desktop Layout - Sidebar + Feed side by side */
+    .manikant-content {
+        flex-direction: row;
+        gap: var(--space-lg);
+        align-items: flex-start;
+    }
+
+    .manikant-sidebar {
+        width: 350px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 80px;
+        max-height: calc(100vh - 100px);
+        overflow-y: auto;
+    }
+
+    /* Hide sidebar when user is logged in (on desktop) */
+    .manikant-sidebar.sidebar-hidden {
+        display: none;
+        width: 0;
+    }
+
+    .manikant-feed {
+        flex: 1;
+        max-width: 100%;
+        width: 100%;
+    }
+
+    /* Show create post in feed on desktop */
+    .create-post-desktop {
+        display: block;
+        margin-bottom: var(--space-md);
     }
 }
 

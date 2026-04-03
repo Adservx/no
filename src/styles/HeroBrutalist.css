@@ -7,6 +7,9 @@
   overflow: hidden;
   padding-top: 0;
   margin-top: 0;
+  padding-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Animated gradient overlay */
@@ -47,6 +50,7 @@
   animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   opacity: 0;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  min-height: 600px;
 }
 
 @keyframes fadeInUp {
@@ -72,14 +76,18 @@
     linear-gradient(rgba(21, 128, 61, 0.02) 1px, transparent 1px),
     linear-gradient(90deg, rgba(21, 128, 61, 0.02) 1px, transparent 1px);
   background-size: 50px 50px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 @media (min-width: 1024px) {
   .hero-brutalist-content {
-    grid-column: span 8;
-    padding: 4rem;
+    grid-column: span 7;
+    padding: 5rem 4rem;
     border-bottom: 0;
     border-right: 4px solid var(--text-primary, #f8fafc);
+    min-height: 600px;
   }
 }
 
@@ -143,15 +151,17 @@
 /* Main Title */
 .hero-brutalist-title {
   font-family: var(--font-display, 'JetBrains Mono', monospace);
-  font-size: clamp(4rem, 12vw, 10rem);
-  line-height: 0.8;
+  font-size: clamp(3rem, 10vw, 10rem);
+  line-height: 0.9;
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: -0.05em;
   color: var(--text-primary, #f8fafc);
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
   animation: fadeInScale 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards;
   opacity: 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .hero-brutalist-title .stroke-text {
@@ -294,8 +304,9 @@
 
 @media (min-width: 1024px) {
   .hero-brutalist-visual {
-    grid-column: span 4;
-    min-height: auto;
+    grid-column: span 5;
+    min-height: 600px;
+    padding: 3rem;
   }
 }
 
@@ -315,11 +326,11 @@
   position: relative;
   z-index: 10;
   width: 100%;
-  height: 100%;
+  max-width: 400px;
   border: 4px solid var(--text-primary, #f8fafc);
   background: var(--bg-secondary, #111111);
   box-shadow: 12px 12px 0px 0px var(--primary-color, #15803d);
-  padding: 1rem;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -328,6 +339,14 @@
   transform: rotate(-3deg);
   transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
   animation: floatIn 1s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards;
+}
+
+@media (min-width: 1024px) {
+  .hero-brutalist-card {
+    max-width: none;
+    height: auto;
+    min-height: 500px;
+  }
 }
 
 .hero-brutalist-card:hover {
@@ -521,6 +540,7 @@
   opacity: 0;
   position: relative;
   overflow: hidden;
+  min-height: 250px;
 }
 
 .bento-card::before {
@@ -798,7 +818,18 @@
 /* Responsive adjustments */
 @media (max-width: 1023px) {
   .hero-brutalist {
-    padding-top: 80px;
+    min-height: auto;
+  }
+
+  .hero-brutalist-grid {
+    min-height: auto;
+    border-left: 2px solid var(--text-primary, #f8fafc);
+    border-right: 2px solid var(--text-primary, #f8fafc);
+    border-top: 2px solid var(--text-primary, #f8fafc);
+  }
+
+  .hero-brutalist-content {
+    border-bottom: 2px solid var(--text-primary, #f8fafc);
   }
 
   .hero-brutalist-title {
@@ -812,39 +843,380 @@
 }
 
 @media (max-width: 768px) {
+  .hero-brutalist {
+    min-height: auto;
+    padding-bottom: 2rem;
+  }
+
+  .hero-brutalist-grid {
+    border-left: 2px solid var(--text-primary, #f8fafc);
+    border-right: 2px solid var(--text-primary, #f8fafc);
+    border-top: 2px solid var(--text-primary, #f8fafc);
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    min-height: auto;
+  }
+
   .hero-brutalist-content {
-    padding: 3rem 1.5rem;
+    padding: 2rem 1.25rem;
+    overflow: hidden;
+    border-bottom: 0;
+    border-right: 2px solid var(--text-primary, #f8fafc);
+    grid-column: span 6;
+    min-height: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .hero-brutalist-visual {
+    min-height: auto;
+    padding: 1.5rem 1.25rem;
+    grid-column: span 6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hero-brutalist-title {
+    font-size: clamp(1.75rem, 6vw, 3rem);
+    line-height: 1.05;
+    margin-bottom: 1.25rem;
   }
 
   .hero-brutalist-bottom {
-    gap: 2rem;
+    gap: 1.25rem;
+    flex-direction: column;
+  }
+
+  /* Disable hover effects on mobile */
+  .hero-brutalist-card:hover {
+    transform: none !important;
+    box-shadow: 6px 6px 0px 0px var(--primary-color, #15803d) !important;
+  }
+
+  .hero-brutalist-card:hover .hero-brutalist-card-image {
+    border-color: 2px solid var(--text-primary, #f8fafc) !important;
+    box-shadow: none !important;
+  }
+
+  .hero-brutalist-card:hover .hero-brutalist-card-title {
+    font-size: 1.15rem !important;
+  }
+
+  .hero-brutalist-card:hover .hero-brutalist-card-title::after {
+    width: 0 !important;
+  }
+
+  .hero-brutalist-card:hover .hero-brutalist-card-text {
+    font-size: 0.8rem !important;
+  }
+
+  /* Bento Grid - Horizontal Layout on Mobile */
+  .hero-brutalist-bento {
+    padding: 2rem 1.25rem;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
   }
 
   .bento-card {
-    padding: 2rem;
+    padding: 1.5rem;
+    border: 2px solid var(--text-primary, #f8fafc);
+    box-shadow: 4px 4px 0px 0px var(--primary-color, #15803d);
+    min-height: auto;
   }
 
-  .bento-card-title {
-    font-size: 2rem;
+  .bento-card-large {
+    grid-column: span 2;
+    min-height: auto;
   }
 
-  .hero-brutalist-cta:hover {
-    transform: translate(2px, 2px);
-    box-shadow: 3px 3px 0px 0px var(--text-primary, #f8fafc);
-  }
-}
-
-@media (max-width: 480px) {
-  .hero-brutalist-title {
-    font-size: clamp(2.5rem, 12vw, 4rem);
+  .bento-card-dark {
+    grid-column: span 2;
+    min-height: auto;
   }
 
   .bento-card-title {
     font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .bento-card-text {
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .bento-card-icon {
+    font-size: 2.25rem;
+    margin-bottom: 1rem;
   }
 
   .bento-card-stat-number {
     font-size: 3.5rem;
+  }
+
+  .bento-card-stat-label {
+    font-size: 0.875rem;
+  }
+
+  .bento-card-dark-title {
+    font-size: 1.75rem;
+  }
+
+  .bento-card-dark-text {
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .bento-card-tertiary-title {
+    font-size: 1.5rem;
+  }
+
+  .hero-brutalist-cta {
+    padding: 0.875rem 1.75rem;
+    font-size: 0.875rem;
+    width: 100%;
+    text-align: center;
+    box-shadow: 4px 4px 0px 0px var(--text-primary, #f8fafc);
+  }
+
+  .hero-brutalist-cta:hover {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px 0px var(--text-primary, #f8fafc);
+  }
+
+  .hero-brutalist-card {
+    max-width: 100%;
+    padding: 1.25rem;
+    border: 2px solid var(--text-primary, #f8fafc);
+    box-shadow: 6px 6px 0px 0px var(--primary-color, #15803d);
+    min-height: auto;
+  }
+
+  .hero-brutalist-card-image {
+    height: 10rem;
+    border: 2px solid var(--text-primary, #f8fafc);
+  }
+
+  .hero-brutalist-description {
+    font-size: 0.875rem;
+    padding-left: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .hero-brutalist-badge {
+    font-size: 0.7rem;
+    padding: 0.4rem 0.875rem;
+    margin-bottom: 1.25rem;
+    border: 2px solid var(--text-primary, #f8fafc);
+    box-shadow: 2px 2px 0px 0px rgba(21, 128, 61, 0.3);
+  }
+
+  .hero-brutalist-ticker {
+    border: 2px solid var(--text-primary, #f8fafc);
+    padding: 1rem 0;
+  }
+
+  .hero-brutalist-ticker-content {
+    font-size: 1.15rem;
+  }
+
+  .hero-brutalist-card-title {
+    font-size: 1.15rem;
+    margin-bottom: 0.625rem;
+  }
+
+  .hero-brutalist-card-text {
+    font-size: 0.8rem;
+    line-height: 1.4;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-brutalist-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    min-height: auto;
+    border-left: 2px solid var(--text-primary, #f8fafc);
+    border-right: 2px solid var(--text-primary, #f8fafc);
+    border-top: 2px solid var(--text-primary, #f8fafc);
+  }
+
+  .hero-brutalist-content {
+    padding: 1.5rem 1rem;
+    grid-column: span 6;
+    border-right: 2px solid var(--text-primary, #f8fafc);
+    border-bottom: 0;
+    min-height: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .hero-brutalist-visual {
+    min-height: auto;
+    padding: 1.25rem 1rem;
+    grid-column: span 6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hero-brutalist-title {
+    font-size: clamp(1.5rem, 5.5vw, 2.5rem);
+    line-height: 1.05;
+    margin-bottom: 1rem;
+  }
+
+  /* Disable hover effects on mobile */
+  .hero-brutalist-card:hover {
+    transform: none !important;
+    box-shadow: 4px 4px 0px 0px var(--primary-color, #15803d) !important;
+  }
+
+  .hero-brutalist-card:hover .hero-brutalist-card-image {
+    border-color: 2px solid var(--text-primary, #f8fafc) !important;
+    box-shadow: none !important;
+  }
+
+  .hero-brutalist-card:hover .hero-brutalist-card-title {
+    font-size: 1rem !important;
+  }
+
+  .hero-brutalist-card:hover .hero-brutalist-card-title::after {
+    width: 0 !important;
+  }
+
+  .hero-brutalist-card:hover .hero-brutalist-card-text {
+    font-size: 0.75rem !important;
+  }
+
+  /* Bento Grid - 2 Column Layout on Small Mobile */
+  .hero-brutalist-bento {
+    padding: 1.75rem 1rem;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .bento-card {
+    padding: 1.25rem;
+    border: 2px solid var(--text-primary, #f8fafc);
+    box-shadow: 3px 3px 0px 0px var(--primary-color, #15803d);
+    min-height: auto;
+  }
+
+  .bento-card-large {
+    grid-column: span 2;
+    min-height: auto;
+  }
+
+  .bento-card-dark {
+    grid-column: span 2;
+    min-height: auto;
+  }
+
+  .bento-card-title {
+    font-size: 1.35rem;
+    margin-bottom: 0.875rem;
+  }
+
+  .bento-card-text {
+    font-size: 0.8rem;
+    line-height: 1.45;
+  }
+
+  .bento-card-icon {
+    font-size: 2rem;
+    margin-bottom: 0.875rem;
+  }
+
+  .bento-card-stat-number {
+    font-size: 3rem;
+  }
+
+  .bento-card-stat-label {
+    font-size: 0.8rem;
+  }
+
+  .bento-card-dark-title {
+    font-size: 1.5rem;
+  }
+
+  .bento-card-dark-text {
+    font-size: 0.8rem;
+    line-height: 1.45;
+  }
+
+  .bento-card-tertiary-title {
+    font-size: 1.35rem;
+  }
+
+  .bento-card-footer {
+    margin-top: 1.5rem;
+  }
+
+  .bento-card-line {
+    width: 4rem;
+    height: 3px;
+  }
+
+  .bento-card-label {
+    font-size: 0.75rem;
+  }
+
+  .hero-brutalist-description {
+    font-size: 0.8rem;
+    line-height: 1.45;
+    padding-left: 0.75rem;
+  }
+
+  .hero-brutalist-cta {
+    padding: 0.8rem 1.5rem;
+    font-size: 0.8rem;
+    box-shadow: 3px 3px 0px 0px var(--text-primary, #f8fafc);
+  }
+
+  .hero-brutalist-cta:hover {
+    transform: translate(1px, 1px);
+    box-shadow: 2px 2px 0px 0px var(--text-primary, #f8fafc);
+  }
+
+  .hero-brutalist-badge {
+    font-size: 0.65rem;
+    padding: 0.35rem 0.75rem;
+    box-shadow: 2px 2px 0px 0px rgba(21, 128, 61, 0.3);
+    margin-bottom: 1rem;
+  }
+
+  .hero-brutalist-card {
+    padding: 1rem;
+    box-shadow: 4px 4px 0px 0px var(--primary-color, #15803d);
+  }
+
+  .hero-brutalist-card-image {
+    height: 9rem;
+  }
+
+  .hero-brutalist-card-title {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .hero-brutalist-card-text {
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+
+  .hero-brutalist-bottom {
+    gap: 1rem;
+  }
+
+  .hero-brutalist-ticker {
+    padding: 0.875rem 0;
+  }
+
+  .hero-brutalist-ticker-content {
+    font-size: 1rem;
   }
 }
 

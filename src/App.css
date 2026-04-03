@@ -637,54 +637,51 @@ body::before {
     }
 }
 
-/* Add new media query for laptop screens */
+/* Desktop/Laptop screens - proper sidebar layout */
 @media screen and (min-width: 769px) {
     :root {
-        --sidebar-width: 100%;
-        --sidebar-collapsed: 100%;
+        --sidebar-width: 280px;
+        --sidebar-collapsed: 70px;
     }
 
     .subjects-grid {
         grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     }
 
-    .main-content {
-        padding-left: 20px;
-        padding-right: 20px;
-    }
-
-    .content-body {
-        padding: 20px;
-    }
-
-    /* Force mobile-like layout for all desktop/laptop screens */
     .app-container {
-        flex-direction: column;
+        flex-direction: row;
     }
 
     .sidebar {
-        position: relative;
-        width: 100% !important;
-        height: auto;
-        min-height: unset;
+        position: fixed;
+        width: var(--sidebar-width);
+        height: 100vh;
+        min-height: 100vh;
     }
 
     .main-content {
-        margin-left: 0 !important;
-        width: 100% !important;
+        margin-left: var(--sidebar-width);
+        width: calc(100% - var(--sidebar-width));
+        padding: 24px;
+    }
+
+    .sidebar.closed + .main-content {
+        margin-left: var(--sidebar-collapsed);
+        width: calc(100% - var(--sidebar-collapsed));
     }
 }
 
+/* Mobile/Tablet screens - overlay sidebar */
 @media screen and (max-width: 768px) {
     :root {
-        --sidebar-width: 260px;
+        --sidebar-width: 280px;
         --sidebar-collapsed: 0px;
         --app-width: 100vw;
         --app-height: 100vh;
     }
 
     .app-container {
-        flex-direction: column;
+        flex-direction: row;
     }
 
     .sidebar {
@@ -692,8 +689,10 @@ body::before {
         transform: translateX(0);
         transition: transform 0.3s ease;
         z-index: 1000;
-        height: 100%;
+        height: 100vh;
         position: fixed;
+        left: 0;
+        top: 0;
     }
 
     .sidebar.closed {
@@ -701,7 +700,7 @@ body::before {
     }
 
     .sidebar-toggle {
-        display: flex;
+        display: flex !important;
         right: -45px;
         top: 15px;
         background-color: var(--white);
@@ -948,76 +947,64 @@ html.pwa-mode .notification-permission-container {
     }
 }
 
-/* Add laptop mode specific styles */
-html.laptop-mode .app-container {
-    overflow-x: hidden;
-    flex-direction: column;
-}
+/* Remove laptop mode forced styles */
 
-html.laptop-mode .main-content {
-    margin-left: 0;
-    width: 100%;
-    transition: margin-left 0.3s ease, width 0.3s ease;
-}
-
-html.laptop-mode .sidebar {
-    position: relative;
-    width: 100% !important;
-    height: auto;
-    min-height: unset;
-}
-
-html.laptop-mode .sidebar.open+.main-content {
-    margin-left: 0;
-    width: 100%;
-}
-
-html.laptop-mode .sidebar-toggle {
-    display: none;
-}
-
-html.laptop-mode .content-body {
-    padding: 15px;
-}
-
-html.laptop-mode .spider-web-corner {
-    width: 60px;
-    height: 60px;
-}
-
-html.laptop-mode .tab-button {
-    padding: 12px 14px;
-}
-
-/* Apply dark brutalist theme to laptop mode */
-html.laptop-mode .sidebar {
-    background-color: var(--sidebar-bg);
-    background-image: none;
-}
-
-/* Make sure sidebar is always visible and styled like mobile */
+/* Remove forced mobile-style sidebar */
 .sidebar {
-    position: relative !important;
-    width: 100% !important;
-    height: auto !important;
-    min-height: unset !important;
-    overflow: visible !important;
+    background-color: var(--sidebar-bg);
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    transition: width var(--transition-speed) ease;
+    width: var(--sidebar-width);
+    z-index: 100;
+    border-right: 1px solid var(--line);
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    backdrop-filter: none;
+    box-shadow: none;
 }
 
 .main-content {
-    margin-left: 0 !important;
-    width: 100% !important;
+    flex: 1;
+    padding: 24px;
+    margin-left: var(--sidebar-width);
+    transition: margin-left var(--transition-smooth), width var(--transition-smooth);
+    min-height: var(--app-height);
+    width: calc(100% - var(--sidebar-width));
+    overflow-x: hidden;
+    box-sizing: border-box;
 }
 
-/* Sidebar background pattern */
+/* Remove forced mobile layout styles */
 .sidebar {
     background-color: var(--sidebar-bg);
-    background-image: none;
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    transition: width var(--transition-speed) ease;
+    width: var(--sidebar-width);
+    z-index: 100;
+    border-right: 1px solid var(--line);
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    backdrop-filter: none;
+    box-shadow: none;
 }
 
-/* Force app container to be column-based */
 .app-container {
-    flex-direction: column !important;
+    display: flex;
+    min-height: var(--app-height);
+    width: var(--app-width);
+    position: relative;
+    overflow: hidden;
+    flex-direction: row;
 }
 
 /* ============================================

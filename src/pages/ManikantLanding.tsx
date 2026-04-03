@@ -1808,9 +1808,23 @@ export default function ManikantLanding() {
       </section>
 
       <div className="manikant-content">
-        <aside className="manikant-sidebar">
-          {user ? (
+        <aside className="manikant-sidebar sidebar-hidden">
+          {!user && (
             <div className="manikant-auth-box">
+              <h3>Join the Community</h3>
+              <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginBottom: '15px' }}>
+                Connect with electrical engineering students. Share resources, ask questions, and grow together in your academic journey.
+              </p>
+              <button onClick={() => setIsLogin(true)} className="manikant-btn">
+                Sign Up Now
+              </button>
+            </div>
+          )}
+        </aside>
+
+        <div className="manikant-feed">
+          {user ? (
+            <div className="manikant-auth-box create-post-desktop">
               <div
                 className="create-post-header"
                 onClick={() => setIsCreatePostOpen(!isCreatePostOpen)}
@@ -1959,7 +1973,7 @@ export default function ManikantLanding() {
               </div>
             </div>
           ) : (
-            <div className="manikant-auth-box">
+            <div className="manikant-auth-box create-post-desktop">
               <h3>Join the Community</h3>
               <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginBottom: '15px' }}>
                 Connect with electrical engineering students. Share resources, ask questions, and grow together in your academic journey.
@@ -1969,9 +1983,7 @@ export default function ManikantLanding() {
               </button>
             </div>
           )}
-        </aside>
 
-        <div className="manikant-feed">
           {loading ? (
             <div className="manikant-loading">
               <div className="spinner"></div>
