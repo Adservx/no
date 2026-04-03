@@ -4,7 +4,7 @@ node_modules
 .env.local
 *.log
 .DS_Store
-src
-config
-scripts
 public/pdf-files
+scripts/uploadToR2.ts
+scripts/syncR2ToDb.ts
+scripts/migrateToFileMetadata.ts
