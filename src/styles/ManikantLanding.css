@@ -943,6 +943,19 @@
     color: rgba(255, 255, 255, 0.3);
 }
 
+
+/* Brutalist Hero Section */
+.hero-brutalist {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--space-lg) var(--space-md);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-lg);
+}
+
 /* Brutalist Cards */
 .hero-brutalist-grid {
     display: grid;
