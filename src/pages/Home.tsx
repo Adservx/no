@@ -6,6 +6,7 @@ import { SecretLogin, SecretLoginButton } from '../components/auth/SecretLogin';
 import { authHelpers } from '../utils/supabase';
 import '../styles/SpiderWeb.css';
 import '../styles/SecretLogin.css';
+import '../styles/Home.css';
 import '../App.css';
 
 // Lazy load heavy components - they'll only load when needed
@@ -321,6 +322,30 @@ function Home() {
                         )}
                     </div>
                     <SpiderWebCorner className="spider-web-bottom-right" size={100} />
+                </div>
+
+                {/* Hero Section */}
+                <div className="home-hero">
+                    <h1 className="home-hero-title">
+                        PRAJOL'S WEB
+                    </h1>
+                    <p className="home-hero-subtitle">
+                        Professional PDF tools and study materials hub. Create contact sheets, manage documents, and access educational resources.
+                    </p>
+                    <div className="home-hero-stats">
+                        <div className="home-stat">
+                            <span className="home-stat-number">4</span>
+                            <span className="home-stat-label">Tools</span>
+                        </div>
+                        <div className="home-stat">
+                            <span className="home-stat-number">∞</span>
+                            <span className="home-stat-label">PDFs</span>
+                        </div>
+                        <div className="home-stat">
+                            <span className="home-stat-number">24/7</span>
+                            <span className="home-stat-label">Access</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="main-content">

@@ -1,0 +1,300 @@
+/* Prajol's Web - Brutalist Dark Theme */
+/* Updated: 2026-04-03 - Modern brutalist design */
+
+.home-container {
+    min-height: 100vh;
+    background: var(--bg-primary, #000000);
+    color: var(--text-primary, #f0f0f0);
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Hero Section for Prajol's Web */
+.home-hero {
+    padding: 4rem 2rem 3rem;
+    text-align: center;
+    border-bottom: 2px solid var(--text-primary, #f8fafc);
+    background: var(--bg-secondary, #0f0f0f);
+    position: relative;
+}
+
+.home-hero-title {
+    font-family: var(--font-display, 'JetBrains Mono', monospace);
+    font-size: clamp(2.5rem, 8vw, 5rem);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    margin-bottom: 1.5rem;
+    color: var(--text-primary, #f8fafc);
+}
+
+.home-hero-subtitle {
+    font-family: var(--font-body, 'DM Sans', sans-serif);
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    color: var(--text-secondary, #d4d4d4);
+    max-width: 600px;
+    margin: 0 auto 2rem;
+    line-height: 1.6;
+}
+
+.home-hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+}
+
+.home-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border: 2px solid var(--text-primary, #f8fafc);
+    background: var(--bg-tertiary, #1a1a1a);
+    min-width: 120px;
+}
+
+.home-stat-number {
+    font-family: var(--font-display, 'JetBrains Mono', monospace);
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--text-primary, #f8fafc);
+}
+
+.home-stat-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted, #999999);
+    margin-top: 0.25rem;
+}
+
+/* Enhanced Sidebar */
+.sidebar {
+    background: var(--bg-secondary, #0f0f0f);
+    border-right: 2px solid var(--text-primary, #f8fafc);
+}
+
+.logo h1 {
+    font-size: 1.5rem;
+    padding: 1rem 0;
+}
+
+/* Enhanced Tab Buttons */
+.tab-selector {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.tab-button {
+    padding: 1.25rem 1rem;
+    border: 2px solid var(--text-primary, #f8fafc);
+    background: var(--bg-tertiary, #1a1a1a);
+    transition: all 0.2s ease;
+}
+
+.tab-button:hover {
+    background: var(--bg-hover, #2a2a2a);
+    transform: translateY(-2px);
+}
+
+.tab-button.active {
+    background: var(--text-primary, #f8fafc);
+    color: var(--bg-primary, #000000);
+}
+
+.tab-button .icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.tab-button .label {
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Main Content Area */
+.main-content {
+    background: var(--bg-primary, #000000);
+    min-height: calc(100vh - 60px);
+}
+
+.content-header {
+    padding: 2rem;
+    border-bottom: 2px solid var(--text-primary, #f8fafc);
+    background: var(--bg-secondary, #0f0f0f);
+}
+
+.content-header h2 {
+    font-family: var(--font-display, 'JetBrains Mono', monospace);
+    font-size: 2rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    color: var(--text-primary, #f8fafc);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.content-header h2::before {
+    content: '';
+    width: 4px;
+    height: 32px;
+    background: var(--text-primary, #f8fafc);
+}
+
+/* Enhanced Config Panel */
+.config-wrapper {
+    padding: 1.5rem;
+    background: var(--bg-tertiary, #1a1a1a);
+    border: 2px solid var(--text-primary, #f8fafc);
+    margin-top: 1rem;
+}
+
+.config-section-title {
+    font-family: var(--font-display, 'JetBrains Mono', monospace);
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--text-primary, #f8fafc);
+}
+
+/* Back to Home Button Enhancement */
+.back-home-floating-btn {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1.5rem;
+    background: var(--bg-secondary, #0f0f0f);
+    border: 2px solid var(--text-primary, #f8fafc);
+    color: var(--text-primary, #f8fafc);
+    text-decoration: none;
+    font-family: var(--font-display, 'JetBrains Mono', monospace);
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all 0.2s ease;
+    box-shadow: 4px 4px 0px 0px var(--text-primary, #f8fafc);
+}
+
+.back-home-floating-btn:hover {
+    background: var(--text-primary, #f8fafc);
+    color: var(--bg-primary, #000000);
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px 0px var(--text-primary, #f8fafc);
+}
+
+.back-home-floating-btn .btn-icon {
+    font-size: 1.25rem;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .home-hero {
+        padding: 3rem 1.5rem 2rem;
+    }
+
+    .home-hero-title {
+        font-size: clamp(2rem, 10vw, 3.5rem);
+    }
+
+    .home-hero-stats {
+        gap: 1rem;
+    }
+
+    .home-stat {
+        padding: 0.875rem 1.25rem;
+        min-width: 100px;
+    }
+
+    .home-stat-number {
+        font-size: 1.75rem;
+    }
+
+    .tab-selector {
+        gap: 0.5rem;
+    }
+
+    .tab-button {
+        padding: 1rem 0.75rem;
+    }
+
+    .tab-button .icon {
+        font-size: 1.75rem;
+    }
+
+    .tab-button .label {
+        font-size: 0.8rem;
+    }
+
+    .content-header {
+        padding: 1.5rem;
+    }
+
+    .content-header h2 {
+        font-size: 1.5rem;
+    }
+
+    .back-home-floating-btn {
+        padding: 0.75rem 1.25rem;
+        font-size: 0.8rem;
+        box-shadow: 3px 3px 0px 0px var(--text-primary, #f8fafc);
+    }
+
+    .back-home-floating-btn:hover {
+        transform: translate(-1px, -1px);
+        box-shadow: 4px 4px 0px 0px var(--text-primary, #f8fafc);
+    }
+}
+
+@media (max-width: 480px) {
+    .home-hero {
+        padding: 2.5rem 1rem 1.5rem;
+    }
+
+    .home-hero-stats {
+        gap: 0.75rem;
+    }
+
+    .home-stat {
+        padding: 0.75rem 1rem;
+        min-width: 90px;
+    }
+
+    .home-stat-number {
+        font-size: 1.5rem;
+    }
+
+    .home-stat-label {
+        font-size: 0.7rem;
+    }
+
+    .config-wrapper {
+        padding: 1.25rem;
+    }
+
+    .back-home-floating-btn {
+        padding: 0.625rem 1rem;
+        font-size: 0.75rem;
+        gap: 0.5rem;
+    }
+
+    .back-home-floating-btn .btn-icon {
+        font-size: 1.1rem;
+    }
+}
