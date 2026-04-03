@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import viteCompression from 'vite-plugin-compression'
 import { resolve } from 'path'
+import { copyFileSync, existsSync } from 'fs'
+import { join } from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -16,9 +18,33 @@ export default defineConfig({
             }
         }),
         {
-            name: 'html-transform',
-            transformIndexHtml(html) {
-                return html;
+            name: 'copy-public-assets',
+            closeBundle() {
+                // Copy only necessary public files, excluding pdf-files
+                const publicDir = resolve(__dirname, '../public');
+                const outDir = resolve(__dirname, '../dist');
+
+                const filesToCopy = [
+                    'favicon.svg',
+                    'manifest.webmanifest',
+                    'pdf.worker.min.js',
+                    'robots.txt',
+                    'sitemap.xml',
+                    'google0411e24d2561d35a.html',
+                    'og-image.svg',
+                    'community-bg.png',
+                    'ee-bg.png',
+                    'study-bg.png',
+                    '5365-183788430.mp4'
+                ];
+
+                filesToCopy.forEach(file => {
+                    const src = join(publicDir, file);
+                    const dest = join(outDir, file);
+                    if (existsSync(src)) {
+                        copyFileSync(src, dest);
+                    }
+                });
             }
         },
         // Gzip compression for production
@@ -54,6 +80,7 @@ export default defineConfig({
         jsxFragment: 'React.Fragment',
         drop: ['console', 'debugger'] // Remove console.log in production
     },
+    publicDir: resolve(__dirname, '../public'),
     build: {
         outDir: 'dist',
         sourcemap: false, // Disable sourcemaps in production for smaller bundles
@@ -61,6 +88,7 @@ export default defineConfig({
         target: 'es2020',
         cssMinify: true,
         cssCodeSplit: true,
+        copyPublicDir: false, // Don't copy public dir to avoid pdf-files being copied
         rollupOptions: {
             input: {
                 main: resolve(__dirname, '../index.html')

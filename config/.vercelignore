@@ -14,5 +14,4 @@
 node_modules
 
 # Ignore local PDF files (served from R2)
-/public/pdf-files
 /pdf file src 
