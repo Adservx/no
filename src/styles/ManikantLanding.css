@@ -950,8 +950,8 @@
     gap: 1.5rem;
     width: 100%;
     max-width: 1000px;
-    opacity: 0;
-    animation: fadeInUp 0.8s ease-out 0.8s forwards;
+    opacity: 1;
+    animation: fadeInUp 0.8s ease-out forwards;
 }
 
 .brutalist-card {
