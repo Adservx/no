@@ -195,7 +195,7 @@ function Home() {
 
     return (
         <ErrorBoundary>
-            <div className={`app-container ${isStandalone ? 'standalone-mode' : ''}`}>
+            <div className={`home-container app-container ${isStandalone ? 'standalone-mode' : ''}`}>
                 {/* Geometric background shapes - Manikant style */}
                 <div className="manikant-bg-shape shape-1"></div>
                 <div className="manikant-bg-shape shape-2"></div>
