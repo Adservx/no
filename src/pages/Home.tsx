@@ -4,10 +4,7 @@ import { ErrorBoundary } from '../components/common/ErrorBoundary';
 import { SpiderWebLogo, SpiderWebCorner } from '../components/layout/SpiderWeb';
 import { SecretLogin, SecretLoginButton } from '../components/auth/SecretLogin';
 import { authHelpers } from '../utils/supabase';
-import '../styles/SpiderWeb.css';
 import '../styles/SecretLogin.css';
-import '../styles/Home.css';
-import '../App.css';
 
 // Lazy load heavy components - they'll only load when needed
 const PDFContactSheet = lazy(() => import('../components/pdf/PDFContactSheet').then(m => ({ default: m.PDFContactSheet })));

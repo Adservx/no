@@ -5,6 +5,7 @@ import App from './App'
 // Import critical CSS first
 import './App.css'
 import './styles/SpiderWeb.css'
+import './styles/Home.css'
 
 // Defer PDF.js setup - only load when needed
 const setupPdfWorker = async () => {
