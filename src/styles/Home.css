@@ -1,5 +1,5 @@
 /* Prajol's Web - Brutalist Dark Theme */
-/* Updated: 2026-04-03T08:16 - Modern brutalist design with cache bust */
+/* Updated: 2026-04-03T14:51 - Fixed desktop and mobile responsive spacing for PWA */
 
 .home-container {
     min-height: 100vh;
@@ -16,11 +16,17 @@
 
 /* Hero Section for Prajol's Web */
 .home-hero {
-    padding: 4rem 2rem 3rem;
+    padding: 3rem 1.5rem 2.5rem;
     text-align: center;
     border-bottom: 2px solid var(--text-primary, #f8fafc);
     background: var(--bg-secondary, #0f0f0f);
     position: relative;
+}
+
+@media (min-width: 1024px) {
+    .home-hero {
+        padding: 4rem 2rem 3rem;
+    }
 }
 
 .home-hero-title {
@@ -211,15 +217,22 @@
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
     .home-hero {
-        padding: 3rem 1.5rem 2rem;
+        padding: 2.5rem 1.25rem 2rem;
     }
 
     .home-hero-title {
         font-size: clamp(2rem, 10vw, 3.5rem);
+        margin-bottom: 1.25rem;
+    }
+
+    .home-hero-subtitle {
+        font-size: clamp(0.9rem, 2vw, 1.1rem);
+        margin-bottom: 1.5rem;
     }
 
     .home-hero-stats {
         gap: 1rem;
+        margin-top: 1.5rem;
     }
 
     .home-stat {
@@ -269,11 +282,21 @@
 
 @media (max-width: 480px) {
     .home-hero {
-        padding: 2.5rem 1rem 1.5rem;
+        padding: 2rem 1rem 1.5rem;
+    }
+
+    .home-hero-title {
+        margin-bottom: 1rem;
+    }
+
+    .home-hero-subtitle {
+        font-size: 0.875rem;
+        margin-bottom: 1.25rem;
     }
 
     .home-hero-stats {
         gap: 0.75rem;
+        margin-top: 1.25rem;
     }
 
     .home-stat {
