@@ -114,7 +114,7 @@ export default defineConfig({
                 propertyReadSideEffects: false
             }
         },
-        chunkSizeWarningLimit: 500,
+        chunkSizeWarningLimit: 1000,
         // Enable compression hints
         reportCompressedSize: true
     },
