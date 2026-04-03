@@ -24,7 +24,7 @@ export interface UploadParams {
   subject: string;
   description?: string;
   tags?: string[];
-  onProgress?: (progress: number) => void;
+  onProgress?: (progressPercent: number) => void;
 }
 
 export interface FileServiceResponse<T> {
@@ -115,7 +115,7 @@ export const fileService = {
 
   // Upload file to R2 with metadata in Supabase
   uploadFile: async (params: UploadParams): Promise<FileServiceResponse<FileMetadata>> => {
-    const { file, semester, subject, description, tags, onProgress } = params;
+    const { file, semester, subject, description, tags } = params;
 
     const token = await getAuthToken();
     if (!token) {
@@ -123,7 +123,7 @@ export const fileService = {
     }
 
     try {
-      onProgress?.(10);
+      params.onProgress?.(10);
 
       // Convert file to base64
       const arrayBuffer = await file.arrayBuffer();
@@ -131,14 +131,14 @@ export const fileService = {
         new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
       );
 
-      onProgress?.(30);
+      params.onProgress?.(30);
 
       // Generate file path
       const sanitizedSemester = semester.toLowerCase().replace(/\s+/g, '-');
       const sanitizedSubject = subject.replace(/[^a-zA-Z0-9\s-]/g, '').trim();
       const filePath = `${sanitizedSemester}/${sanitizedSubject}/${file.name}`;
 
-      onProgress?.(50);
+      params.onProgress?.(50);
 
       const response = await fetch(`${API_BASE}/upload-file`, {
         method: 'POST',
@@ -159,13 +159,13 @@ export const fileService = {
         }),
       });
 
-      onProgress?.(90);
+      params.onProgress?.(90);
 
       const result = await response.json();
 
       if (result.success) {
         fileService.clearCache();
-        onProgress?.(100);
+        params.onProgress?.(100);
         return { data: result.data, error: null };
       }
 

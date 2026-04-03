@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import './PDFStore.css';
-import { isPWA, requestNotificationPermission, notifyServiceWorkerDownload, notifyServiceWorkerComplete, updateServiceWorkerProgress, showBrowserNotification, sendServiceWorkerNotification } from '../utils/notificationUtils';
-import { getR2FileUrl, convertPathToR2Key, isR2Configured } from '../utils/r2Storage';
-import { pdfHelpers } from '../utils/supabase';
+import '../../styles/PDFStore.css';
+import { getR2FileUrl, convertPathToR2Key, isR2Configured } from '../../utils/r2Storage';
+import { pdfHelpers } from '../../utils/supabase';
 
 interface PDFFile {
   name: string;
@@ -18,17 +17,6 @@ interface Subject {
 interface SemesterData {
   name: string;
   subjects: Subject[];
-}
-
-interface Notification {
-  id: string;
-  type: 'downloading' | 'success' | 'error';
-  title: string;
-  message: string;
-  progress?: number;
-  fileName?: string;
-  fileType?: string;
-  closing?: boolean;
 }
 
 // Interface for download progress tracking
@@ -98,8 +86,8 @@ const loadFilesFromDatabase = async (): Promise<SemesterData[]> => {
 
   // Group files by semester and subject
   const semesterMap = new Map<string, Map<string, PDFFile[]>>();
-  
-  dbFiles.forEach((file: any) => {
+
+  dbFiles.forEach((file: { semester: string; subject: string; file_name: string; file_path: string }) => {
     if (!semesterMap.has(file.semester)) {
       semesterMap.set(file.semester, new Map());
     }
@@ -315,12 +303,10 @@ export const PDFStore = () => {
   const [semesters, setSemesters] = useState<SemesterData[]>(hardcodedSemesters);
   const [activeSemester, setActiveSemester] = useState(0);
   const [expandedSubjects, setExpandedSubjects] = useState<Record<string, boolean>>({});
-  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [fileDownloads, setFileDownloads] = useState<Record<string, boolean>>({});
   const [downloadProgress, setDownloadProgress] = useState<Record<string, DownloadProgress>>({});
   const [subjectDownloadProgress, setSubjectDownloadProgress] = useState<Record<string, { downloading: boolean; progress: number }>>({});
   const [downloadQueue, setDownloadQueue] = useState<QueueItem[]>([]);
-  const [isProcessingQueue, setIsProcessingQueue] = useState(false);
   const [isLoadingFiles, setIsLoadingFiles] = useState(true);
   const downloadLinksRef = useRef<HTMLDivElement>(null);
   const queueRef = useRef<QueueItem[]>([]);
@@ -338,23 +324,6 @@ export const PDFStore = () => {
     loadFiles();
   }, []);
   const isProcessingRef = useRef(false);
-
-  // Add notification
-  const addNotification = (notification: Omit<Notification, 'id'>) => {
-    const id = `notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    const newNotification = { ...notification, id };
-    
-    setNotifications(prev => [...prev, newNotification]);
-    
-    return id;
-  };
-
-  // Update notification
-  const updateNotification = (id: string, updates: Partial<Notification>) => {
-    setNotifications(prev => prev.map(n => 
-      n.id === id ? { ...n, ...updates } : n
-    ));
-  };
 
   // Get short filename for download
   const getShortFilename = (subject: Subject, file: PDFFile, index: number) => {
@@ -374,9 +343,8 @@ export const PDFStore = () => {
     if (isProcessingRef.current || queueRef.current.length === 0) {
       return;
     }
-    
+
     isProcessingRef.current = true;
-    setIsProcessingQueue(true);
     
     try {
       while (queueRef.current.length > 0) {
@@ -397,7 +365,7 @@ export const PDFStore = () => {
         setDownloadQueue([...queueRef.current]);
         
         // Download the file (await ensures serial processing)
-        await downloadFile(item.subject, item.file, item.fileIndex, item.semesterName);
+        await downloadFile(item.subject, item.file, item.fileIndex);
         
         // Remove from queue after download completes
         queueRef.current.shift();
@@ -411,7 +379,6 @@ export const PDFStore = () => {
       }
     } finally {
       isProcessingRef.current = false;
-      setIsProcessingQueue(false);
     }
   };
 
@@ -462,7 +429,7 @@ export const PDFStore = () => {
   };
 
   // Function to handle single file download with progress tracking
-  const downloadFile = async (subject: Subject, file: PDFFile, fileIndex: number, semesterName?: string) => {
+  const downloadFile = async (subject: Subject, file: PDFFile, fileIndex: number) => {
     const fileId = `${subject.name}-${file.name}`;
     
     // Already downloading
@@ -798,32 +765,7 @@ export const PDFStore = () => {
           </div>
         </div>
       )}
-      
-      {/* Notification container */}
-      <div className="notification-container">
-        {notifications.map((notification) => (
-          <div key={notification.id} className={`notification ${notification.type}`}>
-            <div className="notification-icon">
-              {notification.type === 'downloading' && '⬇️'}
-              {notification.type === 'success' && '✅'}
-              {notification.type === 'error' && '❌'}
-            </div>
-            <div className="notification-content">
-              <h4>{notification.title}</h4>
-              <p>{notification.message}</p>
-              {notification.progress !== undefined && (
-                <div className="notification-progress">
-                  <div 
-                    className="notification-progress-bar"
-                    style={{ width: `${notification.progress}%` }}
-                  ></div>
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-      
+
       <div className="semester-tabs">
         {semesters.map((semester: SemesterData, index: number) => (
           <button 
@@ -901,7 +843,7 @@ export const PDFStore = () => {
                                 fileProgress?.queuePosition ? 'queued' : ''
                               }`}
                               target="_blank"
-                              onClick={() => downloadFile(subject, file, fileIndex, semesters[activeSemester].name)}
+                              onClick={() => downloadFile(subject, file, fileIndex)}
                             >
                               <span>
                                 {isFileDownloading 

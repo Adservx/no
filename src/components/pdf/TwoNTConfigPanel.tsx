@@ -1,21 +1,22 @@
 import React from 'react';
-import './ConfigPanel.css';
+import '../../styles/ConfigPanel.css';
 
 interface TwoNTConfigPanelProps {
   config: {
     spacing: number;
     resolution: number;
   };
-  onConfigChange: (config: any) => void;
+  onConfigChange: (newConfig: { spacing: number; resolution: number }) => void;
 }
 
 export const TwoNTConfigPanel: React.FC<TwoNTConfigPanelProps> = ({ config, onConfigChange }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    onConfigChange({
+    const updatedConfig = {
       ...config,
       [name]: Number(value),
-    });
+    };
+    onConfigChange(updatedConfig);
   };
 
   return (

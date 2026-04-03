@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Document, pdfjs } from 'react-pdf';
+import { pdfjs, Document as PDFDocument } from 'react-pdf';
 import { useDropzone } from 'react-dropzone';
 import { jsPDF } from 'jspdf';
-import './PDFContactSheet.css';
-import { notifyServiceWorkerDownload, notifyServiceWorkerComplete, updateServiceWorkerProgress, isPWA } from '../utils/notificationUtils';
+import '../../styles/PDFContactSheet.css';
+import { notifyServiceWorkerDownload, notifyServiceWorkerComplete, updateServiceWorkerProgress } from '../../utils/notificationUtils';
 
 interface PDFContactSheetProps {
   config: {
@@ -273,9 +273,7 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
       const loadedPdf = await loadingTask.promise;
 
       // Update progress periodically as pages are processed
-      let currentProgress = 0;
       const updateProgress = (progress: number) => {
-        currentProgress = progress;
         setLoadingProgress(progress);
         showDownloadNotification('downloading', `Processing page ${Math.ceil(numPages * progress / 100)} of ${numPages}...`, progress);
       };
@@ -417,7 +415,7 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
 
       {pdfFile && (
         <>
-          <Document
+          <PDFDocument
             file={pdfFile}
             onLoadSuccess={onDocumentLoadSuccess}
             onLoadError={onDocumentLoadError}
@@ -425,7 +423,7 @@ export const PDFContactSheet: React.FC<PDFContactSheetProps> = ({ config }) => {
             error={<div className="error-message">Failed to load PDF</div>}
           >
             {null /* We don't need to render pages here */}
-          </Document>
+          </PDFDocument>
 
           <div className="pdf-preview">
             <p className="file-name">{pdfFile.name}</p>

@@ -1,50 +1,61 @@
 .config-panel {
   background-color: var(--card-bg);
-  padding: 20px;
+  padding: 16px;
   box-shadow: var(--shadow);
   margin: 0 auto;
   max-width: 600px;
   width: 100%;
-  border: 2px solid var(--text-color);
-  backdrop-filter: blur(10px);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius);
+  backdrop-filter: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.config-panel:hover {
+  box-shadow: var(--shadow-lg);
+  border-color: var(--line2);
 }
 
 .config-panel-title {
   font-family: var(--font-family-heading);
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   font-weight: 700;
-  color: var(--primary-color);
-  margin-bottom: 20px;
+  color: var(--white);
+  margin-bottom: 16px;
   text-align: center;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+  text-shadow: none;
 }
 
 .config-group {
-  margin-bottom: 24px;
+  margin-bottom: 18px;
   position: relative;
-  padding: 15px;
-  background-color: rgba(255, 255, 255, 0.03);
-  border: 2px solid var(--border-color);
-  border-left: 3px solid var(--primary-color);
+  padding: 14px;
+  background-color: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--white);
+  border-radius: var(--radius);
+  transition: all 0.3s ease;
 }
 
-.config-group:nth-child(even) {
-  border-left: 3px solid var(--primary-color);
+.config-group:hover {
+  background-color: var(--card);
+  border-left-color: var(--white);
 }
 
 .config-group-title {
   font-family: var(--font-family-heading);
-  font-size: 1.2rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--text-color);
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   text-align: center;
   position: relative;
   display: inline-block;
   left: 50%;
   transform: translateX(-50%);
-  padding: 0 15px;
+  padding: 0 10px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -66,15 +77,15 @@
   left: 0;
   width: 100%;
   height: 2px;
-  background: var(--primary-color);
+  background: var(--line);
   border-radius: 0;
 }
 
 .config-item {
   display: flex;
   flex-direction: column;
-  margin-bottom: 16px;
-  padding: 10px 0;
+  margin-bottom: 10px;
+  padding: 6px 0;
   border-bottom: 1px solid var(--border-color);
   position: relative;
 }
@@ -85,8 +96,8 @@
 
 .config-item label {
   font-family: var(--font-family-base);
-  font-size: 1rem;
-  font-weight: 500;
+  font-size: 0.9rem;
+  font-weight: 600;
   color: var(--text-color);
   margin-bottom: 6px;
   text-align: center;
@@ -105,32 +116,41 @@
 
 .config-item input,
 .config-item select {
-  padding: 8px 12px;
-  border-radius: var(--border-radius);
-  border: 1px solid var(--border-color);
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  border: 2px solid var(--border-color);
   background-color: rgba(255, 255, 255, 0.05);
   color: var(--text-color);
-  font-size: 0.95rem;
-  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
   margin: 0 auto;
   width: 100%;
-  max-width: 300px;
+  max-width: 250px;
   text-align: center;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
   font-family: var(--font-family-base);
+}
+
+.config-item input:hover,
+.config-item select:hover {
+  border-color: var(--line2);
+  background-color: var(--hover);
 }
 
 .config-item input:focus,
 .config-item select:focus {
   outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+  border-color: var(--white);
+  box-shadow: none;
+  transform: none;
+  background-color: var(--hover);
 }
 
 .config-item select {
   cursor: pointer;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23f97316' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   padding-right: 36px;
@@ -148,45 +168,48 @@
 
 .config-description {
   font-family: var(--font-family-base);
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   color: var(--text-muted);
-  margin-top: 4px;
+  margin-top: 5px;
   text-align: center;
-  max-width: 300px;
+  max-width: 250px;
   line-height: 1.4;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.01em;
+  font-style: italic;
 }
 
 .config-actions {
   display: flex;
   justify-content: center;
-  gap: 12px;
-  margin-top: 24px;
+  gap: 10px;
+  margin-top: 12px;
 }
 
 .config-actions button {
   padding: 10px 20px;
-  border-radius: var(--border-radius);
-  font-size: 1rem;
-  font-weight: 500;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.4s ease;
+  transition: all 0.3s ease;
   width: 100%;
-  max-width: 150px;
+  max-width: 140px;
   margin: 0 auto;
   text-align: center;
-  background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-  color: white;
+  background: var(--white);
+  color: var(--black);
   border: none;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
   font-family: var(--font-family-heading);
-  letter-spacing: 1px;
-  min-height: 44px; /* Better touch target */
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  min-height: 40px;
 }
 
 .config-actions button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 10px rgba(56, 189, 248, 0.3);
+  transform: none;
+  box-shadow: none;
+  background: var(--head);
 }
 
 @media screen and (max-width: 768px) {
@@ -314,26 +337,26 @@
 }
 
 .two-nt-config {
-  background-image: linear-gradient(to bottom, rgba(56, 189, 248, 0.05), rgba(34, 197, 94, 0.05));
-  border-left: 4px solid var(--primary-color);
+  background-image: none;
+  border-left: 4px solid var(--white);
 }
 
 .two-nt-info-panel {
   margin-top: 20px;
   padding: 12px 16px;
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--surface);
   border-radius: var(--border-radius);
-  border: 1px solid rgba(56, 189, 248, 0.2);
+  border: 1px solid var(--line);
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
 }
 
 .info-icon {
   font-size: 1.2rem;
   margin-top: 2px;
-  color: var(--primary-color);
+  color: var(--white);
 }
 
 .two-nt-info-panel p {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { pdfHelpers } from '../utils/supabase';
-import '../styles/AdminFileManager.css';
+import { pdfHelpers, supabase } from '../../utils/supabase';
+import '../../styles/AdminFileManager.css';
 
 interface AdminFileManagerProps {
   onClose: () => void;
@@ -22,6 +22,7 @@ export const AdminFileManager = ({ onClose, onFileDeleted }: AdminFileManagerPro
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
+  const [cleaning, setCleaning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [filterSemester, setFilterSemester] = useState<string>('all');
@@ -146,6 +147,76 @@ export const AdminFileManager = ({ onClose, onFileDeleted }: AdminFileManagerPro
     }
   };
 
+  const handleCleanup = async () => {
+    setCleaning(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      // First, do a dry run to see what will be deleted
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        setError('Not authenticated');
+        return;
+      }
+
+      const dryRunResponse = await fetch('/api/cleanup-unregistered-files', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ dryRun: true }),
+      });
+
+      if (!dryRunResponse.ok) {
+        throw new Error('Failed to check unregistered files');
+      }
+
+      const dryRunResult = await dryRunResponse.json();
+
+      if (dryRunResult.count === 0) {
+        setSuccess('No unregistered files found. All files are in sync!');
+        setTimeout(() => setSuccess(null), 3000);
+        return;
+      }
+
+      // Show confirmation with details
+      const confirmMessage = `Found ${dryRunResult.count} unregistered files (${dryRunResult.totalSizeMB} MB).\n\nThese files exist in storage but are NOT in the database.\n\nDelete them?`;
+
+      if (!confirm(confirmMessage)) {
+        return;
+      }
+
+      // Perform actual cleanup
+      const cleanupResponse = await fetch('/api/cleanup-unregistered-files', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ dryRun: false }),
+      });
+
+      if (!cleanupResponse.ok) {
+        throw new Error('Cleanup failed');
+      }
+
+      const cleanupResult = await cleanupResponse.json();
+
+      if (cleanupResult.success) {
+        setSuccess(`Deleted ${cleanupResult.deleted} unregistered files. Freed ${cleanupResult.freedSpaceMB} MB.`);
+        setTimeout(() => setSuccess(null), 5000);
+      } else {
+        setError('Cleanup failed: ' + (cleanupResult.error || 'Unknown error'));
+      }
+    } catch (err) {
+      setError('Cleanup failed: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    } finally {
+      setCleaning(false);
+    }
+  };
+
   return (
     <div className="admin-manager-overlay" onClick={onClose}>
       <div className="admin-manager-modal" onClick={(e) => e.stopPropagation()}>
@@ -186,10 +257,22 @@ export const AdminFileManager = ({ onClose, onFileDeleted }: AdminFileManagerPro
             <button
               className="sync-button"
               onClick={handleSync}
-              disabled={syncing || loading}
+              disabled={syncing || loading || cleaning}
               title="Sync files from R2 storage to Supabase metadata"
             >
               {syncing ? '🔄 Syncing...' : '🔄 Sync R2 to DB'}
+            </button>
+          </div>
+
+          <div className="filter-group">
+            <button
+              className="cleanup-button"
+              onClick={handleCleanup}
+              disabled={cleaning || loading || syncing}
+              title="Remove files from R2 that are not registered in database"
+              style={{ backgroundColor: '#ff6b6b', color: 'white' }}
+            >
+              {cleaning ? '🗑️ Cleaning...' : '🗑️ Clean Unregistered'}
             </button>
           </div>
         </div>

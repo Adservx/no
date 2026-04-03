@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { supabase, pdfHelpers } from '../utils/supabase';
-import { uploadFileWithMetadata } from '../utils/r2Storage';
-import '../styles/AdminFileUpload.css';
+import React, { useState, useEffect } from 'react';
+import { supabase, pdfHelpers } from '../../utils/supabase';
+import { uploadFileWithMetadata } from '../../utils/r2Storage';
+import '../../styles/AdminFileUpload.css';
 
 interface AdminFileUploadProps {
   onClose: () => void;
@@ -46,7 +46,7 @@ export const AdminFileUpload = ({ onClose, onUploadSuccess }: AdminFileUploadPro
 
       if (!error && data) {
         // Extract unique subjects
-        const subjects = [...new Set(data.map((file: any) => file.subject as string))];
+        const subjects = [...new Set(data.map((file: { subject: string }) => file.subject))];
         setExistingSubjects(subjects as string[]);
         // If no existing subjects, automatically enable custom input
         if (subjects.length === 0) {
@@ -65,7 +65,7 @@ export const AdminFileUpload = ({ onClose, onUploadSuccess }: AdminFileUploadPro
     fetchSubjects();
   }, [semester]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const selectedFiles = e.target.files;
     if (selectedFiles && selectedFiles.length > 0) {
       const fileArray = Array.from(selectedFiles);
@@ -196,8 +196,8 @@ export const AdminFileUpload = ({ onClose, onUploadSuccess }: AdminFileUploadPro
               file,
               semester,
               subject,
-              (progress) => {
-                const fileProgress = previousFilesProgress + (progress / files.length);
+              (progressPercent) => {
+                const fileProgress = previousFilesProgress + (progressPercent / files.length);
                 setTotalProgress(Math.round(fileProgress));
               }
             );

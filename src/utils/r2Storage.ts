@@ -95,7 +95,7 @@ const convertHeicToJpeg = async (file: File): Promise<{ blob: Blob; newKey: stri
 export const uploadToR2 = async (
   file: File,
   key: string,
-  onProgress?: (progress: number) => void
+  onProgress?: (progressPercent: number) => void
 ): Promise<{ success: boolean; error?: string; url?: string }> => {
   try {
     let uploadFile: File | Blob = file;

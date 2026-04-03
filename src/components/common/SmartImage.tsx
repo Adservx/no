@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { isHeicUrl, convertHeicToJpeg } from '../utils/heicConverter';
+import { isHeicUrl, convertHeicToJpeg } from '../../utils/heicConverter';
 
 interface SmartImageProps {
   src: string;
@@ -20,7 +20,7 @@ export default function SmartImage({ src, alt, className, loading = 'lazy', deco
       setIsConverting(true);
       setProgress(0);
       convertHeicToJpeg(src, setProgress)
-        .then(convertedUrl => {
+        .then((convertedUrl: string) => {
           setImageSrc(convertedUrl);
         })
         .finally(() => {

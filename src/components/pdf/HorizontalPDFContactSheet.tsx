@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Document, pdfjs } from 'react-pdf';
+import { pdfjs } from 'react-pdf';
 import { useDropzone } from 'react-dropzone';
 import { jsPDF } from 'jspdf';
-import './PDFContactSheet.css'; // Reusing the existing CSS
-import { notifyServiceWorkerDownload, notifyServiceWorkerComplete, updateServiceWorkerProgress, isPWA } from '../utils/notificationUtils';
+import '../../styles/PDFContactSheet.css'; // Reusing the existing CSS
+import { notifyServiceWorkerDownload, notifyServiceWorkerComplete, updateServiceWorkerProgress } from '../../utils/notificationUtils';
 
 // Worker is already initialized in main.tsx
 // No need to initialize PDF.js worker here

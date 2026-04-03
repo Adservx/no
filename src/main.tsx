@@ -35,7 +35,7 @@ const setupPdfWorker = async () => {
 if (typeof window !== 'undefined') {
   // Use requestIdleCallback for non-critical initialization
   if ('requestIdleCallback' in window) {
-    (window as any).requestIdleCallback(() => setupPdfWorker());
+    window.requestIdleCallback(() => setupPdfWorker());
   } else {
     setTimeout(setupPdfWorker, 100);
   }
@@ -71,8 +71,9 @@ if (rootElement) {
         <App />
       </React.StrictMode>,
     );
-  } catch (error) {
+  } catch (err) {
     // Fallback rendering in case of error
+    console.error('Failed to initialize app:', err);
     rootElement.innerHTML = `
       <div style="padding: 20px; text-align: center; color: white;">
         <h2>Unable to load application</h2>

@@ -37,10 +37,13 @@ const convertHeicIfNeeded = async (file: File): Promise<File> => {
 };
 
 interface UserProfileModalProps {
-    user: any;
+    user: {
+        id: string;
+        email?: string;
+    };
     onClose: () => void;
     onUpdate: () => void;
-    showNotification: (message: string, type: 'success' | 'error') => void;
+    showNotification: (msg: string, notifType: 'success' | 'error') => void;
 }
 
 export default function UserProfileModal({ user, onClose, onUpdate, showNotification }: UserProfileModalProps) {
@@ -98,9 +101,10 @@ export default function UserProfileModal({ user, onClose, onUpdate, showNotifica
                 if (isHeic) {
                     showNotification('Image converted successfully!', 'success');
                 }
-            } catch (error: any) {
-                console.error('File processing error:', error);
-                showNotification(error.message || 'Failed to process image', 'error');
+            } catch (err) {
+                console.error('File processing error:', err);
+                const errorMsg = err instanceof Error ? err.message : 'Failed to process image';
+                showNotification(errorMsg, 'error');
             } finally {
                 setConverting(false);
             }
@@ -142,8 +146,9 @@ export default function UserProfileModal({ user, onClose, onUpdate, showNotifica
             showNotification('Profile updated successfully!', 'success');
             onUpdate();
             onClose();
-        } catch (error: any) {
-            showNotification('Error updating profile: ' + error.message, 'error');
+        } catch (err) {
+            const errorMsg = err instanceof Error ? err.message : 'Failed to update profile';
+            showNotification('Error updating profile: ' + errorMsg, 'error');
         } finally {
             setLoading(false);
         }

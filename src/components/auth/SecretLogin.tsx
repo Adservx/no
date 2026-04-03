@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { authHelpers, supabase } from '../utils/supabase';
-import '../styles/SecretLogin.css';
+import React, { useState, useEffect } from 'react';
+import { authHelpers } from '../../utils/supabase';
+import '../../styles/SecretLogin.css';
 
 interface SecretLoginProps {
   onClose: () => void;
@@ -41,7 +41,7 @@ export const SecretLogin = ({ onClose }: SecretLoginProps) => {
           }, 3000);
         }
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred');
     } finally {
       setLoading(false);
@@ -113,7 +113,10 @@ export const SecretLogin = ({ onClose }: SecretLoginProps) => {
 };
 
 interface SecretLoginButtonProps {
-  user: any;
+  user: {
+    id: string;
+    email?: string;
+  } | null;
   onLogout: () => void;
   onLoginClick: () => void;
   onAdminUploadClick?: () => void;

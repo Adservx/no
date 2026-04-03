@@ -1,59 +1,87 @@
-# no
+# Manikant Engineering Hub
 
 [![CI](https://github.com/Adservx/no/actions/workflows/ci.yml/badge.svg)](https://github.com/Adservx/no/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A React-based web application that generates contact sheets from PDF files. This tool allows you to create a grid-based preview of PDF pages with customizable layouts.
+> A comprehensive web platform for Sub-Electrical Engineers featuring a social community, PDF library, and study materials management system.
 
-## Features
+## ✨ Features
 
-- 📥 Drag & drop PDF file upload
-- 🔧 Customizable grid layout (rows & columns)
-- 📐 Adjustable spacing and resolution
-- 📄 Support for different page sizes (A4, A3, Letter)
-- 🎨 High-quality output
-- ↔️ Choice of layout direction (across or down)
+- 🤝 **Social Community** - Share posts, photos, videos, and study materials
+- 📚 **PDF Library** - Organized by semester with batch download
+- 🎨 **Modern UI** - Instagram-inspired design with dark mode
+- 🔒 **Secure** - XSS protection, rate limiting, and authentication
+- 📱 **PWA** - Offline capabilities and mobile-friendly
 
-## Getting Started
+## 🚀 Quick Start
 
-### Prerequisites
-
-- Node.js (v14 or higher)
-- npm or yarn
-
-### Installation
-
-1. Clone the repository:
 ```bash
-git clone https://github.com/Adservx/no.git
-cd no
-```
-
-2. Install dependencies:
-```bash
+# Install dependencies
 npm install
-```
 
-3. Start the development server:
-```bash
+# Configure environment
+cp config/.env.example .env
+
+# Start development
 npm run dev
 ```
 
-The application will be available at `http://localhost:5173`.
+Visit `http://localhost:3000`
 
-## Building for Production
+## 📋 Requirements
 
-To create a production build:
+- Node.js v18+
+- Supabase account
+- Cloudflare R2 (optional)
 
-```bash
-npm run build
+## 🛠️ Tech Stack
+
+- React 18 + TypeScript
+- Vite + Vitest
+- Supabase + Cloudflare R2
+- PDF.js + jsPDF
+
+## 📁 Structure
+
+```
+├── api/          # Serverless functions
+├── config/       # All configuration files
+├── docs/         # Documentation
+├── public/       # Static assets
+├── scripts/      # Utility scripts
+├── src/          # Source code
+│   ├── components/  # React components (organized by feature)
+│   ├── pages/       # Page components
+│   ├── api/         # API services
+│   ├── utils/       # Utilities
+│   └── types/       # TypeScript types
+└── tests/        # Test files
 ```
 
-The build output will be in the `dist` directory.
+## 🧪 Commands
 
-## Contributing
+```bash
+npm run dev          # Start dev server
+npm run build        # Production build
+npm test             # Run tests
+npm run lint         # Check code quality
+npm run lint:fix     # Auto-fix issues
+```
 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+## 📖 Documentation
 
-## License
+- [Setup Guide](./docs/SETUP.md)
+- [API Reference](./docs/API.md)
+- [Architecture](./docs/ARCHITECTURE.md)
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE)
+
+## 👤 Author
+
+**Adservx** - [GitHub](https://github.com/Adservx)
+
+---
+
+Built with ⚡ for Sub-Engineers

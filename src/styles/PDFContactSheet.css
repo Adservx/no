@@ -9,50 +9,66 @@
 
 .upload-section {
   background-color: var(--card-bg);
-  border-radius: var(--border-radius);
-  border: 1px solid var(--border-color);
-  padding: 24px;
+  border-radius: var(--radius);
+  border: 2px solid var(--border-color);
+  padding: 28px;
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 18px;
+  margin-bottom: 28px;
   text-align: center;
+  backdrop-filter: none;
+  transition: all 0.3s ease;
+}
+
+.upload-section:hover {
+  box-shadow: var(--shadow-lg);
+  border-color: var(--line2);
 }
 
 .upload-section-title {
   font-family: var(--font-family-elegant);
-  font-size: 1.4rem;
-  font-weight: 500;
+  font-size: 1.5rem;
+  font-weight: 600;
   color: var(--text-color);
-  margin-bottom: 16px;
+  margin-bottom: 18px;
   text-align: center;
-  letter-spacing: 1.5px;
+  letter-spacing: 0.02em;
+  text-shadow: none;
 }
 
 .dropzone {
-  border: 2px dashed var(--border-color);
-  border-radius: var(--border-radius);
-  padding: 32px 24px;
+  border: 3px dashed var(--border-color);
+  border-radius: var(--radius);
+  padding: 36px 28px;
   text-align: center;
   cursor: pointer;
   background-color: rgba(255, 255, 255, 0.02);
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .dropzone:hover {
-  border-color: var(--primary-color);
-  background-color: rgba(99, 102, 241, 0.05);
+  border-color: var(--white);
+  background-color: var(--hover);
+  transform: none;
+  box-shadow: none;
 }
 
 .dropzone-icon {
-  font-size: 2rem;
-  color: var(--primary-color);
+  font-size: 2.5rem;
+  color: var(--white);
+  filter: none;
+  transition: transform 0.3s ease;
+}
+
+.dropzone:hover .dropzone-icon {
+  transform: none;
 }
 
 .dropzone p {
@@ -67,37 +83,44 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background-color: var(--primary-color);
-  color: white;
+  gap: 10px;
+  padding: 12px 24px;
+  background-color: var(--white);
+  color: var(--black);
   border: none;
-  border-radius: var(--border-radius);
+  border-radius: var(--radius);
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 1rem;
-  transition: all 0.2s ease;
-  box-shadow: var(--shadow-sm);
-  margin-top: 8px;
+  transition: all 0.3s ease;
+  box-shadow: none;
+  margin-top: 10px;
   font-family: var(--font-family-cursive);
-  letter-spacing: 0.5px;
+  letter-spacing: 0.02em;
 }
 
 .pdf-select-button:hover {
-  background-color: var(--primary-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow);
+  background-color: var(--head);
+  transform: none;
+  box-shadow: none;
 }
 
 .file-name {
   font-size: 1rem;
   color: var(--text-color);
   background: rgba(255, 255, 255, 0.05);
-  padding: 12px 16px;
-  border-radius: var(--border-radius);
-  border: 1px solid var(--border-color);
+  padding: 14px 18px;
+  border-radius: var(--radius);
+  border: 2px solid var(--border-color);
   word-break: break-all;
   font-family: var(--font-family-cursive);
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.file-name:hover {
+  border-color: var(--white);
+  background: var(--hover);
 }
 
 .pdf-preview {
@@ -113,24 +136,27 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 16px;
-  padding: 16px;
+  gap: 20px;
+  padding: 20px;
   background-color: var(--card-bg);
-  border-radius: var(--border-radius);
-  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  border: 2px solid var(--border-color);
 }
 
 .react-pdf__Page {
-  margin: 8px;
-  box-shadow: var(--shadow);
-  border-radius: var(--border-radius);
-  transition: transform 0.2s ease;
+  margin: 10px;
+  box-shadow: var(--shadow-md);
+  border-radius: var(--radius);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   background-color: white !important;
   overflow: hidden;
+  border: 2px solid var(--border-color);
 }
 
 .react-pdf__Page:hover {
-  transform: scale(1.02);
+  transform: none;
+  box-shadow: none;
+  border-color: var(--line2);
 }
 
 .react-pdf__Page canvas {
@@ -144,90 +170,40 @@
   font-weight: 500;
 }
 
-/* Mind-blowing button animation classes */
+/* Remove all glow animations */
 @keyframes pulse {
   0% {
-    box-shadow: 0 0 8px rgba(56, 189, 248, 0.5), 0 0 15px rgba(56, 189, 248, 0.3);
+    box-shadow: none;
   }
-
   50% {
-    box-shadow: 0 0 20px rgba(56, 189, 248, 0.7), 0 0 30px rgba(56, 189, 248, 0.5);
+    box-shadow: none;
   }
-
   100% {
-    box-shadow: 0 0 8px rgba(56, 189, 248, 0.5), 0 0 15px rgba(56, 189, 248, 0.3);
-  }
-}
-
-@keyframes float {
-  0% {
-    transform: translateY(0) translateZ(0) rotateX(0);
-  }
-
-  50% {
-    transform: translateY(-10px) translateZ(20px) rotateX(5deg);
-  }
-
-  100% {
-    transform: translateY(0) translateZ(0) rotateX(0);
-  }
-}
-
-@keyframes particleDrift {
-  0% {
-    transform: translate(0, 0) scale(1);
-    opacity: 0;
-  }
-
-  20% {
-    opacity: 1;
-  }
-
-  100% {
-    transform: translate(var(--x, 100px), var(--y, -100px)) scale(0);
-    opacity: 0;
+    box-shadow: none;
   }
 }
 
 @keyframes buttonGlow {
   0% {
-    filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.7));
+    filter: none;
   }
-
   50% {
-    filter: drop-shadow(0 0 15px rgba(96, 165, 250, 0.9));
+    filter: none;
   }
-
   100% {
-    filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.7));
+    filter: none;
   }
 }
 
 @keyframes textGlow {
   0% {
-    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5), 0 0 10px rgba(56, 189, 248, 0.3);
+    text-shadow: none;
   }
-
   50% {
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(56, 189, 248, 0.6), 0 0 30px rgba(56, 189, 248, 0.4);
+    text-shadow: none;
   }
-
   100% {
-    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5), 0 0 10px rgba(56, 189, 248, 0.3);
-  }
-}
-
-@keyframes rainbow {
-  0% {
-    background-position: 0% 50%;
-  }
-
-  50% {
-    background-position: 100% 50%;
-  }
-
-  100% {
-    background-position: 0% 50%;
+    text-shadow: none;
   }
 }
 
@@ -252,30 +228,29 @@
 }
 
 .generate-button {
-  padding: 16px 32px;
-  font-size: 1.1rem;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
+  padding: 18px 36px;
+  font-size: 1rem;
+  background: var(--white);
+  color: var(--black);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius);
   cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3), 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-weight: 700;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: none;
   width: 100%;
-  max-width: 320px;
+  max-width: 340px;
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
   text-align: center;
   position: relative;
   overflow: hidden;
-  font-family: var(--font-family-elegant);
-  letter-spacing: 0.5px;
+  font-family: var(--font-family-heading);
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  font-size: 0.95rem;
   z-index: 10;
   opacity: 1;
 }
@@ -293,7 +268,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: var(--head);
   opacity: 0;
   transition: opacity 0.3s ease;
   border-radius: 8px;
@@ -313,8 +288,8 @@
 }
 
 .generate-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4), 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: none;
+  box-shadow: none;
 }
 
 .generate-button:hover:not(:disabled):before {
@@ -327,8 +302,8 @@
 }
 
 .generate-button:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3), 0 1px 3px rgba(0, 0, 0, 0.1);
+  transform: none;
+  box-shadow: none;
 }
 
 @keyframes shine {
@@ -361,7 +336,7 @@
 }
 
 .generate-button.generating {
-  background: linear-gradient(135deg, #06b6d4 0%, #0284c7 100%);
+  background: var(--soft);
   cursor: wait;
   opacity: 1;
 }
@@ -373,8 +348,8 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  animation: shimmer 1.5s infinite;
+  background: none;
+  animation: none;
 }
 
 @keyframes shimmer {
@@ -416,7 +391,7 @@
 
 .progress {
   height: 100%;
-  background-color: var(--accent-color);
+  background-color: var(--white);
   transition: width 0.3s ease;
 }
 
@@ -593,9 +568,9 @@
 }
 
 .confirm-button {
-  background-color: var(--accent-color);
-  color: white;
-  border: 2px solid var(--accent-hover);
+  background-color: var(--white);
+  color: var(--black);
+  border: 2px solid var(--white);
 }
 
 .confirm-button:before {
@@ -605,15 +580,15 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(45deg, rgba(16, 185, 129, 0.8), rgba(52, 211, 153, 0.8));
+  background: var(--head);
   z-index: -1;
   transition: all 0.4s ease;
 }
 
 .confirm-button:hover {
-  background-color: transparent;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.5);
+  background-color: var(--head);
+  transform: none;
+  box-shadow: none;
 }
 
 .confirm-button:hover:before {
@@ -628,7 +603,7 @@
 }
 
 .cancel-button:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--hover);
 }
 
 @media (max-width: 768px) {
@@ -780,11 +755,11 @@
 }
 
 .standard-sheet-info {
-  border-left: 4px solid var(--accent-color);
+  border-left: 4px solid var(--white);
 }
 
 .two-n-t-info {
-  border-left: 4px solid var(--primary-color);
+  border-left: 4px solid var(--white);
 }
 
 .standard-sheet-features,
@@ -810,18 +785,18 @@
 }
 
 .feature:hover {
-  transform: translateY(-5px);
-  background-color: rgba(255, 255, 255, 0.1);
+  transform: none;
+  background-color: var(--hover);
 }
 
 .feature-icon {
   font-size: 2rem;
-  color: var(--accent-color);
+  color: var(--white);
   margin-bottom: 8px;
 }
 
 .two-n-t-info .feature-icon {
-  color: var(--primary-color);
+  color: var(--white);
 }
 
 .feature-text {

@@ -1,22 +1,22 @@
 import { useState, useEffect, lazy, Suspense, memo } from 'react';
 import { Link } from 'react-router-dom';
-import { ErrorBoundary } from '../components/ErrorBoundary';
-import { SpiderWebLogo, SpiderWebCorner } from '../components/SpiderWeb';
-import { SecretLogin, SecretLoginButton } from '../components/SecretLogin';
+import { ErrorBoundary } from '../components/common/ErrorBoundary';
+import { SpiderWebLogo, SpiderWebCorner } from '../components/layout/SpiderWeb';
+import { SecretLogin, SecretLoginButton } from '../components/auth/SecretLogin';
 import { authHelpers } from '../utils/supabase';
 import '../styles/SpiderWeb.css';
 import '../styles/SecretLogin.css';
 import '../App.css';
 
 // Lazy load heavy components - they'll only load when needed
-const PDFContactSheet = lazy(() => import('../components/PDFContactSheet').then(m => ({ default: m.PDFContactSheet })));
-const HorizontalPDFContactSheet = lazy(() => import('../components/HorizontalPDFContactSheet').then(m => ({ default: m.HorizontalPDFContactSheet })));
-const CustomOrderPDFContactSheet = lazy(() => import('../components/CustomOrderPDFContactSheet').then(m => ({ default: m.CustomOrderPDFContactSheet })));
-const PDFStore = lazy(() => import('../components/PDFStore').then(m => ({ default: m.PDFStore })));
-const ConfigPanel = lazy(() => import('../components/ConfigPanel').then(m => ({ default: m.ConfigPanel })));
-const TwoNTConfigPanel = lazy(() => import('../components/TwoNTConfigPanel').then(m => ({ default: m.TwoNTConfigPanel })));
-const AdminFileUpload = lazy(() => import('../components/AdminFileUpload').then(m => ({ default: m.AdminFileUpload })));
-const AdminFileManager = lazy(() => import('../components/AdminFileManager').then(m => ({ default: m.AdminFileManager })));
+const PDFContactSheet = lazy(() => import('../components/pdf/PDFContactSheet').then(m => ({ default: m.PDFContactSheet })));
+const HorizontalPDFContactSheet = lazy(() => import('../components/pdf/HorizontalPDFContactSheet').then(m => ({ default: m.HorizontalPDFContactSheet })));
+const CustomOrderPDFContactSheet = lazy(() => import('../components/pdf/CustomOrderPDFContactSheet').then(m => ({ default: m.CustomOrderPDFContactSheet })));
+const PDFStore = lazy(() => import('../components/pdf/PDFStore').then(m => ({ default: m.PDFStore })));
+const ConfigPanel = lazy(() => import('../components/pdf/ConfigPanel').then(m => ({ default: m.ConfigPanel })));
+const TwoNTConfigPanel = lazy(() => import('../components/pdf/TwoNTConfigPanel').then(m => ({ default: m.TwoNTConfigPanel })));
+const AdminFileUpload = lazy(() => import('../components/admin/AdminFileUpload').then(m => ({ default: m.AdminFileUpload })));
+const AdminFileManager = lazy(() => import('../components/admin/AdminFileManager').then(m => ({ default: m.AdminFileManager })));
 
 // Loading fallback for lazy components
 const ComponentLoader = memo(() => (
@@ -68,7 +68,7 @@ function Home() {
     const [showLogin, setShowLogin] = useState<boolean>(false);
     const [showAdminUpload, setShowAdminUpload] = useState<boolean>(false);
     const [showAdminManage, setShowAdminManage] = useState<boolean>(false);
-    const [user, setUser] = useState<any>(null);
+    const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
     const [refreshPDFStore, setRefreshPDFStore] = useState<number>(0);
 
     // Check if app is running in standalone mode (PWA)
@@ -76,7 +76,7 @@ function Home() {
         const isInStandaloneMode = () => {
             return (
                 window.matchMedia('(display-mode: standalone)').matches ||
-                (window.navigator as any).standalone === true ||
+                (window.navigator as { standalone?: boolean }).standalone === true ||
                 document.referrer.includes('android-app://')
             );
         };
@@ -195,6 +195,10 @@ function Home() {
     return (
         <ErrorBoundary>
             <div className={`app-container ${isStandalone ? 'standalone-mode' : ''}`}>
+                {/* Geometric background shapes - Manikant style */}
+                <div className="manikant-bg-shape shape-1"></div>
+                <div className="manikant-bg-shape shape-2"></div>
+
                 {/* Fantastic Back to Home Button - Top Left Corner */}
                 <Link to="/" className="back-home-floating-btn">
                     <span className="btn-icon">🏠</span>

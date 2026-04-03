@@ -1,5 +1,5 @@
 import React from 'react';
-import './ConfigPanel.css';
+import '../../styles/ConfigPanel.css';
 
 interface ConfigPanelProps {
   config: {
@@ -10,17 +10,25 @@ interface ConfigPanelProps {
     resolution: number;
     layoutDirection: 'across' | 'down';
   };
-  onConfigChange: (config: any) => void;
+  onConfigChange: (newConfig: {
+    columns: number;
+    rows: number;
+    spacing: number;
+    pageSize: 'A4' | 'A3' | 'Letter';
+    resolution: number;
+    layoutDirection: 'across' | 'down';
+  }) => void;
 }
 
 export const ConfigPanel: React.FC<ConfigPanelProps> = ({ config, onConfigChange }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     const isNumericField = !['pageSize', 'layoutDirection'].includes(name);
-    onConfigChange({
+    const updatedConfig = {
       ...config,
       [name]: isNumericField ? Number(value) : value,
-    });
+    };
+    onConfigChange(updatedConfig);
   };
 
   return (

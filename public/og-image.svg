@@ -1,34 +1,41 @@
 <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#050508"/>
-      <stop offset="100%" style="stop-color:#1a1a2e"/>
-    </linearGradient>
-    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#8c52ff"/>
-      <stop offset="100%" style="stop-color:#FF9900"/>
-    </linearGradient>
-  </defs>
-  
-  <!-- Background -->
-  <rect width="1200" height="630" fill="url(#bg)"/>
-  
-  <!-- Decorative elements -->
-  <circle cx="100" cy="100" r="200" fill="#8c52ff" opacity="0.1"/>
-  <circle cx="1100" cy="530" r="250" fill="#FF9900" opacity="0.1"/>
-  
-  <!-- Main title -->
-  <text x="600" y="250" font-family="Arial, sans-serif" font-size="80" font-weight="bold" fill="url(#accent)" text-anchor="middle">Manikant</text>
-  
+  <!-- Dark brutalist background -->
+  <rect width="1200" height="630" fill="#000000"/>
+
+  <!-- Noise texture overlay -->
+  <filter id="noise">
+    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" />
+    <feColorMatrix type="saturate" values="0"/>
+  </filter>
+  <rect width="1200" height="630" fill="#000000" filter="url(#noise)" opacity="0.03"/>
+
+  <!-- Geometric border frame -->
+  <rect x="40" y="40" width="1120" height="550" fill="none" stroke="#ffffff" stroke-width="3"/>
+  <rect x="60" y="60" width="1080" height="510" fill="none" stroke="#333333" stroke-width="1"/>
+
+  <!-- Corner brackets - brutalist detail -->
+  <line x1="40" y1="120" x2="40" y2="40" stroke="#ffffff" stroke-width="3"/>
+  <line x1="40" y1="40" x2="120" y2="40" stroke="#ffffff" stroke-width="3"/>
+
+  <line x1="1160" y1="120" x2="1160" y2="40" stroke="#ffffff" stroke-width="3"/>
+  <line x1="1160" y1="40" x2="1080" y2="40" stroke="#ffffff" stroke-width="3"/>
+
+  <line x1="40" y1="510" x2="40" y2="590" stroke="#ffffff" stroke-width="3"/>
+  <line x1="40" y1="590" x2="120" y2="590" stroke="#ffffff" stroke-width="3"/>
+
+  <line x1="1160" y1="510" x2="1160" y2="590" stroke="#ffffff" stroke-width="3"/>
+  <line x1="1160" y1="590" x2="1080" y2="590" stroke="#ffffff" stroke-width="3"/>
+
+  <!-- Main title - Monospace brutalist -->
+  <text x="600" y="240" font-family="'Courier New', monospace" font-size="90" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="2">MANIKANT</text>
+
   <!-- Subtitle -->
-  <text x="600" y="340" font-family="Arial, sans-serif" font-size="36" fill="#e6e6fa" text-anchor="middle">Free Study Materials &amp; Notes</text>
-  
+  <text x="600" y="320" font-family="'Courier New', monospace" font-size="32" fill="#d4d4d4" text-anchor="middle">FREE STUDY MATERIALS &amp; NOTES</text>
+
   <!-- Description -->
-  <text x="600" y="420" font-family="Arial, sans-serif" font-size="24" fill="#a0a0c0" text-anchor="middle">Engineering Notes • PDF Resources • Student Community</text>
-  
-  <!-- Domain -->
-  <text x="600" y="520" font-family="Arial, sans-serif" font-size="28" fill="#FF9900" text-anchor="middle">manikant.com.np</text>
-  
-  <!-- Bottom accent line -->
-  <rect x="400" y="560" width="400" height="4" fill="url(#accent)" rx="2"/>
+  <text x="600" y="400" font-family="'Courier New', monospace" font-size="22" fill="#999999" text-anchor="middle">ENGINEERING NOTES • PDF RESOURCES • STUDENT COMMUNITY</text>
+
+  <!-- Domain with underline -->
+  <text x="600" y="500" font-family="'Courier New', monospace" font-size="26" fill="#ffffff" text-anchor="middle">manikant.com.np</text>
+  <rect x="450" y="515" width="300" height="2" fill="#ffffff"/>
 </svg>

@@ -18,7 +18,7 @@ function getProxiedUrl(url: string): string {
   return url;
 }
 
-export type ProgressCallback = (progress: number) => void;
+export type ProgressCallback = (progressPercent: number) => void;
 
 export async function convertHeicToJpeg(
   heicUrl: string,
@@ -62,7 +62,7 @@ export async function convertHeicToJpeg(
       onProgress?.(downloadProgress);
     }
 
-    const blob = new Blob(chunks as BlobPart[]);
+    const blob = new Blob(chunks);
     return await performConversion(blob, heicUrl, onProgress);
   } catch (error) {
     console.error('Failed to convert HEIC:', error);

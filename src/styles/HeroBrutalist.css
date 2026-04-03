@@ -1,0 +1,881 @@
+/* Editorial Brutalist Hero Section - Dark Theme Adapted */
+
+.hero-brutalist {
+  position: relative;
+  min-height: 100vh;
+  background: var(--bg-primary, #0a0a0a);
+  overflow: hidden;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+/* Animated gradient overlay */
+.hero-brutalist::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 20% 50%, rgba(21, 128, 61, 0.15) 0%, transparent 50%),
+              radial-gradient(circle at 80% 80%, rgba(21, 128, 61, 0.1) 0%, transparent 50%);
+  animation: gradientShift 15s ease infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes gradientShift {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.1) rotate(5deg);
+  }
+}
+
+/* Main Grid Container */
+.hero-brutalist-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 0;
+  border-left: 4px solid var(--text-primary, #f8fafc);
+  border-right: 4px solid var(--text-primary, #f8fafc);
+  border-top: 4px solid var(--text-primary, #f8fafc);
+  max-width: 1400px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Left Content Area */
+.hero-brutalist-content {
+  grid-column: span 12;
+  padding: 4rem 2rem;
+  border-bottom: 4px solid var(--text-primary, #f8fafc);
+  background: var(--bg-secondary, #111111);
+  position: relative;
+  z-index: 10;
+  background-image:
+    linear-gradient(rgba(21, 128, 61, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(21, 128, 61, 0.02) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+@media (min-width: 1024px) {
+  .hero-brutalist-content {
+    grid-column: span 8;
+    padding: 4rem;
+    border-bottom: 0;
+    border-right: 4px solid var(--text-primary, #f8fafc);
+  }
+}
+
+/* Issue Badge */
+.hero-brutalist-badge {
+  display: inline-block;
+  background: var(--primary-color, #15803d);
+  color: #000;
+  padding: 0.5rem 1rem;
+  font-family: var(--font-display, 'JetBrains Mono', monospace);
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  border: 2px solid var(--text-primary, #f8fafc);
+  margin-bottom: 2rem;
+  letter-spacing: 0.05em;
+  box-shadow: 4px 4px 0px 0px rgba(21, 128, 61, 0.3);
+  animation: slideInLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+  opacity: 0;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.hero-brutalist-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 6px 6px 0px 0px rgba(21, 128, 61, 0.4);
+}
+
+.hero-brutalist-badge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 3s infinite;
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 200%;
+  }
+}
+
+/* Main Title */
+.hero-brutalist-title {
+  font-family: var(--font-display, 'JetBrains Mono', monospace);
+  font-size: clamp(4rem, 12vw, 10rem);
+  line-height: 0.8;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.05em;
+  color: var(--text-primary, #f8fafc);
+  margin-bottom: 3rem;
+  animation: fadeInScale 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards;
+  opacity: 0;
+}
+
+.hero-brutalist-title .stroke-text {
+  -webkit-text-stroke: 2px var(--primary-color, #15803d);
+  color: transparent;
+  display: inline-block;
+  animation: glowPulse 3s ease-in-out infinite;
+  position: relative;
+}
+
+.hero-brutalist-title .stroke-text::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  z-index: -1;
+  -webkit-text-stroke: 2px rgba(21, 128, 61, 0.3);
+  opacity: 0.5;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 0px transparent);
+  }
+  50% {
+    filter: drop-shadow(0 0 20px rgba(21, 128, 61, 0.6));
+  }
+}
+
+/* Description and CTA Container */
+.hero-brutalist-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+  align-items: flex-start;
+  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards;
+  opacity: 0;
+}
+
+@media (min-width: 768px) {
+  .hero-brutalist-bottom {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+.hero-brutalist-description {
+  max-width: 28rem;
+  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--text-secondary, #cbd5e1);
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.hero-brutalist-description::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, var(--primary-color, #15803d), transparent);
+}
+
+.hero-brutalist-cta {
+  background: var(--primary-color, #15803d);
+  color: #000;
+  padding: 1.25rem 2.5rem;
+  font-family: var(--font-display, 'JetBrains Mono', monospace);
+  font-weight: 900;
+  font-size: 1.25rem;
+  text-transform: uppercase;
+  border: 4px solid var(--text-primary, #f8fafc);
+  box-shadow: 8px 8px 0px 0px var(--text-primary, #f8fafc);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  display: inline-block;
+  letter-spacing: 0.05em;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-brutalist-cta::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.hero-brutalist-cta:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.hero-brutalist-cta:hover {
+  transform: translate(4px, 4px);
+  box-shadow: 4px 4px 0px 0px var(--text-primary, #f8fafc);
+  background: var(--primary-hover, #16a34a);
+}
+
+.hero-brutalist-cta:active {
+  transform: translate(8px, 8px);
+  box-shadow: 0px 0px 0px 0px var(--text-primary, #f8fafc);
+}
+
+/* Right Visual Area */
+.hero-brutalist-visual {
+  grid-column: span 12;
+  background: var(--bg-tertiary, #1a1a1a);
+  position: relative;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  overflow: hidden;
+  box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5);
+}
+
+@media (min-width: 1024px) {
+  .hero-brutalist-visual {
+    grid-column: span 4;
+    min-height: auto;
+  }
+}
+
+/* Background Image Layer */
+.hero-brutalist-bg {
+  position: absolute;
+  inset: 0;
+  filter: grayscale(100%);
+  opacity: 0.2;
+  mix-blend-mode: overlay;
+  background-size: cover;
+  background-position: center;
+}
+
+/* Floating Card */
+.hero-brutalist-card {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  height: 100%;
+  border: 4px solid var(--text-primary, #f8fafc);
+  background: var(--bg-secondary, #111111);
+  box-shadow: 12px 12px 0px 0px var(--primary-color, #15803d);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 1rem;
+  transform: rotate(-3deg);
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: floatIn 1s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards;
+}
+
+.hero-brutalist-card:hover {
+  transform: rotate(0deg) scale(1.02) !important;
+  box-shadow: 16px 16px 0px 0px var(--primary-color, #15803d);
+}
+
+@keyframes floatIn {
+  from {
+    opacity: 0;
+    transform: rotate(-3deg) translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-3deg) translateY(0);
+  }
+}
+
+.hero-brutalist-card-image {
+  width: 100%;
+  height: 16rem;
+  object-fit: cover;
+  border: 4px solid var(--text-primary, #f8fafc);
+  margin-bottom: 1rem;
+  display: block;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3);
+  transition: all 0.4s ease;
+  flex-shrink: 0;
+}
+
+.hero-brutalist-card:hover .hero-brutalist-card-image {
+  border-color: var(--primary-color, #15803d);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Support for both img and video elements */
+.hero-brutalist-card video.hero-brutalist-card-image {
+  background: var(--bg-primary, #0a0a0a);
+}
+
+.hero-brutalist-card-title {
+  font-family: var(--font-display, 'JetBrains Mono', monospace);
+  font-weight: 700;
+  font-size: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  color: var(--text-primary, #f8fafc);
+  margin-bottom: 0.5rem;
+  position: relative;
+  display: inline-block;
+  transition: all 0.4s ease;
+}
+
+.hero-brutalist-card:hover .hero-brutalist-card-title {
+  font-size: 1.75rem;
+}
+
+.hero-brutalist-card-title::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--primary-color, #15803d);
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: none;
+}
+
+.hero-brutalist-card:hover .hero-brutalist-card-title::after {
+  width: 100%;
+}
+
+.hero-brutalist-card-text {
+  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-size: 0.875rem;
+  color: var(--text-secondary, #cbd5e1);
+  transition: all 0.4s ease;
+}
+
+.hero-brutalist-card:hover .hero-brutalist-card-text {
+  font-size: 1rem;
+}
+
+/* Ticker Bottom Border */
+.hero-brutalist-ticker {
+  border: 4px solid var(--text-primary, #f8fafc);
+  background: var(--text-primary, #f8fafc);
+  color: var(--bg-primary, #0a0a0a);
+  padding: 1rem 0;
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 1400px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.hero-brutalist-ticker::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+    var(--text-primary, #f8fafc) 0%,
+    var(--primary-color, #15803d) 50%,
+    var(--text-primary, #f8fafc) 100%);
+  opacity: 0;
+  animation: tickerGlow 3s ease-in-out infinite;
+}
+
+@keyframes tickerGlow {
+  0%, 100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.1;
+  }
+}
+
+.hero-brutalist-ticker-content {
+  display: inline-block;
+  animation: ticker 20s linear infinite;
+  font-family: var(--font-display, 'JetBrains Mono', monospace);
+  font-weight: 900;
+  font-size: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-brutalist-ticker-content span {
+  display: inline-block;
+  margin: 0 3rem;
+  transition: color 0.3s ease;
+}
+
+.hero-brutalist-ticker:hover .hero-brutalist-ticker-content span {
+  color: var(--primary-color, #15803d);
+}
+
+@keyframes ticker {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Bento Grid Section */
+.hero-brutalist-bento {
+  padding: 4rem 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  position: relative;
+}
+
+.hero-brutalist-bento::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--primary-color, #15803d), transparent);
+}
+
+@media (min-width: 768px) {
+  .hero-brutalist-bento {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.bento-card {
+  border: 4px solid var(--text-primary, #f8fafc);
+  padding: 3rem;
+  box-shadow: 8px 8px 0px 0px var(--primary-color, #15803d);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background: var(--bg-secondary, #111111);
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.bento-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.3) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  pointer-events: none;
+}
+
+.bento-card:hover::before {
+  opacity: 1;
+}
+
+.bento-card:hover {
+  transform: translate(-4px, -4px);
+  box-shadow: 12px 12px 0px 0px var(--primary-color, #15803d);
+}
+
+.bento-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.bento-card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.bento-card:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.bento-card:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+.bento-card-large {
+  grid-column: span 1;
+  background: var(--bg-tertiary, #1a1a1a);
+}
+
+@media (min-width: 768px) {
+  .bento-card-large {
+    grid-column: span 2;
+  }
+}
+
+.bento-card-icon {
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
+  display: inline-block;
+  animation: iconFloat 3s ease-in-out infinite;
+}
+
+@keyframes iconFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.bento-card-title {
+  font-family: var(--font-display, 'JetBrains Mono', monospace);
+  font-size: 3rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 1;
+  margin-bottom: 1.5rem;
+  color: var(--text-primary, #f8fafc);
+  position: relative;
+  display: inline-block;
+}
+
+.bento-card-title::first-letter {
+  color: var(--primary-color, #15803d);
+  font-size: 1.2em;
+}
+
+.bento-card-text {
+  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-size: 1.125rem;
+  max-width: 32rem;
+  color: var(--text-secondary, #cbd5e1);
+}
+
+.bento-card-footer {
+  margin-top: 3rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.bento-card-line {
+  height: 4px;
+  width: 6rem;
+  background: var(--primary-color, #15803d);
+  position: relative;
+  overflow: hidden;
+}
+
+.bento-card-line::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  animation: lineShimmer 2s infinite;
+}
+
+@keyframes lineShimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 200%;
+  }
+}
+
+.bento-card-label {
+  font-family: var(--font-display, 'JetBrains Mono', monospace);
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  font-size: 0.875rem;
+  color: var(--text-secondary, #cbd5e1);
+}
+
+/* Colored Cards */
+.bento-card-tertiary {
+  background: var(--primary-color, #15803d);
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+}
+
+.bento-card-tertiary-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 10;
+}
+
+.bento-card-tertiary:hover .bento-card-tertiary-overlay {
+  opacity: 1;
+}
+
+.bento-card-tertiary-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  mix-blend-mode: overlay;
+  filter: grayscale(100%);
+  opacity: 0.6;
+}
+
+.bento-card-tertiary-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  padding: 2rem;
+  z-index: 20;
+  color: #000;
+}
+
+.bento-card-tertiary-title {
+  font-family: var(--font-display, 'JetBrains Mono', monospace);
+  font-size: 2rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.bento-card-stat {
+  background: var(--primary-color, #15803d);
+  text-align: center;
+  border-color: var(--primary-color, #15803d);
+}
+
+.bento-card-stat-number {
+  font-family: var(--font-display, 'JetBrains Mono', monospace);
+  font-size: 5rem;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+  display: block;
+  color: #000;
+  animation: countUp 2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform: scale(0.8);
+}
+
+@keyframes countUp {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.bento-card-stat-label {
+  font-family: var(--font-display, 'JetBrains Mono', monospace);
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #000;
+}
+
+.bento-card-dark {
+  background: var(--text-primary, #f8fafc);
+  position: relative;
+  overflow: hidden;
+  grid-column: span 1;
+  border-color: var(--text-primary, #f8fafc);
+}
+
+@media (min-width: 768px) {
+  .bento-card-dark {
+    grid-column: span 2;
+  }
+}
+
+.bento-card-dark-bg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bento-card-dark-bg-text {
+  font-family: var(--font-display, 'JetBrains Mono', monospace);
+  font-size: clamp(6rem, 15vw, 10rem);
+  font-weight: 900;
+  color: rgba(10, 10, 10, 0.1);
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.bento-card-dark-content {
+  position: relative;
+  z-index: 10;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.bento-card-dark-title {
+  font-family: var(--font-display, 'JetBrains Mono', monospace);
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--bg-primary, #0a0a0a);
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+.bento-card-dark-text {
+  font-family: var(--font-body, 'DM Sans', sans-serif);
+  color: var(--bg-secondary, #111111);
+  max-width: 28rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1023px) {
+  .hero-brutalist {
+    padding-top: 80px;
+  }
+
+  .hero-brutalist-title {
+    font-size: clamp(3rem, 10vw, 6rem);
+  }
+
+  .hero-brutalist-card {
+    transform: rotate(0deg);
+    animation: fadeInUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-brutalist-content {
+    padding: 3rem 1.5rem;
+  }
+
+  .hero-brutalist-bottom {
+    gap: 2rem;
+  }
+
+  .bento-card {
+    padding: 2rem;
+  }
+
+  .bento-card-title {
+    font-size: 2rem;
+  }
+
+  .hero-brutalist-cta:hover {
+    transform: translate(2px, 2px);
+    box-shadow: 3px 3px 0px 0px var(--text-primary, #f8fafc);
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-brutalist-title {
+    font-size: clamp(2.5rem, 12vw, 4rem);
+  }
+
+  .bento-card-title {
+    font-size: 1.5rem;
+  }
+
+  .bento-card-stat-number {
+    font-size: 3.5rem;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .hero-brutalist-ticker-content,
+  .hero-brutalist-badge::before,
+  .bento-card-line::after,
+  .hero-brutalist-title .stroke-text,
+  .bento-card-icon,
+  .hero-brutalist::before {
+    animation: none;
+  }
+
+  .hero-brutalist-card,
+  .hero-brutalist-grid,
+  .hero-brutalist-badge,
+  .hero-brutalist-title,
+  .hero-brutalist-bottom,
+  .bento-card,
+  .bento-card-stat-number {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .bento-card:hover {
+    transform: none;
+  }
+
+  .hero-brutalist-cta::before {
+    display: none;
+  }
+}

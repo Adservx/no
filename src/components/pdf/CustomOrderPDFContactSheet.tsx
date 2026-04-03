@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Document, pdfjs } from 'react-pdf';
+import { pdfjs, Document as PDFDocument } from 'react-pdf';
 import { useDropzone } from 'react-dropzone';
 import { jsPDF } from 'jspdf';
-import './PDFContactSheet.css';
-import { notifyServiceWorkerDownload, notifyServiceWorkerComplete, updateServiceWorkerProgress, isPWA } from '../utils/notificationUtils';
+import '../../styles/PDFContactSheet.css';
+import { notifyServiceWorkerDownload, notifyServiceWorkerComplete, updateServiceWorkerProgress } from '../../utils/notificationUtils';
 
 interface CustomOrderPDFContactSheetProps {
   config: {
@@ -618,7 +618,7 @@ export const CustomOrderPDFContactSheet: React.FC<CustomOrderPDFContactSheetProp
       
       {pdfFile && (
         <>
-          <Document
+          <PDFDocument
             file={pdfFile}
             onLoadSuccess={onDocumentLoadSuccess}
             onLoadError={onDocumentLoadError}
@@ -626,7 +626,7 @@ export const CustomOrderPDFContactSheet: React.FC<CustomOrderPDFContactSheetProp
             error={<div className="error-message">Failed to load PDF</div>}
           >
             {null /* We don't need to render pages here */}
-          </Document>
+          </PDFDocument>
           
           <div className="pdf-preview">
             <p className="file-name">{pdfFile.name}</p>

@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense, memo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../utils/supabase';
-import SmartImage from '../components/SmartImage';
+import SmartImage from '../components/common/SmartImage';
 import '../styles/ManikantLanding.css';
+import '../styles/HeroBrutalist.css';
+import '../styles/FooterBrutalist.css';
 import '../styles/SpiderWeb.css';
 
 // Lazy load heavy components
 const UserProfileModal = lazy(() => import('../components/manikant/UserProfileModal'));
 const ProfileViewModal = lazy(() => import('../components/manikant/ProfileViewModal'));
-const SpiderWebLogo = lazy(() => import('../components/SpiderWeb').then(m => ({ default: m.SpiderWebLogo })));
-const SpiderWebCorner = lazy(() => import('../components/SpiderWeb').then(m => ({ default: m.SpiderWebCorner })));
+const SpiderWebCorner = lazy(() => import('../components/layout/SpiderWeb').then(m => ({ default: m.SpiderWebCorner })));
 
 // Lazy load R2 upload only when needed
 const loadR2Upload = () => import('../utils/r2Storage').then(m => m.uploadToR2);
@@ -46,7 +47,6 @@ const convertHeicIfNeeded = async (file: File): Promise<File> => {
 };
 
 // Memoized placeholder for SpiderWeb components during load
-const SpiderWebPlaceholder = memo(() => <span style={{ width: 20, height: 20, display: 'inline-block' }} />);
 const CornerPlaceholder = memo(() => <div style={{ position: 'absolute', width: 80, height: 80 }} />);
 
 // Helper to parse media URLs (handles both single URL and JSON array)
@@ -116,8 +116,8 @@ interface UserProfile {
 export default function ManikantLanding() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
-  const [profile, setProfile] = useState<any>(null);
+  const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
+  const [profile, setProfile] = useState<{ bio?: string; avatar_url?: string } | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLogin, setIsLogin] = useState<boolean | null>(null);
@@ -174,7 +174,6 @@ export default function ManikantLanding() {
   const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
   const [expandedAllComments, setExpandedAllComments] = useState<Record<string, boolean>>({});
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
-  const [loadingLike, setLoadingLike] = useState<string | null>(null);
   const [loadingComment, setLoadingComment] = useState<string | null>(null);
 
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -207,6 +206,9 @@ export default function ManikantLanding() {
   const [flashPage, setFlashPage] = useState<number | null>(null);
   const [flipDirection, setFlipDirection] = useState<'next' | 'prev'>('next');
 
+  // Back to top button visibility
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
   const handleNextPage = useCallback(() => {
     if (currentPage < groupedPosts.length - 1 && !isFlipping) {
       setFlipDirection('next');
@@ -238,15 +240,16 @@ export default function ManikantLanding() {
   // Fetch all user profiles for footer
   const fetchAllProfiles = useCallback(async () => {
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('profiles')
         .select('id, username, full_name, avatar_url, bio');
 
-      if (!error && data) {
+      if (data) {
         setAllProfiles(data);
       }
-    } catch (error) {
+    } catch (err) {
       // Silent fail - not critical
+      console.error('Failed to fetch profiles:', err);
     }
   }, []);
 
@@ -307,19 +310,34 @@ export default function ManikantLanding() {
     }
   }, [notification]);
 
+  // Handle scroll for back to top button
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 500);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const fetchProfile = useCallback(async (userId: string) => {
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('profiles')
         .select('bio, avatar_url') // Only select needed fields
         .eq('id', userId)
         .single();
 
-      if (!error && data) {
+      if (data) {
         setProfile(data);
       }
-    } catch (error) {
+    } catch (err) {
       // Silent fail for profile - not critical
+      console.error('Failed to fetch profile:', err);
     }
   }, []);
 
@@ -337,8 +355,9 @@ export default function ManikantLanding() {
       if (data && data.length > 0) {
         fetchLikesAndComments(data.map(p => p.id), user?.id);
       }
-    } catch (error) {
+    } catch (err) {
       // Silent fail
+      console.error('Failed to fetch posts:', err);
     } finally {
       setLoading(false);
     }
@@ -364,7 +383,7 @@ export default function ManikantLanding() {
 
       // Process likes count
       const likesCount: Record<string, number> = {};
-      likesResult.data?.forEach((like: any) => {
+      likesResult.data?.forEach((like: { post_id: string }) => {
         likesCount[like.post_id] = (likesCount[like.post_id] || 0) + 1;
       });
       setPostLikes(likesCount);
@@ -372,7 +391,7 @@ export default function ManikantLanding() {
       // Process user likes
       if (userLikesResult?.data) {
         const userLikesMap: Record<string, boolean> = {};
-        userLikesResult.data.forEach((like: any) => {
+        userLikesResult.data.forEach((like: { post_id: string }) => {
           userLikesMap[like.post_id] = true;
         });
         setUserLikes(userLikesMap);
@@ -380,7 +399,7 @@ export default function ManikantLanding() {
 
       // Process comments count
       const commentsCount: Record<string, number> = {};
-      commentsResult.data?.forEach((comment: any) => {
+      commentsResult.data?.forEach((comment: { post_id: string }) => {
         commentsCount[comment.post_id] = (commentsCount[comment.post_id] || 0) + 1;
       });
 
@@ -391,8 +410,9 @@ export default function ManikantLanding() {
       });
       setPostComments(prev => ({ ...commentsPlaceholder, ...prev }));
 
-    } catch (error) {
+    } catch (err) {
       // Silent fail - likes/comments are not critical for initial render
+      console.error('Failed to fetch likes/comments:', err);
     }
   }, []);
 
@@ -403,7 +423,6 @@ export default function ManikantLanding() {
       return;
     }
 
-    setLoadingLike(postId);
     try {
       if (userLikes[postId]) {
         // Unlike
@@ -428,11 +447,9 @@ export default function ManikantLanding() {
         setUserLikes(prev => ({ ...prev, [postId]: true }));
         setPostLikes(prev => ({ ...prev, [postId]: (prev[postId] || 0) + 1 }));
       }
-    } catch (error: any) {
-      console.error('Error liking post:', error);
+    } catch (err) {
+      console.error('Error liking post:', err);
       showNotification('Failed to update like', 'error');
-    } finally {
-      setLoadingLike(null);
     }
   };
 
@@ -491,8 +508,8 @@ export default function ManikantLanding() {
       }));
       setCommentInputs(prev => ({ ...prev, [postId]: '' }));
       showNotification('Comment added!', 'success');
-    } catch (error: any) {
-      console.error('Error adding comment:', error);
+    } catch (err) {
+      console.error('Error adding comment:', err);
       showNotification('Failed to add comment', 'error');
     } finally {
       setLoadingComment(null);
@@ -500,6 +517,8 @@ export default function ManikantLanding() {
   };
 
   const handleDeleteComment = async (commentId: string, postId: string) => {
+    if (!user) return;
+
     try {
       const { error } = await supabase
         .from('manikant_comments')
@@ -514,8 +533,8 @@ export default function ManikantLanding() {
         [postId]: prev[postId].filter(c => c.id !== commentId)
       }));
       showNotification('Comment deleted', 'success');
-    } catch (error: any) {
-      console.error('Error deleting comment:', error);
+    } catch (err) {
+      console.error('Error deleting comment:', err);
       showNotification('Failed to delete comment', 'error');
     }
   };
@@ -534,8 +553,9 @@ export default function ManikantLanding() {
         showNotification('Check your email for confirmation!', 'success');
         setIsLogin(null); // Close modal
       }
-    } catch (error: any) {
-      showNotification(error.message, 'error');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Authentication failed';
+      showNotification(errorMessage, 'error');
     }
   };
 
@@ -660,8 +680,9 @@ export default function ManikantLanding() {
 
       fetchPosts();
       showNotification('Post created successfully!', 'success');
-    } catch (error: any) {
-      showNotification('Error creating post: ' + error.message, 'error');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create post';
+      showNotification('Error creating post: ' + errorMessage, 'error');
       setUploadProgress({
         stage: 'idle',
         percent: 0,
@@ -794,8 +815,9 @@ export default function ManikantLanding() {
 
       fetchPosts();
       showNotification('Post updated successfully!', 'success');
-    } catch (error: any) {
-      showNotification('Error updating post: ' + error.message, 'error');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update post';
+      showNotification('Error updating post: ' + errorMessage, 'error');
       setUploadProgress({
         stage: 'idle',
         percent: 0,
@@ -824,8 +846,9 @@ export default function ManikantLanding() {
 
       fetchPosts();
       showNotification('Post deleted successfully!', 'success');
-    } catch (error: any) {
-      showNotification('Error deleting post: ' + error.message, 'error');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete post';
+      showNotification('Error deleting post: ' + errorMessage, 'error');
     }
   };
 
@@ -1219,7 +1242,7 @@ export default function ManikantLanding() {
               <select
                 className="manikant-input"
                 value={editType}
-                onChange={(e: any) => setEditType(e.target.value)}
+                onChange={(e) => setEditType(e.target.value as 'photo' | 'video' | 'material')}
               >
                 <option value="material">Study Material</option>
                 <option value="photo">Photo</option>
@@ -1511,7 +1534,7 @@ export default function ManikantLanding() {
                 placeholder="Email"
                 className="manikant-input"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
               <input
@@ -1519,7 +1542,7 @@ export default function ManikantLanding() {
                 placeholder="Password"
                 className="manikant-input"
                 value={password}
-                onChange={e => setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
                 required
               />
               <button type="submit" className="manikant-btn">
@@ -1533,19 +1556,127 @@ export default function ManikantLanding() {
         </div>
       )}
 
-      <div className="manikant-bg-shape shape-1"></div>
-      <div className="manikant-bg-shape shape-2"></div>
+      {/* Brutalist Hero Section */}
+      <section className="hero-brutalist">
+        <div className="hero-brutalist-grid">
+          {/* Left Content: Typography Power */}
+          <div className="hero-brutalist-content">
+            <div className="hero-brutalist-badge">
+              Issue 001: Engineering Excellence
+            </div>
 
-      <header className="manikant-hero">
-        <h1>Sub-Electrical Engineers <span className="highlight">Hub</span></h1>
-        <p>A place to share project memories, photos, videos, and study materials.</p>
-        <div className="manikant-scroll-indicator">
-          <div className="mouse">
-            <div className="wheel"></div>
+            <h1 className="hero-brutalist-title">
+              STUDENT<br />
+              <span className="stroke-text">COMMUNITY</span>
+            </h1>
+
+            <div className="hero-brutalist-bottom">
+              <p className="hero-brutalist-description">
+                We connect electrical engineering students with high-impact resources and collaborative learning. Precision meets community.
+              </p>
+
+              <button
+                className="hero-brutalist-cta"
+                onClick={() => document.querySelector('.manikant-posts-section')?.scrollIntoView({ behavior: 'smooth' })}
+              >
+                EXPLORE FEED
+              </button>
+            </div>
           </div>
-          <span className="scroll-text">Scroll</span>
+
+          {/* Right Visual Area */}
+          <div className="hero-brutalist-visual">
+            <div
+              className="hero-brutalist-bg"
+              style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1550684848-fac1c5b4e853?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80)' }}
+            />
+            <div className="hero-brutalist-card">
+              <video
+                src="/5365-183788430.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="hero-brutalist-card-image"
+                style={{ objectFit: 'cover' }}
+              />
+              <div className="hero-brutalist-card-title">
+                Academic Rigor
+              </div>
+              <p className="hero-brutalist-card-text">
+                Built to endure the challenges of modern engineering education.
+              </p>
+            </div>
+          </div>
         </div>
-      </header>
+
+        {/* Ticker */}
+        <div className="hero-brutalist-ticker">
+          <div className="hero-brutalist-ticker-content">
+            <span>* ENGINEERING EXCELLENCE *</span>
+            <span>STUDENT COMMUNITY *</span>
+            <span>MANIKANT *</span>
+            <span>HIGH IMPACT LEARNING *</span>
+            <span>COLLABORATIVE GROWTH *</span>
+            <span>ACADEMIC SUCCESS *</span>
+            {/* Duplicate for seamless loop */}
+            <span>* ENGINEERING EXCELLENCE *</span>
+            <span>STUDENT COMMUNITY *</span>
+            <span>MANIKANT *</span>
+            <span>HIGH IMPACT LEARNING *</span>
+            <span>COLLABORATIVE GROWTH *</span>
+            <span>ACADEMIC SUCCESS *</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Bento Grid Section */}
+      <section className="hero-brutalist-bento">
+        <div className="bento-card bento-card-large">
+          <div>
+            <span className="bento-card-icon">⚡</span>
+            <h2 className="bento-card-title">High Velocity Learning</h2>
+            <p className="bento-card-text">
+              We don't overthink; we overbuild. Our platform is designed for students who need to move at the speed of knowledge.
+            </p>
+          </div>
+          <div className="bento-card-footer">
+            <div className="bento-card-line"></div>
+            <span className="bento-card-label">Our Methodology</span>
+          </div>
+        </div>
+
+        <div className="bento-card bento-card-tertiary">
+          <div className="bento-card-tertiary-overlay"></div>
+          <img
+            src="https://images.unsplash.com/photo-1581092160562-40aa08e78837?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
+            alt="Texture"
+            className="bento-card-tertiary-image"
+          />
+          <div className="bento-card-tertiary-content">
+            <h3 className="bento-card-tertiary-title">
+              Raw<br />Knowledge
+            </h3>
+          </div>
+        </div>
+
+        <div className="bento-card bento-card-stat">
+          <div className="bento-card-stat-number">{allProfiles.length}+</div>
+          <div className="bento-card-stat-label">Active Students</div>
+        </div>
+
+        <div className="bento-card bento-card-dark">
+          <div className="bento-card-dark-bg">
+            <span className="bento-card-dark-bg-text">SYSTEM</span>
+          </div>
+          <div className="bento-card-dark-content">
+            <h3 className="bento-card-dark-title">The Logic of Growth</h3>
+            <p className="bento-card-dark-text">
+              Complexity is not a bug; it is the ultimate expression of sophisticated collaborative learning.
+            </p>
+          </div>
+        </div>
+      </section>
 
       <section className="manikant-features">
         <Suspense fallback={null}>
@@ -1553,32 +1684,76 @@ export default function ManikantLanding() {
         </Suspense>
 
         <Link to="/prajols-web" className="manikant-feature-card study-card">
-          <span className="manikant-feature-icon">📚</span>
-          <h3>Study Materials</h3>
-          <p>Access a vast collection of engineering notes, past papers, and essential reference books curated for sub-engineers.</p>
-          <div className="feature-badges">
-            <span className="feature-badge">Notes</span>
-            <span className="feature-badge">Papers</span>
-            <span className="feature-badge">Books</span>
+          <div className="feature-card-glow"></div>
+
+          <div className="feature-icon-minimal">
+            <span>📚</span>
           </div>
-          <div className="feature-cta">
-            Browse Library <span>→</span>
+
+          <div className="feature-content-minimal">
+            <h3 className="feature-title-minimal">Study Materials</h3>
+            <p className="feature-description-minimal">
+              Access comprehensive notes, past papers, and study guides organized by semester and subject
+            </p>
+          </div>
+
+          <div className="feature-stats-minimal">
+            <div className="stat-minimal">
+              <span className="stat-value-minimal">500+</span>
+              <span className="stat-label-minimal">Docs</span>
+            </div>
+            <div className="stat-minimal">
+              <span className="stat-value-minimal">200+</span>
+              <span className="stat-label-minimal">Papers</span>
+            </div>
+            <div className="stat-minimal">
+              <span className="stat-value-minimal">50+</span>
+              <span className="stat-label-minimal">Books</span>
+            </div>
+          </div>
+
+          <div className="feature-arrow-minimal">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </div>
         </Link>
 
         <div className="manikant-feature-card community-card" onClick={() => {
           document.querySelector('.manikant-posts-section')?.scrollIntoView({ behavior: 'smooth' });
         }}>
-          <span className="manikant-feature-icon">🤝</span>
-          <h3>Community</h3>
-          <p>Connect with fellow engineers, share your project experiences, ask questions, and grow your professional network.</p>
-          <div className="feature-badges">
-            <span className="feature-badge">Connect</span>
-            <span className="feature-badge">Share</span>
-            <span className="feature-badge">Grow</span>
+          <div className="feature-card-glow"></div>
+
+          <div className="feature-icon-minimal">
+            <span>🤝</span>
           </div>
-          <div className="feature-cta">
-            Join Discussion <span>↓</span>
+
+          <div className="feature-content-minimal">
+            <h3 className="feature-title-minimal">Student Community</h3>
+            <p className="feature-description-minimal">
+              Connect with fellow students, share knowledge, and collaborate on academic projects
+            </p>
+          </div>
+
+          <div className="feature-stats-minimal">
+            <div className="stat-minimal">
+              <span className="stat-value-minimal">{allProfiles.length}+</span>
+              <span className="stat-label-minimal">Members</span>
+            </div>
+            <div className="stat-minimal">
+              <span className="stat-value-minimal">{postStats.total}+</span>
+              <span className="stat-label-minimal">Posts</span>
+            </div>
+            <div className="stat-minimal">
+              <span className="stat-value-minimal">Active</span>
+              <span className="stat-label-minimal">Daily</span>
+            </div>
+          </div>
+
+          <div className="feature-arrow-minimal">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M12 5V19M12 19L5 12M12 19L19 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </div>
         </div>
 
@@ -1595,8 +1770,8 @@ export default function ManikantLanding() {
         </Suspense>
         <div className="posts-section-header">
           <span className="section-icon">📝</span>
-          <h2>Community <span className="highlight">Posts</span></h2>
-          <p>Explore shared memories, study materials, and experiences from fellow engineers</p>
+          <h2>Community <span className="highlight">Feed</span></h2>
+          <p>Where students share insights, resources, and experiences—join the conversation shaping tomorrow's engineers</p>
           <div className="posts-section-divider">
             <span></span>
             <span></span>
@@ -1689,7 +1864,7 @@ export default function ManikantLanding() {
                   <select
                     className="manikant-input"
                     value={newType}
-                    onChange={(e: any) => setNewType(e.target.value)}
+                    onChange={(e) => setNewType(e.target.value as 'photo' | 'video' | 'material')}
                   >
                     <option value="material">Study Material</option>
                     <option value="photo">Photo</option>
@@ -1785,12 +1960,12 @@ export default function ManikantLanding() {
             </div>
           ) : (
             <div className="manikant-auth-box">
-              <h3>Welcome!</h3>
+              <h3>Join the Community</h3>
               <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginBottom: '15px' }}>
-                Login to create and share posts with the community.
+                Connect with electrical engineering students. Share resources, ask questions, and grow together in your academic journey.
               </p>
               <button onClick={() => setIsLogin(true)} className="manikant-btn">
-                Login to Post
+                Sign Up Now
               </button>
             </div>
           )}
@@ -1805,8 +1980,8 @@ export default function ManikantLanding() {
           ) : posts.length === 0 ? (
             <div className="manikant-empty">
               <span className="empty-icon">📭</span>
-              <h3>No posts yet</h3>
-              <p>Be the first to share something with the community!</p>
+              <h3>Start the Conversation</h3>
+              <p>Be the first to share your knowledge. Post a question, share study materials, or start a discussion to help fellow students.</p>
             </div>
           ) : (
             <div className={`manikant-book-container ${isFlipping ? 'flipping' : ''} ${isFlipping ? `flip-${flipDirection}` : ''}`}>
@@ -1882,7 +2057,7 @@ export default function ManikantLanding() {
               <span className="footer-logo-icon">⚡</span>
               <span className="footer-logo-text">Manikant</span>
             </div>
-            <p className="footer-tagline">Empowering Sub-Electrical Engineers with resources, community, and shared knowledge.</p>
+            <p className="footer-tagline">Empowering electrical engineering students to excel in their studies and build lasting connections.</p>
             <div className="footer-social">
               <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="Facebook">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" /></svg>
@@ -1900,14 +2075,14 @@ export default function ManikantLanding() {
             <div className="footer-section">
               <h4>Navigation</h4>
               <Link to="/">Home</Link>
-              <Link to="/prajols-web">Prajol's Web</Link>
-              <Link to="/prajols-web">Study Notes</Link>
+              <Link to="/prajols-web">Study Hub</Link>
+              <Link to="/prajols-web">Course Notes</Link>
             </div>
             <div className="footer-section">
               <h4>Resources</h4>
-              <Link to="/prajols-web">PDF Library</Link>
-              <Link to="/community">Community</Link>
-              <Link to="/about">About Us</Link>
+              <Link to="/prajols-web">Study Materials</Link>
+              <Link to="/community">Community Posts</Link>
+              <Link to="/about">About Platform</Link>
             </div>
             <div className="footer-section">
               <h4>Contact</h4>
@@ -1955,10 +2130,21 @@ export default function ManikantLanding() {
         <div className="footer-bottom">
           <div className="footer-bottom-content">
             <p className="copyright">&copy; {new Date().getFullYear()} Manikant. All rights reserved.</p>
-            <p className="footer-credit">Built with ⚡ for Sub-Engineers</p>
+            <p className="footer-credit">Built by students, for students. Powered by community.</p>
           </div>
         </div>
       </footer>
+
+      {/* Back to Top Button */}
+      <button
+        className={`back-to-top ${showBackToTop ? 'visible' : ''}`}
+        onClick={scrollToTop}
+        aria-label="Back to top"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 19V5M5 12l7-7 7 7"/>
+        </svg>
+      </button>
     </div>
   );
 }

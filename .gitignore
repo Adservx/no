@@ -1,61 +1,49 @@
-# dependencies
-/node_modules
-/.pnp
+# Dependencies
+node_modules/
+.pnp
 .pnp.js
 
-# testing
-/coverage
+# Testing
+coverage/
+.nyc_output
 
-# production
-/build
-/dist
+# Production
+dist/
+build/
 
-# misc
-.DS_Store
+# Environment
 .env
 .env.local
-.env*.local
-.env.production
-
+.env.development.local
+.env.test.local
+.env.production.local
 
 # Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-logs
+lerna-debug.log*
 *.log
 
-# IDE
-.idea/
+# Editor
 .vscode/
+.idea/
 *.swp
 *.swo
-*.sublime-workspace
-*.sublime-project
-
-# System Files
+*~
 .DS_Store
-Thumbs.db
 
-# Debug
-.debug/
-debug.log
+# Misc
+.cache/
+.temp/
+.tmp/
+*.tsbuildinfo
 
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
-
-# Optional stylelint cache
-.stylelintcache
-
-# Yarn Integrity file
-.yarn-integrity
-
-# Vite
-.vite/
+# Vercel
 .vercel
 
-# Agent
-.agent/
+# Archive
+.archive/
+
+# Claude
+.claude/

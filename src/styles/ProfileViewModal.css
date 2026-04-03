@@ -7,7 +7,7 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.92);
-  backdrop-filter: blur(8px);
+  backdrop-filter: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -55,7 +55,7 @@
   top: 16px;
   right: 16px;
   background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(10px);
+  backdrop-filter: none;
   border: 1px solid rgba(255, 255, 255, 0.15);
   color: #fff;
   width: 36px;
@@ -135,8 +135,8 @@
 }
 
 @keyframes ringGlow {
-  0%, 100% { box-shadow: 0 0 30px rgba(255, 153, 0, 0.4), 0 0 60px rgba(255, 153, 0, 0.2); }
-  50% { box-shadow: 0 0 40px rgba(255, 153, 0, 0.5), 0 0 80px rgba(255, 153, 0, 0.3); }
+  0%, 100% { box-shadow: none; }
+  50% { box-shadow: none; }
 }
 
 .profile-avatar-img {
@@ -179,7 +179,7 @@
   background: #00C853;
   border-radius: 50%;
   border: 3px solid var(--bg-secondary, #0D0D0D);
-  box-shadow: 0 0 10px rgba(0, 200, 83, 0.5);
+  box-shadow: none;
 }
 
 /* Profile Info Section */
@@ -459,7 +459,7 @@
 
 .overlay-icon {
   font-size: 1.8rem;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
+  filter: none);
 }
 
 /* About Section */
@@ -524,7 +524,7 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.95);
-  backdrop-filter: blur(10px);
+  backdrop-filter: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -553,7 +553,7 @@
   top: 12px;
   right: 12px;
   background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(10px);
+  backdrop-filter: none;
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #fff;
   width: 32px;
@@ -608,7 +608,7 @@
   height: 40px;
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(10px);
+  backdrop-filter: none;
   border: 1px solid rgba(255, 255, 255, 0.15);
   color: #fff;
   cursor: pointer;
@@ -653,7 +653,7 @@
   gap: 6px;
   padding: 6px 10px;
   background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(10px);
+  backdrop-filter: none;
   border-radius: 20px;
   z-index: 10;
 }
