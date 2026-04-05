@@ -1,5 +1,5 @@
 /* Prajol's Web - Brutalist Dark Theme */
-/* Updated: 2026-04-03T14:51 - Fixed desktop and mobile responsive spacing for PWA */
+/* Updated: 2026-04-04 - Enhanced mobile responsiveness for hero section */
 
 .home-container {
     min-height: 100vh;
@@ -12,18 +12,27 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Hero Section for Prajol's Web */
 .home-hero {
-    padding: 3rem 1.5rem 2.5rem;
+    padding: 2rem 1rem 1.5rem;
     text-align: center;
     border-bottom: 2px solid var(--text-primary, #f8fafc);
     background: var(--bg-secondary, #0f0f0f);
     position: relative;
     width: 100%;
-    margin: 0 0 2rem 0;
+    margin: 0;
     z-index: 10;
+    flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+    .home-hero {
+        padding: 3rem 1.5rem 2.5rem;
+    }
 }
 
 @media (min-width: 1024px) {
@@ -34,51 +43,56 @@
 
 .home-hero-title {
     font-family: var(--font-display, 'JetBrains Mono', monospace);
-    font-size: clamp(2.5rem, 8vw, 5rem);
+    font-size: clamp(1.75rem, 6vw, 5rem);
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: -0.02em;
-    line-height: 1;
-    margin-bottom: 1.5rem;
+    line-height: 1.1;
+    margin-bottom: 1rem;
     color: var(--text-primary, #f8fafc);
+    word-break: break-word;
 }
 
 .home-hero-subtitle {
     font-family: var(--font-body, 'DM Sans', sans-serif);
-    font-size: clamp(1rem, 2vw, 1.25rem);
+    font-size: clamp(0.875rem, 2vw, 1.25rem);
     color: var(--text-secondary, #d4d4d4);
     max-width: 600px;
-    margin: 0 auto 2rem;
-    line-height: 1.6;
+    margin: 0 auto 1.5rem;
+    line-height: 1.5;
+    padding: 0 0.5rem;
 }
 
 .home-hero-stats {
     display: flex;
     justify-content: center;
-    gap: 2rem;
+    gap: 1rem;
     flex-wrap: wrap;
-    margin-top: 2rem;
+    margin-top: 1.5rem;
 }
 
 .home-stat {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 1rem 1.5rem;
+    padding: 0.75rem 1rem;
     border: 2px solid var(--text-primary, #f8fafc);
     background: var(--bg-tertiary, #1a1a1a);
-    min-width: 120px;
+    min-width: 90px;
+    flex: 1 1 auto;
+    max-width: 140px;
 }
 
 .home-stat-number {
     font-family: var(--font-display, 'JetBrains Mono', monospace);
-    font-size: 2rem;
+    font-size: clamp(1.5rem, 4vw, 2rem);
     font-weight: 900;
     color: var(--text-primary, #f8fafc);
+    line-height: 1;
 }
 
 .home-stat-label {
-    font-size: 0.75rem;
+    font-size: clamp(0.65rem, 1.5vw, 0.75rem);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--text-muted, #999999);
@@ -136,7 +150,8 @@
 /* Main Content Area */
 .main-content {
     background: var(--bg-primary, #000000);
-    min-height: calc(100vh - 60px);
+    min-height: 50vh;
+    flex: 1;
 }
 
 .content-header {
@@ -220,37 +235,17 @@
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
     .home-hero {
-        padding: 2.5rem 1.25rem 2rem;
-        position: relative;
-        width: 100%;
-    }
-
-    .main-content {
-        margin-top: 0;
-    }
-
-    .home-hero-title {
-        font-size: clamp(2rem, 10vw, 3.5rem);
-        margin-bottom: 1.25rem;
-    }
-
-    .home-hero-subtitle {
-        font-size: clamp(0.9rem, 2vw, 1.1rem);
-        margin-bottom: 1.5rem;
+        padding: 1.75rem 1rem 1.5rem;
     }
 
     .home-hero-stats {
-        gap: 1rem;
-        margin-top: 1.5rem;
+        gap: 0.75rem;
+        margin-top: 1.25rem;
     }
 
     .home-stat {
-        padding: 0.875rem 1.25rem;
-        min-width: 100px;
-    }
-
-    .home-stat-number {
-        font-size: 1.75rem;
+        padding: 0.625rem 0.875rem;
+        min-width: 80px;
     }
 
     .tab-selector {
@@ -270,17 +265,24 @@
     }
 
     .content-header {
-        padding: 1.5rem;
+        padding: 1.5rem 1rem;
     }
 
     .content-header h2 {
         font-size: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .content-header h2::before {
+        height: 24px;
     }
 
     .back-home-floating-btn {
-        padding: 0.75rem 1.25rem;
-        font-size: 0.8rem;
+        padding: 0.625rem 1rem;
+        font-size: 0.75rem;
         box-shadow: 3px 3px 0px 0px var(--text-primary, #f8fafc);
+        top: 0.75rem;
+        left: 0.75rem;
     }
 
     .back-home-floating-btn:hover {
@@ -291,53 +293,50 @@
 
 @media (max-width: 480px) {
     .home-hero {
-        padding: 2rem 1rem 1.5rem;
-        position: relative;
-        width: 100%;
-    }
-
-    .main-content {
-        margin-top: 0;
+        padding: 1.5rem 0.75rem 1.25rem;
     }
 
     .home-hero-title {
-        margin-bottom: 1rem;
+        margin-bottom: 0.875rem;
     }
 
     .home-hero-subtitle {
-        font-size: 0.875rem;
-        margin-bottom: 1.25rem;
+        margin-bottom: 1rem;
+        padding: 0 0.25rem;
     }
 
     .home-hero-stats {
-        gap: 0.75rem;
-        margin-top: 1.25rem;
+        gap: 0.5rem;
+        margin-top: 1rem;
     }
 
     .home-stat {
-        padding: 0.75rem 1rem;
-        min-width: 90px;
-    }
-
-    .home-stat-number {
-        font-size: 1.5rem;
-    }
-
-    .home-stat-label {
-        font-size: 0.7rem;
+        padding: 0.5rem 0.75rem;
+        min-width: 75px;
+        border-width: 1px;
     }
 
     .config-wrapper {
-        padding: 1.25rem;
+        padding: 1rem;
     }
 
     .back-home-floating-btn {
-        padding: 0.625rem 1rem;
-        font-size: 0.75rem;
+        padding: 0.5rem 0.875rem;
+        font-size: 0.7rem;
         gap: 0.5rem;
+        top: 0.5rem;
+        left: 0.5rem;
     }
 
     .back-home-floating-btn .btn-icon {
-        font-size: 1.1rem;
+        font-size: 1rem;
+    }
+
+    .content-header {
+        padding: 1.25rem 0.875rem;
+    }
+
+    .content-header h2 {
+        font-size: 1.25rem;
     }
 }

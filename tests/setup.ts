@@ -32,3 +32,12 @@ Object.defineProperty(window, 'matchMedia', {
   }
   unobserve() {}
 };
+
+// Mock Worker for heic2any
+(globalThis as Record<string, unknown>).Worker = class Worker {
+  constructor() {}
+  postMessage() {}
+  terminate() {}
+  addEventListener() {}
+  removeEventListener() {}
+};

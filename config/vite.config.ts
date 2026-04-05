@@ -52,14 +52,16 @@ export default defineConfig({
             algorithm: 'gzip',
             ext: '.gz',
             threshold: 1024, // Only compress files > 1KB
-            deleteOriginFile: false
+            deleteOriginFile: false,
+            filter: /\.(js|mjs|json|css|html|svg)$/i // Exclude video/image files
         }),
         // Brotli compression (better compression ratio)
         viteCompression({
             algorithm: 'brotliCompress',
             ext: '.br',
             threshold: 1024,
-            deleteOriginFile: false
+            deleteOriginFile: false,
+            filter: /\.(js|mjs|json|css|html|svg)$/i // Exclude video/image files
         }),
         // Temporarily disable PWA due to path issues on Windows
         // VitePWA can be re-enabled after fixing path handling

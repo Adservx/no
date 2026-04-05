@@ -1558,7 +1558,7 @@ export default function ManikantLanding() {
 
       {/* Brutalist Hero Section */}
       <section className="hero-brutalist">
-        <div className="hero-brutalist-grid">
+        <div className="hero-brutalist-main">
           {/* Left Content: Typography Power */}
           <div className="hero-brutalist-content">
             <div className="hero-brutalist-badge">
