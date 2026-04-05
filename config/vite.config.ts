@@ -39,10 +39,14 @@ export default defineConfig({
                 ];
 
                 filesToCopy.forEach(file => {
-                    const src = join(publicDir, file);
-                    const dest = join(outDir, file);
-                    if (existsSync(src)) {
-                        copyFileSync(src, dest);
+                    try {
+                        const src = join(publicDir, file);
+                        const dest = join(outDir, file);
+                        if (existsSync(src)) {
+                            copyFileSync(src, dest);
+                        }
+                    } catch (error) {
+                        console.warn(`Failed to copy ${file}:`, error);
                     }
                 });
             }
